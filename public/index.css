@@ -1,0 +1,76 @@
+.grille {
+	display: flex;
+}
+.column-left {
+	flex: initial;
+}
+.column-right {
+	flex: initial;
+	margin-left: 30px;
+}
+table {
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+.tablo caption {
+	cursor: pointer;
+	padding-top: 1px;
+	padding-left: 1px;
+	padding-right: 1px;
+}
+.tablo.selected caption{
+	padding-top: 0;
+	padding-left: 0;
+	padding-right: 0;
+	border: 1px dashed black;
+	border-bottom: 0;
+	background-color: lightblue;
+}
+.tablo caption:hover {
+	padding-top: 0;
+	padding-left: 0;
+	padding-right: 0;
+	border: 1px dashed black;
+	border-bottom: 0;
+}
+.clickable {
+	cursor: pointer;
+}
+th {
+	border: 1px solid black;
+	background-color: lightgray;
+	padding-left: 3px;
+	padding-right: 3px;
+}
+.header {
+	cursor: pointer;
+}
+th.selected {
+	background-color: lightblue;
+}
+.incorrect {
+	background-color: lightcoral;
+}
+.funcheader {
+	background-color: cornsilk;
+}
+td {
+	border: 1px solid black;
+	padding: 0 3px;
+}
+td div {
+	min-height: 1em;
+}
+.tablo {
+	margin-bottom: 30px;
+}
+button {
+	cursor: pointer;
+}
+td pre {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+td input, td textarea {
+	width:95%;
+}
