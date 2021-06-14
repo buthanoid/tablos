@@ -4,8 +4,10 @@ export {
 	getByAlias,
 	DATAHEADER,
 	FUNCHEADER,
+	TABTYPEHEADER,
 	NULLARG,
 	COLSAMELINEARG,
+	TABTYPEARG,
 	newTabenv, 
 	newTablo,
 	newDataHeader,
@@ -14,17 +16,22 @@ export {
 	newColSamelineArg,
 	addNewLine,
 	updCell,
+	updFuncHeaderCells,
 	updTabloAlias,
 	updHeaderAlias,
-	updHeaderFunc,
-	updHeaderOrder
+	updHeaderType,
+	updHeaderOrder,
+	updHeaderArgs,
+	updHeaderFunc
 };
 
 const DATAHEADER = 0 ;
 const FUNCHEADER = 1 ;
+const TABTYPEHEADER = [ DATAHEADER, FUNCHEADER ];
 
 const NULLARG = -1 ;
 const COLSAMELINEARG = 0 ;
+const TABTYPEARG = [ NULLARG, COLSAMELINEARG ];
 
 function getByAlias (tab, alias) {
 	return tab.find(function (elt) { 
@@ -109,7 +116,7 @@ function delHeader (tabenv, tablo, alias) {
 		tablo.headers[i].order = i ; 
 	}
 		
-	var fullalias = tablo.alias + "." + header.alias;
+	var fullalias = aliasesToStr(tablo.alias, header.alias);
 	var followers = tabenv.follows.get(fullalias);
 	
 	// delete follows
@@ -142,11 +149,23 @@ function delHeader (tabenv, tablo, alias) {
 	return true;
 }
 
-function newColSamelineArg (alias) {
+function newColSamelineArg (tabloAlias, headerAlias) {
 	return {
 		type: COLSAMELINEARG,
-		alias: alias
+		alias: {
+			tablo: tabloAlias,
+			header: headerAlias
+		}
 	};
+}
+
+function aliasObjToStr (alias) { return alias.tablo + "." + alias.header }
+function aliasesToStr (tabloAlias, headerAlias) {
+	return tabloAlias + "." + headerAlias ;
+}
+function aliasObjFromStr (str) { 
+	var tab = str.split(".");
+	return { tablo: tab[0], header: tab[1] }
 }
 
 function addNewLine (tabenv, tablo) {	
@@ -166,7 +185,7 @@ function updCell (tabenv, tablo, header, numLine, newVal) {
 		return false;
 	}
 
-	var fullalias = tablo.alias + "." + header.alias;
+	var fullalias = aliasesToStr(tablo.alias, header.alias);
 	if (! tabenv.follows.has(fullalias)) {
 		console.log("cannot find follows : " + fullalias);
 		return false;
@@ -185,13 +204,13 @@ function updCell (tabenv, tablo, header, numLine, newVal) {
 						args_vals.push(null); 
 						break;
 					case COLSAMELINEARG: 
-						var aliases = arg.alias.split(".");
-						if (! tabenv.tablos.has(aliases[0])) {
+						if (! tabenv.tablos.has(arg.alias.tablo)) {
 							console.log("tablo alias not found");
 							return false;
 						}
-						var tablo2 = tabenv.tablos.get(aliases[0]);
-						var header2 = getByAlias(tablo2.headers, aliases[1]);
+						var tablo2 = tabenv.tablos.get(arg.alias.tablo);
+						var header2 = 
+							getByAlias(tablo2.headers, arg.alias.header);
 						if (header2 == undefined) {
 							console.log("header alias not found");
 							return false;
@@ -217,13 +236,13 @@ function updCell (tabenv, tablo, header, numLine, newVal) {
 	}
 	
 	tabenv.follows.get(fullalias).forEach(function (follow) {
-		var aliases = follow.split(".");
-		if (! tabenv.tablos.has(aliases[0])) {
+		var folAlias = aliasObjFromStr(follow);
+		if (! tabenv.tablos.has(folAlias.tablo)) {
 			console.log("tablo alias not found");
 			return false;
 		}
-		var tablo2 = tabenv.tablos.get(aliases[0]);
-		var header2 = getByAlias(tablo2.headers, aliases[1]);
+		var tablo2 = tabenv.tablos.get(folAlias.tablo);
+		var header2 = getByAlias(tablo2.headers, folAlias.header);
 		if (header2 == undefined) {
 			console.log("header alias not found");
 			return false;
@@ -234,14 +253,11 @@ function updCell (tabenv, tablo, header, numLine, newVal) {
 	return true;
 }
 
-function updHeaderAlias (tabenv, tablo, oldAlias, newAlias) {
+function updHeaderAlias (tabenv, tablo, oldHeaderAlias, newHeaderAlias) {
 	
 	// the header himself
-	var theHeader = getByAlias(tablo.headers, oldAlias);
-	theHeader.alias = newAlias;
-	
-	var oldFullAlias = tablo.alias + "." + oldAlias;
-	var newFullAlias = tablo.alias + "." + newAlias;
+	var theHeader = getByAlias(tablo.headers, oldHeaderAlias);
+	theHeader.alias = newHeaderAlias;
 	
 	// the args referencing the header
 	tabenv.tablos.forEach(function (tablo) {
@@ -250,8 +266,10 @@ function updHeaderAlias (tabenv, tablo, oldAlias, newAlias) {
 				switch(arg.type) {
 					case NULLARG: break;
 					case COLSAMELINEARG: 
-						if (arg.alias == oldFullAlias) {
-							arg.alias = newFullAlias; 
+						if (arg.alias.tablo == tablo.alias &&
+							arg.alias.header == oldHeaderAlias
+						) {
+							arg.alias.header = newHeaderAlias; 
 						}
 						break;
 					default: console.log("unknown arg type " + arg.type);
@@ -261,6 +279,8 @@ function updHeaderAlias (tabenv, tablo, oldAlias, newAlias) {
 	});
 	
 	// the follows 
+	var oldFullAlias = aliasesToStr(tablo.alias, oldHeaderAlias);
+	var newFullAlias = aliasesToStr(tablo.alias, newHeaderAlias);
 	var theFollowers = tabenv.follows.get(oldFullAlias);
 	tabenv.follows.delete(oldFullAlias);
 	tabenv.follows.set(newFullAlias, theFollowers);
@@ -271,6 +291,23 @@ function updHeaderAlias (tabenv, tablo, oldAlias, newAlias) {
 			}
 		});
 	});
+}
+
+function updHeaderType (tabenv, tablo, header, newType) {
+	if (header.type == DATAHEADER && newType == FUNCHEADER) {
+		header.type = FUNCHEADER;
+		header.args = [];
+		header.func = function () { return null; };
+		updFuncHeaderCells(tabenv, tablo, header);
+	}
+	else if (header.type == FUNCHEADER && newType == DATAHEADER) {
+		updHeaderArgs(tabenv, tablo, header, []);
+		header.type = DATAHEADER;
+		header.args = undefined;
+		header.func = undefined;
+	}
+	else return false;
+	return true;
 }
 
 function updTabloAlias (tabenv, tablo, newAlias) {
@@ -288,9 +325,8 @@ function updTabloAlias (tabenv, tablo, newAlias) {
 				switch(arg.type) {
 					case NULLARG: break;
 					case COLSAMELINEARG: 
-						var argAliases = arg.alias.split(".");
-						if (argAliases[0] == oldAlias) {
-							arg.alias = newAlias + "." + argAliases[1]; 
+						if (arg.alias.tablo == oldAlias) {
+							arg.alias.tablo = newAlias; 
 						}
 						break;
 					default: console.log("unknown arg type " + arg.type);
@@ -301,18 +337,18 @@ function updTabloAlias (tabenv, tablo, newAlias) {
 	
 	// update the follows keys
 	tablo.headers.forEach(function (header) {
-		var fullOldAlias = oldAlias + "." + header.alias;
+		var fullOldAlias = aliasesToStr(oldAlias, header.alias);
 		var hfs = tabenv.follows.get(fullOldAlias);
 		tabenv.follows.delete(fullOldAlias);
-		tabenv.follows.set(newAlias + "." + header.alias, hfs);
+		tabenv.follows.set(aliasesToStr(newAlias, header.alias), hfs);
 	});
 	
 	// update the follows values
 	tabenv.follows.forEach(function (followers, followersKey) {
 		tabenv.follows.set(followersKey, followers.map(function (follower) {
-			var folAliases = follower.split(".");
-			if (folAliases[0] == oldAlias) {
-				return newAlias + "." + folAliases[1];
+			var folAlias = aliasObjFromStr(follower);
+			if (folAlias.tablo == oldAlias) {
+				return aliasesToStr(newAlias, folAlias.header);
 			}
 			else return follower;
 		}));
@@ -391,17 +427,18 @@ function updHeaderArgs (tabenv, tablo, header, newArgs) {
 		console.log("header is not func type so has no args to update");
 		return false;
 	}
-	var fullAlias = tablo.alias + "." + header.alias;
+	var fullAlias = aliasesToStr(tablo.alias, header.alias);
 	// remove followers for old args
 	if (header.args) {
 		for (var i = 0; i < header.args.length; i ++) {
 			switch (header.args[i].type) {
 				case NULLARG: break;
 				case COLSAMELINEARG:
-					var follows = tabenv.follows.get(header.args[i].alias);
+					var argAlias = aliasObjToStr(header.args[i].alias);
+					var follows = tabenv.follows.get(argAlias);
 					if (follows != undefined) {
 						tabenv.follows.set(
-							header.args[i].alias,
+							argAlias,
 							follows.filter(function (fa) {
 								return fa != fullAlias;
 							})
@@ -419,10 +456,11 @@ function updHeaderArgs (tabenv, tablo, header, newArgs) {
 		switch (newArgs[i].type) {
 			case NULLARG: break;
 			case COLSAMELINEARG: 
-				if (tabenv.follows.has(newArgs[i].alias)) {
-					tabenv.follows.get(newArgs[i].alias).push(fullAlias);
+				var argAlias = aliasObjToStr(newArgs[i].alias);
+				if (tabenv.follows.has(argAlias)) {
+					tabenv.follows.get(argAlias).push(fullAlias);
 				}
-				else tabenv.follows.set(newArgs[i].alias, [fullAlias]);
+				else tabenv.follows.set(argAlias, [fullAlias]);
 				break;
 			default:
 				console.log("unknown arg type");

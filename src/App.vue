@@ -33,6 +33,8 @@
 			></tablo-infos>
 			<header-infos
 				v-if="selectedHeader.alias != null"
+				:tablos-list="tablosList"
+				:headers-list="headersList"
 				:tablo-alias="selectedTablo.alias"
 				:header="selectedHeader"
 				:nb-headers="selectedTablo.headers.length"
@@ -60,6 +62,7 @@ import TabloComp from "./components/TabloComp.vue";
 import TabloInfos from "./components/TabloInfos.vue";
 import HeaderInfos from "./components/HeaderInfos.vue";
 import * as TabLib from "./tablos.js";
+import { validTabloProperty, validHeaderProperty } from "./validators.js";
 const getByAlias = TabLib.getByAlias;
 
 export default {
@@ -119,15 +122,26 @@ export default {
 			this.edit.target = target;
 			this.edit.property = property;
 			this.edit.valid = true;
-			this.edit.msg = null;
+			this.edit.msg = "";
 		},
 		validEdit: function (newValue) {
 			switch (this.edit.target) {
 				case "header":
-					validEditHeader.call(this, newValue);
+					var res = validHeaderProperty(
+						this.tabenv.tablos,
+						this.selectedTablo, this.selectedHeader,
+						this.edit.property, newValue
+					);
+					this.edit.valid = res.valid;
+					this.edit.msg = res.msg;
 					break;
 				case "tablo":
-					validEditTablo.call(this, newValue);
+					var res = validTabloProperty(
+						this.tabenv, this.selectedTablo,
+						this.edit.property, newValue
+					);
+					this.edit.valid = res.valid;
+					this.edit.msg = res.msg;
 					break;
 				default: console.log("unmanaged target for validEdit");
 			}
@@ -161,116 +175,38 @@ export default {
 			this.cancelEdit();
 		}
 	},
+	computed: {
+		tablosList: function () {
+			var tablosList = [];
+			this.tabenv.tablos.forEach(function (tablo) {
+				tablosList.push({ alias: tablo.alias, label: tablo.label });
+			});
+			return tablosList;
+		},
+		headersList: function () {
+			var headersList = new Map();
+			this.tabenv.tablos.forEach(function (tablo) {
+				headersList.set(
+					tablo.alias, 
+					tablo.headers.map(function (header) {
+						return { alias: header.alias, label: header.label };
+					})
+				);
+			});
+			return headersList; 
+		}
+	},
   	components: { TabloComp, TabloInfos, HeaderInfos }
 };
 
-function validEditHeader (newvalue) {
-	this.edit.valid = true;
-	this.edit.msg = null;
-	switch (this.edit.property) {
-		case "alias":
-			if (newvalue == "") {
-				this.edit.valid = false;
-				this.edit.msg = "L'alias ne doit pas être vide.";
-			}
-			else if (
-				newvalue != this.selectedHeader.alias &&
-				getByAlias(this.selectedTablo.headers, newvalue)
-			) {
-				this.edit.valid = false ;
-				this.edit.msg = 
-					"L'alias de header doit être unique au sein du tablo.";
-			}
-			break;
-		case "label": 
-			if (newvalue == "") {
-				this.edit.valid = false;
-				this.edit.msg = "Le label ne doit pas être vide.";
-			}
-			break;
-		case "order":
-			if (newvalue < 0 || 
-				newvalue >= this.selectedTablo.headers.length
-			){
-				this.edit.valid = false;
-				this.edit.msg = "L'ordre doit être dans les bornes.";
-			}
-			break;
-		case "func":
-			if (newvalue == "") {
-				this.edit.valid = false;
-				this.edit.msg = "La fonction ne doit pas être vide.";
-			}
-			else {
-				var code = 
-					"\"use strict\"; return ( " +
-					newvalue + " ); ";
-				try {
-					var f = new Function(code) ();
-					if (typeof f != "function") {
-						this.edit.valid = false;
-						this.edit.msg = 
-							"La fonction doit être une fonction " +
-							"Javascript correcte." ;
-					}
-				}
-				catch (error) {
-					this.edit.valid = false;
-					this.edit.msg = 
-					 	"L'erreur suivante a été détectée lors " +
-					 	"de l'évaluation de la fonction : " +
-					 	error.toString() ;
-				}
-			}
-			break;
-		default: 
-			console.log("unknown property : " + this.edit.property);
-			this.edit.valid = false;
-			this.edit.msg = "unknown property";
-	};
-}
-
-function validEditTablo (newValue) {
-	this.edit.valid = true;
-	this.edit.msg = null;
-	switch (this.edit.property) {
-		case "alias":
-			if (newValue == "") {
-				this.edit.valid = false;
-				this.edit.msg = "L'alias ne doit pas être vide.";
-			}
-			else if (
-				newValue != this.selectedTablo.alias && 
-				this.tabenv.tablos.has(newValue)
-			) {
-				this.edit.valid = false ;
-				this.edit.msg = 
-					"L'alias de tablo doit être unique " +
-					"au sein de l'environnement.";
-			}
-			break;
-		case "label": 
-			if (newValue == "") {
-				this.edit.valid = false;
-				this.edit.msg = "Le label ne doit pas être vide.";
-			}
-			break;
-		case "displayNumLines":
-			if (typeof newValue != "boolean") {
-				this.edit.valid = false;
-				this.edit.msg = 
-					"L'affichage des lignes a une valeur incorrecte.";
-			}
-			break;
-		default: 
-			console.log("unknown property : " + this.edit.property);
-			this.edit.valid = false;
-			this.edit.msg = "unknown property";
-	};
-}
-
 function submitEditHeader (newValue) {
-	validEditHeader.call(this, newValue);
+	var res = validHeaderProperty(
+		this.tabenv.tablos,
+		this.selectedTablo, this.selectedHeader,
+		this.edit.property, newValue
+	);
+	this.edit.valid = res.valid;
+	this.edit.msg = res.msg;
 	if (this.edit.valid) {
 		switch (this.edit.property) {
 			case "alias":
@@ -283,10 +219,25 @@ function submitEditHeader (newValue) {
 			case "label":
 				this.selectedHeader.label = newValue;
 				break;
+			case "type":
+				TabLib.updHeaderType (
+					this.tabenv, this.selectedTablo,
+					this.selectedHeader, newValue
+				);
+				break;
 			case "order":
 				TabLib.updHeaderOrder(
 					this.tabenv, this.selectedTablo,
 					this.selectedHeader, newValue
+				);
+				break;
+			case "args":
+				TabLib.updHeaderArgs(
+					this.tabenv, this.selectedTablo,
+					this.selectedHeader, newValue
+				);
+				TabLib.updFuncHeaderCells(
+					this.tabenv, this.selectedTablo, this.selectedHeader
 				);
 				break;
 			case "func":
@@ -304,7 +255,12 @@ function submitEditHeader (newValue) {
 }
 
 function submitEditTablo (newValue) {
-	validEditTablo.call(this, newValue);
+	var res = validTabloProperty(
+		this.tabenv, this.selectedTablo,
+		this.edit.property, newValue
+	);
+	this.edit.valid = res.valid;
+	this.edit.msg = res.msg;
 	if (this.edit.valid) {
 		switch (this.edit.property) {
 			case "alias":
@@ -332,14 +288,14 @@ function created () {
 	
 	var usersComputed = TabLib.newFuncHeader(
 		this.tabenv, users, "computed", "Computed", [ 
-			TabLib.newColSamelineArg("users.cash"), 
-			TabLib.newColSamelineArg("users.debt") ],
+			TabLib.newColSamelineArg("users", "cash"), 
+			TabLib.newColSamelineArg("users", "debt") ],
 		function (cash, debt) { return cash - debt; }
 	);
 	
 	var usersAftertax = TabLib.newFuncHeader(
 		this.tabenv, users, "aftertax", "After Tax",
-		[ TabLib.newColSamelineArg("users.computed") ],
+		[ TabLib.newColSamelineArg("users", "computed") ],
 		function (computed) { return computed - 12; }
 	);
 
@@ -355,24 +311,20 @@ function created () {
 	TabLib.updCell(this.tabenv, users, usersCash, 1, 35);
 	TabLib.updCell(this.tabenv, users, usersDebt, 1, 100);
 
-	setTimeout(function () {
-		TabLib.updCell(this.tabenv, users, usersCash, 0, 20);
-	}.bind(this), 2000);
-
 	var total = TabLib.newTablo(this.tabenv, "total", "Total");
 	
 	var totalName = TabLib.newFuncHeader(
 		this.tabenv, total, "name", "Name",
-		[ TabLib.newColSamelineArg("users.name") ],
+		[ TabLib.newColSamelineArg("users", "name") ],
 		function (name) { return name }
 	);
 	
 	var totalTotal = TabLib.newFuncHeader(
 		this.tabenv, total, "total", "Total", [
-			TabLib.newColSamelineArg("users.cash"), 
-			TabLib.newColSamelineArg("users.debt"),
-			TabLib.newColSamelineArg("users.computed"),
-			TabLib.newColSamelineArg("users.aftertax") ],
+			TabLib.newColSamelineArg("users", "cash"), 
+			TabLib.newColSamelineArg("users", "debt"),
+			TabLib.newColSamelineArg("users", "computed"),
+			TabLib.newColSamelineArg("users", "aftertax") ],
 		function (cash, debt, computed, aftertax) {
 			return cash + debt + computed + aftertax; 
 		}
