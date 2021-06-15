@@ -72,18 +72,15 @@
 			<span v-if="edit.msg" >{{edit.msg}}</span>
 		</p>
 	</div>
-	<button @click="$emit('addNewHeader', alias)" >
-		<span>ajouter une colonne</span>
-	</button> <br />
-	<button @click="$emit('addNewLine', alias)" >
-		<span>ajouter une ligne</span>
-	</button>
+	<button @click="delTablo" >supprimer le tablo</button> <br />
+	<button @click="addNewHeader" >ajouter une colonne</button> <br />
+	<button @click="addNewLine" >ajouter une ligne</button>
 </template>
 
 <script>
 export default {
 	emits: [ 
-		"addNewHeader", "addNewLine", 
+		"delTablo", "addNewHeader", "addNewLine", 
 		"startEdit", "changeEdit", "submitEdit", "cancelEdit"
 	],
 	props: [
@@ -111,13 +108,12 @@ export default {
 			this.editForm = this.$props[property];
 			this.$emit("startEdit", "tablo", property);
 		},
-		changeEdit: function () {
-			this.$emit("changeEdit", this.editForm);
-		},
-		submitEdit: function () { 
-			this.$emit("submitEdit", this.editForm) ;
-		},
-		cancelEdit: function () { this.$emit("cancelEdit") }
+		changeEdit: function () { this.$emit("changeEdit", this.editForm) },
+		submitEdit: function () { this.$emit("submitEdit", this.editForm) },
+		cancelEdit: function () { this.$emit("cancelEdit") },
+		delTablo: function () { this.$emit("delTablo") },
+		addNewHeader: function () { this.$emit("addNewHeader") },
+		addNewLine: function () { this.$emit("addNewLine") }
 	},
 	computed: {
 		isEdited: function () { return this.edit.target == "tablo" ; },

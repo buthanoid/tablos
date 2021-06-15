@@ -10,6 +10,7 @@ export {
 	TABTYPEARG,
 	newTabenv, 
 	newTablo,
+	delTablo,
 	newDataHeader,
 	newFuncHeader,
 	delHeader,
@@ -64,6 +65,24 @@ function newTablo (tabenv, alias, label) {
 	return tablo;
 }
 
+function delTablo (tabenv, tablo) {
+
+	if (! tabenv.tablos.has(tablo.alias)) {
+		console.log("cannot find in the tabenv : tablo " + tablo.alias);
+		return false;
+	}	
+	
+	// delete headers (this will delete follows too)
+	// we first get the aliases because delHeader change 
+	// tablo.headers length, so a tablo.headers.forEach won't work
+	var headersAliases = tablo.headers.map(function (h) { return h.alias });
+	headersAliases.forEach(function(ha) { delHeader(tabenv, tablo, ha) });
+	
+	tabenv.tablos.delete(tablo.alias)
+	
+	return true;
+}
+
 function newHeader (tabenv, tablo, alias, type, label) {
 	if (getByAlias(tablo.headers, alias)) {
 		console.log("already existing alias");
@@ -100,8 +119,12 @@ function newFuncHeader (tabenv, tablo, alias, label, args, func) {
 	return header;
 }
 
-function delHeader (tabenv, tablo, alias) {
+function delHeader (tabenv, tablo, alias) { 
 	var header = getByAlias(tablo.headers, alias);
+	var headerFullAlias = aliasesToStr(tablo.alias, header.alias);
+
+	// delete follows by setting no arguments
+	updHeaderArgs(tabenv, tablo, header, []);
 	
 	// delete data
 	for (var numLine = 0; numLine < tablo.nbLines ; numLine ++) {
@@ -115,19 +138,6 @@ function delHeader (tabenv, tablo, alias) {
 	for (var i = 0; i < tablo.headers.length; i ++) {
 		tablo.headers[i].order = i ; 
 	}
-		
-	var fullalias = aliasesToStr(tablo.alias, header.alias);
-	var followers = tabenv.follows.get(fullalias);
-	
-	// delete follows
-	//tabenv.follows.delete(fullalias);
-	tabenv.follows.forEach(function (value, key) {
-		if (value.includes(fullalias)) {
-			tabenv.follows.set(key, value.filter(function (follow) {
-				return follow != fullalias;
-			}));
-		}
-	});
 	
 	// set to null : args which were pointing to the deleted header
 	/*followers.forEach(function (follower) {
