@@ -46,10 +46,9 @@
 				<select 
 					v-model="editForm" 
 					ref="type" 
-					@change="changeEdit"
-				>
-					<option :value="DATAHEADER" >Data</option>
-					<option :value="FUNCHEADER" >Fonction</option>
+					@change="changeEdit" >
+					<option :value="DATA_HEADER" >Data</option>
+					<option :value="FUNC_HEADER" >Fonction</option>
 				</select>
 				<button @click="submitEdit" >Valider</button>
 				<button @click="cancelEdit" >Annuler</button>
@@ -67,12 +66,10 @@
 				<select 
 					v-model="editForm" 
 					ref="order" 
-					@change="changeEdit"
-				>
+					@change="changeEdit" >
 					<option 
 						v-for="(_,index) in nbHeaders" 
-						:value="index" 
-					>
+						:value="index" >
 						<span>{{index}}</span>
 					</option>
 				</select>
@@ -84,37 +81,39 @@
 			</td>
 		</tr>
 		
-		<tr v-if="header.type == FUNCHEADER" > 
+		<tr v-if="header.type == FUNC_HEADER" > 
 			<th :class="{selected : isEdited && edit.property == 'args' }" >
 				<span>Arguments</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'args'" >
 				<div v-for="(arg,index) in editForm" :key="index" >
-					<select 
-						v-model="arg.alias.tablo" 
-						@change="changeEdit" 
-					>
-						<option 
-							v-for="tablo in tablosList" 
-							:value="tablo.alias" 
-						>
-							<span>{{tablo.label}}</span>
-						</option>
-					</select>
-					<span>[</span>
-					<select 
-						v-model="arg.alias.header" 
-						@change="changeEdit" 
-					>
-						<option 
-							v-for="header in headersList.get(arg.alias.tablo)" 
-							:value="header.alias" 
-						>
-							<span>{{header.label}}</span>
-						</option>
-					</select>
-					<span>][#] </span>
-					<button @click="removeArg(index)" >retirer</button>
+					<div v-if="arg.type == COL_SAMELINE_ARG" >
+						<select 
+							v-model="arg.alias.tablo" 
+							@change="changeEdit" >
+							<option 
+								v-for="tablo in tablosList" 
+								:value="tablo.alias" >
+								<span>{{tablo.label}}</span>
+							</option>
+						</select>
+						<span>[</span>
+						<select 
+							v-model="arg.alias.header" 
+							@change="changeEdit" >
+							<option 
+								v-for="header in headersList.get(arg.alias.tablo)" 
+								:value="header.alias" >
+								<span>{{header.label}}</span>
+							</option>
+						</select>
+						<span>][#] </span>
+						<button @click="removeArg(index)" >retirer</button>
+					</div>
+					<div v-if="arg.type == NULL_ARG" >
+						<span>nul </span>
+						<button @click="removeArg(index)" >retirer</button>
+					</div>
 				</div>
 				<button @click="addArg" >ajouter un argument</button> <br/>
 				<button @click="submitEdit" >valider</button>
@@ -125,7 +124,7 @@
 			</td>
 		</tr>
 		
-		<tr v-if="header.type == FUNCHEADER" > 
+		<tr v-if="header.type == FUNC_HEADER" > 
 			<th :class="{selected : isEdited && edit.property == 'func'}" >
 				<span>Fonction</span>
 			</th> 
@@ -146,8 +145,7 @@
 	<div>
 		<p 
 			v-if="isEdited && edit.valid === false" 
-			class="incorrect" 
-		>
+			class="incorrect" >
 			<span>Valeur invalide !</span> <br />
 			<span v-if="edit.msg" >{{edit.msg}}</span>
 		</p>
@@ -180,16 +178,7 @@ export default {
 		startEdit: function (property) {
 			// for args we need to copy it since it is a deep object
 			if (property == "args") {
-				this.editForm = [];
-				this.header.args.forEach(function(arg) {
-					this.editForm.push({
-						type: arg.type,
-						alias: {
-							tablo: arg.alias.tablo,
-							header: arg.alias.header
-						}
-					});
-				}.bind(this));
+				this.editForm = this.header.args.map(TabLib.copyArg);
 			}
 			else {
 				this.editForm = this.header[property];
@@ -230,17 +219,17 @@ export default {
 		isEdited: function () { return this.edit.target == "header"; },
 		headerType: function () { 
 			switch (this.header.type) {
-				case TabLib.DATAHEADER: return "Data";
-				case TabLib.FUNCHEADER: return "Fonction";
+				case TabLib.DATA_HEADER: return "Data";
+				case TabLib.FUNC_HEADER: return "Fonction";
 				default: console.log("unknown header type");
 			}
 		},
 		argsStr: function () { 
-			if (this.header.type == TabLib.FUNCHEADER) {
+			if (this.header.type == TabLib.FUNC_HEADER) {
 				return this.header.args.map(function (arg) {
 					switch (arg.type) {
-						case TabLib.NULLARG: return "NULL";
-						case TabLib.COLSAMELINEARG: 
+						case TabLib.NULL_ARG: return "nul";
+						case TabLib.COL_SAMELINE_ARG: 
 							var str = 
 								arg.alias.tablo + 
 								"[" + arg.alias.header + "][#]" ;
@@ -253,8 +242,10 @@ export default {
 			}
 			else return null;
 		},
-		DATAHEADER: function () { return TabLib.DATAHEADER },
-		FUNCHEADER: function () { return TabLib.FUNCHEADER }
+		DATA_HEADER: function () { return TabLib.DATA_HEADER },
+		FUNC_HEADER: function () { return TabLib.FUNC_HEADER },
+		NULL_ARG: function () { return TabLib.NULL_ARG },
+		COL_SAMELINE_ARG: function () { return TabLib.COL_SAMELINE_ARG }
 	}
 }
 </script>

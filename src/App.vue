@@ -7,7 +7,7 @@
 				:label="tablo.label"
 				:display-num-lines="tablo.displayNumLines"
 				:headers="tablo.headers"
-				:nb-lines="tablo.nbLines"
+				:nb-lines="tablo.data.length"
 				:datatab="tablo.data"
 				:is-selected="tablo.alias == selectedTablo.alias" 
 				:selected-header-alias="selectedHeader.alias"
@@ -23,7 +23,7 @@
 				:label="selectedTablo.label"
 				:display-num-lines="selectedTablo.displayNumLines"
 				:nb-headers="selectedTablo.headers.length"
-				:nb-lines="selectedTablo.nbLines"
+				:nb-lines="selectedTablo.data.length"
 				:edit="edit"
 				@del-tablo="delTablo"
 				@add-new-header="newHeader"
@@ -49,6 +49,10 @@
 			></header-infos>
 		</div>
 	</div>
+	<p v-if="lastAppError" class="incorrect" >
+		<span>Dernière erreur :</span> <br />
+		<span>{{lastAppError}}</span>
+	</p>
 	<hr />
 	{{tabenv.follows}}
 	<hr />
@@ -64,7 +68,6 @@ import TabloComp from "./components/TabloComp.vue";
 import TabloInfos from "./components/TabloInfos.vue";
 import HeaderInfos from "./components/HeaderInfos.vue";
 import * as TabLib from "./tablos.js";
-import { validTabloProperty, validHeaderProperty } from "./validators.js";
 
 export default {
 	components: { TabloComp, TabloInfos, HeaderInfos },
@@ -78,7 +81,8 @@ export default {
 				property: null,
 				valid: true,
 				msg: null
-			}
+			},
+			lastAppError: ""
 		}
 	},
 	created: created,
@@ -86,28 +90,35 @@ export default {
 		newTablo: function () {
 			var i = 0;
 			while (this.tabenv.tablos.has("newtablo" + i)) i++;
-			TabLib.newTablo(this.tabenv, "newtablo" + i, "New Tablo " + i);
-			this.selectTablo("newtablo" + i);
+			
+			var res = TabLib.newTablo(
+				this.tabenv, "newtablo" + i, "New Tablo " + i);
+				
+			if (res.success) this.selectTablo("newtablo" + i);
+			this.lastAppError = res.errors;
 		},
 		delTablo: function () {
-			TabLib.delTablo(this.tabenv, this.selectedTablo);
+			var res = TabLib.delTablo(this.tabenv, this.selectedTablo);
 			this.selectNothing();
+			this.lastAppError = res.errors;
 		},
 		newHeader: function () {
 			var i = 0 ;
-			while (
-				TabLib.getByAlias(this.selectedTablo.headers, "newheader" + i)
-			){
-				i++;
-			}
-			TabLib.newDataHeader(
+			while (this.selectedTablo.getHeaderByAlias("newheader" + i)) i++;
+			
+			var res = TabLib.newDataHeader(
 				this.tabenv, this.selectedTablo, 
 				"newheader" + i, "New Header " + i
 			);
-			this.selectHeader(this.selectedTablo.alias, "newheader" + i);
+			
+			if (res.success) {
+				this.selectHeader(this.selectedTablo.alias, "newheader" + i);
+			}
+			this.lastAppError = res.errors;
 		},
 		newLine: function () {
-			TabLib.addNewLine(this.tabenv, this.selectedTablo);
+			TabLib.newLine(this.tabenv, this.selectedTablo);
+			this.lastAppError = "";
 		},
 		selectNothing: function () {
 			this.selectedTablo = { alias: null }; 
@@ -120,6 +131,7 @@ export default {
 				this.selectedHeader = { alias: null };
 			}
 			this.cancelEdit();
+			this.lastAppError = "";
 		},
 		selectHeader: function (tabloAlias, headerAlias) {
 			if (this.selectedTablo.alias == tabloAlias &&
@@ -129,15 +141,17 @@ export default {
 			else {
 				this.selectedTablo = this.tabenv.tablos.get(tabloAlias);
 				this.selectedHeader = 
-					TabLib.getByAlias(this.selectedTablo.headers, headerAlias);
+					this.selectedTablo.getHeaderByAlias(headerAlias);
 			}
 			this.cancelEdit();
+			this.lastAppError = "";
 		},
 		startEdit: function (target, property) {
 			this.edit.target = target;
 			this.edit.property = property;
 			this.edit.valid = true;
 			this.edit.msg = "";
+			this.lastAppError = "";
 		},
 		changeEditTablo: changeEditTablo,
 		changeEditHeader: changeEditHeader,
@@ -148,13 +162,15 @@ export default {
 			this.edit.property = null;
 			this.edit.valid = true;
 			this.edit.msg = null;
+			this.lastAppError = "";
 		},
 		deleteHeader: function () {
-			TabLib.delHeader(
-				this.tabenv, this.selectedTablo, this.selectedHeader.alias
+			var res = TabLib.delHeader(
+				this.tabenv, this.selectedTablo, this.selectedHeader
 			);
 			this.selectedHeader = { alias: null };
 			this.cancelEdit();
+			this.lastAppError = res.errors;
 		}
 	},
 	computed: {
@@ -181,146 +197,177 @@ export default {
 };
 
 function changeEditTablo (newValue) {
-	var res = validTabloProperty(
-		this.tabenv, this.selectedTablo,
-		this.edit.property, newValue
-	);
-	this.edit.valid = res.valid;
-	this.edit.msg = res.msg;
+	var res = TabLib.newRes();
+	switch (this.edit.property) {
+		case "alias" :
+			TabLib.checkUpdTabloAlias(
+				this.tabenv, this.selectedTablo.alias, newValue, res
+			);
+			break;
+		case "label" :
+			TabLib.checkTabloLabel(newValue, res);
+			break;
+		case "displayNumLines":
+			TabLib.checkTabloDisplayNumLines(newValue, res);
+			break;
+		default: 
+			res.addError("unmanaged or unknown property");
+			console.log("unmanaged or unknown property");
+	}
+	this.edit.valid = res.success;
+	this.edit.msg = res.errors;
 }
 
 function changeEditHeader (newValue) {
-	var res = validHeaderProperty(
-		this.tabenv.tablos,
-		this.selectedTablo, this.selectedHeader,
-		this.edit.property, newValue
-	);
-	this.edit.valid = res.valid;
-	this.edit.msg = res.msg;
+	var res = TabLib.newRes();
+	switch (this.edit.property) {
+		case "alias":
+			TabLib.checkUpdHeaderAlias (
+				this.selectedTablo,
+				this.selectedTablo.alias, newValue, res);
+			break;
+		case "label":
+			TabLib.checkHeaderLabel (newValue, res);
+			break;
+		case "type":
+			TabLib.checkHeaderType (newValue, res);
+			break;
+		case "order":
+			TabLib.checkHeaderOrder (this.selectedTablo, newValue, res);
+			break;
+		case "args":
+			TabLib.checkHeaderArgs (this.tabenv.tablos, newValue, res);
+			break;
+		case "func":
+			TabLib.checkHeaderFunc (newValue, res);
+			break;
+		default:
+			res.addError("unmanaged or unknown property");
+			console.log("unmanaged or unknown property");
+	}
+	this.edit.valid = res.success;
+	this.edit.msg = res.errors;
 }
 
 function submitEditTablo (newValue) {
-	var res = validTabloProperty(
-		this.tabenv, this.selectedTablo,
-		this.edit.property, newValue
-	);
-	this.edit.valid = res.valid;
-	this.edit.msg = res.msg;
-	if (! this.edit.valid) {
-		console.log("unvalid newValue for submitEditTablo : " + newValue);
-		return false;
-	}
+	var res;
 	switch (this.edit.property) {
 		case "alias":
-			TabLib.updTabloAlias(this.tabenv, this.selectedTablo, newValue);
+			res = 
+				TabLib.updTabloAlias(this.tabenv, this.selectedTablo, newValue);
 			break;
 		case "label":
-			this.selectedTablo.label = newValue;
+			res = TabLib.updTabloLabel(this.selectedTablo, newValue);
 			break;
 		case "displayNumLines":
-			this.selectedTablo.displayNumLines = newValue;
+			res = TabLib.updTabloDisplayNumLines(this.selectedTablo, newValue);
 			break;
-		default: console.log("unknown property");
+		default: 
+			res.addError("unmanaged or unknown property");
+			console.log("unmanaged or unknown property");
 	}
 	this.cancelEdit();
-	return true;
+	this.lastAppError = res.errors;
 }
 
 function submitEditHeader (newValue) {
-	var res = validHeaderProperty(
-		this.tabenv.tablos,
-		this.selectedTablo, this.selectedHeader,
-		this.edit.property, newValue
-	);
-	this.edit.valid = res.valid;
-	this.edit.msg = res.msg;
-	if (! this.edit.valid) {
-		console.log("unvalid newValue for submitEditHeader : " + newValue);
-		return false;
-	}
+	var res;
 	switch (this.edit.property) {
 		case "alias":
-			TabLib.updHeaderAlias(
-				this.tabenv, this.selectedTablo,
-				this.selectedHeader.alias, newValue
+			res = TabLib.updHeaderAlias(
+				this.tabenv, this.selectedTablo, this.selectedHeader, newValue
 			);
 			break;
 		case "label":
-			this.selectedHeader.label = newValue;
+			res = TabLib.updHeaderLabel(this.selectedHeader, newValue);
 			break;
 		case "type":
-			TabLib.updHeaderType (
+			res = TabLib.updHeaderType (
 				this.tabenv, this.selectedTablo, this.selectedHeader, newValue
 			);
 			break;
 		case "order":
-			TabLib.updHeaderOrder(
+			res = TabLib.updHeaderOrder(
 				this.tabenv, this.selectedTablo, this.selectedHeader, newValue
 			);
 			break;
 		case "args":
-			TabLib.updHeaderArgs(
+			res = TabLib.updHeaderArgs(
 				this.tabenv, this.selectedTablo, this.selectedHeader, newValue
 			);
-			TabLib.updFuncHeaderCells(
+			res.combine(TabLib.updFuncHeaderAllCells(
 				this.tabenv, this.selectedTablo, this.selectedHeader
-			);
+			));
 			break;
 		case "func":
-			var code = "\"use strict\"; return (" + newValue + ");";
-			var f = new Function(code) ();
-			TabLib.updHeaderFunc(
-				this.tabenv, this.selectedTablo, this.selectedHeader, f
-			);
+			res = TabLib.parseStrToFunction(newValue);
+			if (res.success) {
+				res.combine(TabLib.updHeaderFunc(
+					this.tabenv, this.selectedTablo, this.selectedHeader, 
+					res.value
+				));
+			}
 			break;
-		default: console.log("unknown property");
+		default:
+			res.addError("unmanaged or unknown property"); 
+			console.log("unmanaged or unknown property");
 	}
 	this.cancelEdit();
-	return true; 
+	this.lastAppError = res.errors;
 }
 
 function created () {
 	
-	var users = TabLib.newTablo(this.tabenv, "users", "Users");
-
-	var usersName = TabLib.newDataHeader(this.tabenv, users, "name", "Name");
-	var usersCash = TabLib.newDataHeader(this.tabenv, users, "cash", "Cash");
-	var usersDebt = TabLib.newDataHeader(this.tabenv, users, "debt", "Debt");
+	var res = TabLib.newRes();
 	
-	var usersComputed = TabLib.newFuncHeader(
+	res.combine(TabLib.newTablo(this.tabenv, "users", "Users"));
+	var users = res.value;
+	
+	res.combine (TabLib.newDataHeader(this.tabenv, users, "name", "Name"));
+	var usersName = res.value;
+	
+	res.combine(TabLib.newDataHeader(this.tabenv, users, "cash", "Cash"));
+	var usersCash = res.value;
+	
+	res.combine(TabLib.newDataHeader(this.tabenv, users, "debt", "Debt"));
+	var usersDebt = res.value;
+		
+	res.combine(TabLib.newFuncHeader(
 		this.tabenv, users, "computed", "Computed", [ 
 			TabLib.newColSamelineArg("users", "cash"), 
 			TabLib.newColSamelineArg("users", "debt") ],
 		function (cash, debt) { return cash - debt; }
-	);
+	));
+	var usersComputed = res.value;
 	
-	var usersAftertax = TabLib.newFuncHeader(
+	res.combine(TabLib.newFuncHeader(
 		this.tabenv, users, "aftertax", "After Tax",
 		[ TabLib.newColSamelineArg("users", "computed") ],
 		function (computed) { return computed - 12; }
-	);
+	));
+	var usersAftertax = res.value;
 
-	TabLib.addNewLine(this.tabenv, users); 
-	
-	TabLib.updCell(this.tabenv, users, usersName, 0, "yayatoto");
-	TabLib.updCell(this.tabenv, users, usersCash, 0, 10);
-	TabLib.updCell(this.tabenv, users, usersDebt, 0, 5);
+	TabLib.newLine(this.tabenv, users); 
+	TabLib.updDataCell(this.tabenv, users, usersName, 0, "yayatoto");
+	TabLib.updDataCell(this.tabenv, users, usersCash, 0, 10);
+	TabLib.updDataCell(this.tabenv, users, usersDebt, 0, 5);
 
-	TabLib.addNewLine(this.tabenv, users);
-	
-	TabLib.updCell(this.tabenv, users, usersName, 1, "magdalena");
-	TabLib.updCell(this.tabenv, users, usersCash, 1, 35);
-	TabLib.updCell(this.tabenv, users, usersDebt, 1, 100);
+	TabLib.newLine(this.tabenv, users);
+	TabLib.updDataCell(this.tabenv, users, usersName, 1, "magdalena");
+	TabLib.updDataCell(this.tabenv, users, usersCash, 1, 35);
+	TabLib.updDataCell(this.tabenv, users, usersDebt, 1, 100);
 
-	var total = TabLib.newTablo(this.tabenv, "total", "Total");
+	res.combine(TabLib.newTablo(this.tabenv, "total", "Total"));
+	var total = res.value;
 	
-	var totalName = TabLib.newFuncHeader(
+	res.combine(TabLib.newFuncHeader(
 		this.tabenv, total, "name", "Name",
 		[ TabLib.newColSamelineArg("users", "name") ],
 		function (name) { return name }
-	);
+	));
+	var totalName = res.value;
 	
-	var totalTotal = TabLib.newFuncHeader(
+	res.combine(TabLib.newFuncHeader(
 		this.tabenv, total, "total", "Total", [
 			TabLib.newColSamelineArg("users", "cash"), 
 			TabLib.newColSamelineArg("users", "debt"),
@@ -329,14 +376,13 @@ function created () {
 		function (cash, debt, computed, aftertax) {
 			return cash + debt + computed + aftertax; 
 		}
-	);
+	));
+	var totalTotal = res.value;
 	
-	TabLib.addNewLine(this.tabenv, total);
-	TabLib.addNewLine(this.tabenv, total);
+	TabLib.newLine(this.tabenv, total);
+	TabLib.updLineAllFuncCells (this.tabenv, total, 0);
 	
-	TabLib.updCell(this.tabenv, total, totalName, 0, null);
-	TabLib.updCell(this.tabenv, total, totalName, 1, null);
-	TabLib.updCell(this.tabenv, total, totalTotal, 0, null);
-	TabLib.updCell(this.tabenv, total, totalTotal, 1, null);
+	TabLib.newLine(this.tabenv, total);
+	TabLib.updLineAllFuncCells (this.tabenv, total, 1);
 }
 </script>
