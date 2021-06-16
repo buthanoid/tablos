@@ -11,6 +11,7 @@ export {
 	// utilities
 	newRes,
 	parseStrToFunction,
+	aliasesToStr,
 	// check functions
 	checkUpdTabloAlias,
 	checkTabloLabel,
@@ -1040,13 +1041,6 @@ function delAllArgsFromHeader (tabenv, tablo, header) {
 	
 	return res;
 }
-
-
-
-
-
-
-
 
 
 
