@@ -29,7 +29,11 @@ export {
 	newColSamelineArg,
 	newFuncHeader,
 	newLine,
+	newHeaderArg,
 	copyArg,
+	// get functions
+	getCell,
+	getCellByAliases,
 	// upd functions
 	updTabloAlias,
 	updTabloLabel,
@@ -378,8 +382,8 @@ function newHeader (tabenv, tablo, alias, label, type) {
 	if (res.success) {
 		var header = {
 			alias: alias,
-			type: type,
 			label: label,
+			type: type,
 			order: tablo.headers.length
 		};
 		
@@ -439,6 +443,9 @@ function newFuncHeader (tabenv, tablo, alias, label, args, func) {
 		res.value.func = func;
 	};
 	
+	var res2 = updFuncHeaderAllCells (tabenv, tablo, res.value);
+	if (! res2.success) res.combine(res2);
+	
 	return res;
 }
 
@@ -447,7 +454,9 @@ function newLine (tabenv, tablo) {
 	var line = new Array(tablo.headers.length);
 	line.fill(null);
 	tablo.data.push(line);
-	updLineAllFuncCells(tabenv, tablo, tablo.data.length - 1);
+	var res = newRes();
+	res.combine(updLineAllFuncCells(tabenv, tablo, tablo.data.length - 1));
+	return res;
 }
 
 // add a new arg to a header 
