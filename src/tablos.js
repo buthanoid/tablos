@@ -46,11 +46,14 @@ export {
 	updHeaderFunc,
 	updLineAllFuncCells,
 	updFuncHeaderAllCells,
+	updTabloAllFuncHeadersAllCells,
 	updFuncCell,
 	updDataCell,
 	// del functions
 	delTablo,
-	delHeader
+	delHeader,
+	delArgFromHeader,
+	delAllArgsFromHeader
 };
 
 
@@ -486,6 +489,8 @@ function newHeaderArg (tabenv, tablo, header, newArg) {
 		default: console.log("unknown arg type");
 	}
 	
+	res.combine(updFuncHeaderAllCells (tabenv, tablo, header));
+	
 	return res;
 }
 
@@ -772,8 +777,6 @@ function updHeaderArgs (tabenv, tablo, header, newArgs) {
 		res.combine(newHeaderArg (tabenv, tablo, header, newArg));
 	});
 	
-	res.combine(updFuncHeaderAllCells (tabenv, tablo, header));
-	
 	if (! res.success) res.addError("updHeaderArgs(" + header.alias + ").");
 	return res;
 }
@@ -983,6 +986,7 @@ function delHeader (tabenv, tablo, header) {
 	return res;
 }
 
+// careful : does not update data
 function delArgFromHeader (tabenv, tablo, header, indexArg) {
 	var res = newRes();
 	if (header.type != FUNC_HEADER) {
@@ -1028,6 +1032,7 @@ function delArgFromHeader (tabenv, tablo, header, indexArg) {
 	return res;
 }
 
+// careful : does not update data
 function delAllArgsFromHeader (tabenv, tablo, header) {
 	var res = newRes();
 	if (header.type != FUNC_HEADER) {
