@@ -103,6 +103,267 @@ function makenv2Tablo2Data2Func1Line () {
 	return env;
 }
 
+describe ("newReactMap", function () {
+	var res ;
+	
+	it("newReactMap()", function() {
+		res = T.newReactMap();
+	});
+	
+	it("result value", function() {
+		assert.equal(res.__proto__, Map.prototype);
+		assert.isEmpty(res);
+	});
+});
+
+describe ("newReactKey", function () {
+	var reactMap, reactKey1;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+	});
+	
+	it("newReactKey()", function() {
+		T.newReactKey(reactMap, reactKey1);
+	});
+	
+	it("reactMap updated", function() {
+		assert.isTrue(reactMap.has(reactKey1));
+		assert.equal(reactMap.get(reactKey1).__proto__, Set.prototype);
+	});
+});
+
+
+describe ("newReaction", function () {
+	var reactMap, reactKey1, reaction1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+	});
+	
+	it("newReaction()", function() {
+		res = T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("result value", function() {
+		assert.isTrue(res.success);
+	});
+	it("reactMap updated", function() {
+		assert.isTrue(reactMap.get(reactKey1).has(reaction1));
+	});
+});
+
+describe ("newReaction with bad reactKey", function () {
+	var reactMap, reactKey1, badReactKey1, reaction1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		badReactKey1 = "badkey1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+	});
+	
+	it("newReaction()", function() {
+		res = T.newReaction(reactMap, badReactKey1, reaction1);
+	});
+	
+	it("result value", function() {
+		assert.isFalse(res.success);
+	});
+	it("reactMap not updated", function() {
+		assert.isFalse(T.hasReaction(reactMap, reactKey1, reaction1));
+	});
+});
+
+describe ("hasReactKey", function () {
+	var reactMap, reactKey1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+	});
+	
+	it("hasReactKey()", function() {
+		res = T.hasReactKey(reactMap, reactKey1);
+	});
+	
+	it("result value", function() {
+		assert.isTrue(res);
+	});
+});
+
+describe ("hasReaction", function () {
+	var reactMap, reactKey1, reaction1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("hasReaction()", function() {
+		res = T.hasReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("result value", function() {
+		assert.isTrue(res);
+	});
+});
+
+describe ("getReactions", function () {
+	var reactMap, reactKey1, reaction1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("getReactions()", function() {
+		res = T.getReactions(reactMap, reactKey1, reaction1);
+	});
+	
+	it("result value", function() {
+		assert.equal(res.__proto__, Set.prototype);
+		assert.equal(res.size, 1);
+		assert.isTrue(res.has(reaction1));
+	});
+});
+
+
+describe ("getReactKeysFromReaction", function () {
+	var reactMap, reactKey1, reaction1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("getReactKeysFromReaction()", function() {
+		res = T.getReactKeysFromReaction(reactMap, reaction1);
+	});
+	
+	it("result value", function() {
+		assert.equal(1, res.size);
+		assert.isTrue(res.has(reactKey1));
+	});
+});
+
+describe("updReactKey", function () {
+	var reactMap, reactKey1, newReactKey1, reaction1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		newReactKey1 = "newkey1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("updReactKey()", function() {
+		res = T.updReactKey(reactMap, reactKey1, newReactKey1);
+	});
+	
+	it("result value", function() {
+		assert.isTrue(res);
+	});
+	it("reactMap updated", function () {
+		assert.isFalse(T.hasReactKey(reactMap, reactKey1));
+		assert.isTrue(T.hasReactKey(reactMap, newReactKey1));
+		assert.isTrue(T.hasReaction(reactMap, newReactKey1, reaction1));
+	});	
+});
+
+describe ("delReactKey", function () {
+	var reactMap, reactKey1, reaction1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("delReactKey()", function() {
+		res = T.delReactKey(reactMap, reactKey1);
+	});
+	
+	it("result value", function() {
+		assert.isTrue(res);
+	});
+	it("reactMap updated", function () {
+		assert.isFalse(T.hasReactKey(reactMap, reactKey1));
+	});
+});
+
+describe ("delReaction", function () {
+	var reactMap, reactKey1, reaction1, res;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("delReaction()", function() {
+		res = T.delReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("result value", function() {
+		assert.isTrue(res);
+	});
+	it("reactMap updated", function () {
+		assert.isFalse(
+			T.hasReaction(reactMap, reactKey1, reaction1)
+		);
+	});
+});
+
+describe ("delReactionFromAllKeys", function () {
+	var reactMap, reactKey1, reactKey2, reaction1;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactKey1 = "key2";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		T.newReactKey(reactMap, reactKey2);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+		T.newReaction(reactMap, reactKey2, reaction1);
+	});
+	
+	it("delReactionFromAllKeys()", function() {
+		T.delReactionFromAllKeys(reactMap, reaction1);
+	});
+	
+	it("reactMap updated", function () {
+		assert.isFalse(
+			T.hasReaction(reactMap, reactKey1, reaction1)
+		);
+		assert.isFalse(
+			T.hasReaction(reactMap, reactKey2, reaction1)
+		);
+	});
+});
+
 describe("newTablo() basique", function () {
 
 	var tabenv, resTablo, tablo, tabloAlias, tabloLabel;
@@ -128,7 +389,7 @@ describe("newTablo() basique", function () {
 	});
 });
 
-describe("newDataHeader() basique", function () {
+describe("newDataHeader", function () {
 
 	var env, header, headerAlias, headerLabel, headerFullAlias, res;
 		
@@ -153,9 +414,11 @@ describe("newDataHeader() basique", function () {
 	it("tablo udpated", function () {
 		assert.equal(env.tablo1.getHeaderByAlias(headerAlias), header);
 	});
-	it("follows udpated", function () {
-		assert.isTrue(env.tabenv.follows.has(headerFullAlias));
-		assert.equal(env.tabenv.follows.get(headerFullAlias).length, 0);
+	it("reactMap udpated", function () {
+		assert.isTrue(T.hasReactKey(env.tabenv.reactMap, headerFullAlias));
+		assert.isEmpty(
+			T.getReactions(env.tabenv.reactMap, headerFullAlias)
+		);
 	});
 });
 
@@ -179,7 +442,7 @@ describe("newColSamelineArg()", function () {
 	});
 });
 
-describe("newFuncHeader() pointant un data header", function () {
+describe("newFuncHeader", function () {
 
 	var env, header2, header2Alias, header2Label, header2FullAlias, 
 		header2Args, header2Func, res;
@@ -217,13 +480,21 @@ describe("newFuncHeader() pointant un data header", function () {
 			header2Func(T.getCell(env.tablo1, env.header1, 0))
 		);
 	});
-	it("follows udpated", function () {
-		assert.isTrue(env.tabenv.follows.has(header2FullAlias));
-		assert.equal(env.tabenv.follows.get(header2FullAlias).length, 0);
-		assert.equal(env.tabenv.follows.get(env.header1FullAlias).length, 1);
+	it("reactMap udpated", function () {
+		assert.isTrue(T.hasReactKey(env.tabenv.reactMap, header2FullAlias));
 		assert.equal(
-			env.tabenv.follows.get(env.header1FullAlias)[0], 
-			header2FullAlias);
+			T.getReactions(env.tabenv.reactMap, header2FullAlias).size, 
+			0
+		);
+		assert.equal(
+			T.getReactions(
+				env.tabenv.reactMap, env.header1FullAlias
+			).size, 
+			1
+		);
+		assert.isTrue(T.hasReaction(
+			env.tabenv.reactMap, env.header1FullAlias, header2FullAlias
+		));
 	});
 });
 
@@ -289,11 +560,16 @@ describe("newHeaderArg() avec zéro arg initialement", function () {
 			header2.func(T.getCell(env.tablo1, env.header1, 0))
 		);
 	});
-	it("follows udpated", function () {
-		assert.equal(env.tabenv.follows.get(env.header1FullAlias).length, 1);
+	it("reactMap udpated", function () {
 		assert.equal(
-			env.tabenv.follows.get(env.header1FullAlias)[0], 
-			header2FullAlias);
+			T.getReactions(
+				env.tabenv.reactMap, env.header1FullAlias
+			).size, 
+			1
+		);
+		assert.isTrue(T.hasReaction(
+			env.tabenv.reactMap, env.header1FullAlias, header2FullAlias
+		));
 	});
 });
 
@@ -387,12 +663,16 @@ describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo1 alias",
 				env.tablo2.headers[0].args[0].alias.tablo, 
 				newTablo1Alias);
 		});
-		it("follows updated", function() {
-			assert.isFalse(env.tabenv.follows.has(oldHeader1FullAlias));
-			assert.isTrue(env.tabenv.follows.has(newHeader1FullAlias));
-			assert.equal(
-				env.tabenv.follows.get(newHeader1FullAlias)[0], 
-				env.header2FullAlias);
+		it("reactMap updated", function() {
+			assert.isFalse(
+				T.hasReactKey(env.tabenv.reactMap, oldHeader1FullAlias)
+			);
+			assert.isTrue(
+				T.hasReactKey(env.tabenv.reactMap, newHeader1FullAlias)
+			);
+			assert.isTrue(T.hasReaction(
+				env.tabenv.reactMap, newHeader1FullAlias, env.header2FullAlias
+			));
 		});
 	}
 );
@@ -421,13 +701,16 @@ describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo2 alias",
 		it("tablo2 updated", function() {
 			assert.equal(env.tablo2.alias, newTablo2Alias);
 		});
-		it("follows updated", function() {
-			assert.isFalse(env.tabenv.follows.has(oldHeader2FullAlias));
-			assert.isTrue(env.tabenv.follows.has(newHeader2FullAlias));
-			assert.equal(
-				env.tabenv.follows.get(env.header1FullAlias)[0], 
-				newHeader2FullAlias
+		it("reactMap updated", function() {
+			assert.isFalse(
+				T.hasReactKey(env.tabenv.reactMap, oldHeader2FullAlias)
 			);
+			assert.isTrue(
+				T.hasReactKey(env.tabenv.reactMap, newHeader2FullAlias)
+			);
+			assert.isTrue(T.hasReaction(
+				env.tabenv.reactMap, env.header1FullAlias, newHeader2FullAlias
+			));
 		});
 	}
 );
@@ -504,13 +787,16 @@ describe(
 		it("header2 updated", function () {
 			assert.equal(env.header2.args[0].alias.header, newHeader1Alias);
 		});
-		it("follows updated", function () {
-			assert.isFalse(env.tabenv.follows.has(oldHeader1FullAlias));
-			assert.isTrue(env.tabenv.follows.has(newHeader1FullAlias));
-			assert.equal(
-				env.tabenv.follows.get(newHeader1FullAlias)[0],
-				env.header2FullAlias
+		it("reactMap updated", function () {
+			assert.isFalse(
+				T.hasReactKey(env.tabenv.reactMap, oldHeader1FullAlias)
 			);
+			assert.isTrue(
+				T.hasReactKey(env.tabenv.reactMap, newHeader1FullAlias)
+			);
+			assert.isTrue(T.hasReaction(
+				env.tabenv.reactMap, newHeader1FullAlias, env.header2FullAlias
+			));
 		});
 });
 
@@ -539,13 +825,16 @@ describe(
 		it("header2 updated", function () {
 			assert.equal(env.header2.alias, newHeader2Alias);
 		});
-		it("follows updated", function () {
-			assert.isFalse(env.tabenv.follows.has(oldHeader2FullAlias));
-			assert.isTrue(env.tabenv.follows.has(newHeader2FullAlias));
-			assert.equal(
-				env.tabenv.follows.get(env.header1FullAlias)[0],
-				newHeader2FullAlias
+		it("reactMap updated", function () {
+			assert.isFalse(
+				T.hasReactKey(env.tabenv.reactMap, oldHeader2FullAlias)
 			);
+			assert.isTrue(
+				T.hasReactKey(env.tabenv.reactMap, newHeader2FullAlias)
+			);
+			assert.isTrue(T.hasReaction(
+				env.tabenv.reactMap, env.header1FullAlias, newHeader2FullAlias
+			));
 		});
 });
 
@@ -675,13 +964,16 @@ describe("updHeaderArgs()", function() {
 			env.header3.func(T.getCell(env.tablo1, env.header2, 0))
 		);
 	});
-	it("follows updated", function() {
-		assert.equal(env.tabenv.follows.get(env.header1FullAlias).length, 0);
-		assert.equal(env.tabenv.follows.get(env.header2FullAlias).length, 1);
+	it("reactMap updated", function() {
 		assert.equal(
-			env.tabenv.follows.get(env.header2FullAlias)[0],
-			env.header3FullAlias
+			0, T.getReactions(env.tabenv.reactMap, env.header1FullAlias).size
 		);
+		assert.equal(
+			1, T.getReactions(env.tabenv.reactMap, env.header2FullAlias).size
+		);
+		assert.isTrue(T.hasReaction(
+			env.tabenv.reactMap, env.header2FullAlias, env.header3FullAlias
+		));
 	});
 });
 
@@ -847,8 +1139,10 @@ describe("delTablo", function() {
 	it("tablo deleted", function() {
 		assert.isFalse(env.tabenv.tablos.has(env.tablo1.alias));
 	});
-	it("follows updated", function () {
-		assert.isFalse(env.tabenv.follows.has(env.header1FullAlias));
+	it("reactMap updated", function () {
+		assert.isFalse(
+			T.hasReactKey(env.tabenv.reactMap, env.header1FullAlias)
+		);
 	});
 	it("other tablo updated", function () {
 		assert.equal(env.header2.args[0].type, T.NULL_ARG);
@@ -876,8 +1170,10 @@ describe("delHeader", function() {
 	it("header deleted", function() {
 		assert.isEmpty(env.tablo1.headers);
 	});
-	it("follows updated", function () {
-		assert.isFalse(env.tabenv.follows.has(env.header1FullAlias));
+	it("reactMap updated", function () {
+		assert.isFalse(
+			T.hasReactKey(env.tabenv.reactMap, env.header1FullAlias)
+		);
 	});
 	it("other tablo updated", function () {
 		assert.equal(env.header2.args[0].type, T.NULL_ARG);
@@ -905,8 +1201,10 @@ describe("delArgFromHeader", function() {
 	it("arg deleted", function() {
 		assert.isEmpty(env.header2.args);
 	});
-	it("follows updated", function () {
-		assert.isEmpty(env.tabenv.follows.get(env.header1FullAlias));
+	it("reactMap updated", function () {
+		assert.isEmpty(
+			T.getReactions(env.tabenv.reactMap, env.header1FullAlias)
+		);
 	});
 });
 
@@ -927,7 +1225,9 @@ describe("delAllArgsFromHeader", function() {
 	it("arg deleted", function() {
 		assert.isEmpty(env.header2.args);
 	});
-	it("follows updated", function () {
-		assert.isEmpty(env.tabenv.follows.get(env.header1FullAlias));
+	it("reactMap updated", function () {
+		assert.isEmpty(
+			T.getReactions(env.tabenv.reactMap, env.header1FullAlias)
+		);
 	});
 });

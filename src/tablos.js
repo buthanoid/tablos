@@ -22,6 +22,18 @@ export {
 	checkHeaderOrder,
 	checkHeaderArgs,
 	checkHeaderFunc,
+	// reactMap functions
+	newReactMap,
+	newReactKey,
+	newReaction,
+	hasReactKey,
+	hasReaction,
+	getReactions,
+	getReactKeysFromReaction,
+	updReactKey,
+	delReactKey,
+	delReaction,
+	delReactionFromAllKeys,
 	// new functions
 	newTabenv, 
 	newTablo,
@@ -333,13 +345,90 @@ function checkHeaderFunc (func, res) {
 }
 
 
+// ==================== REACTS FUNCTIONS =======================
+
+// a ReactMap is a Map, from Alias string, to Alias string set
+// exemple { "tablo1.header1" -> { "tablo2.header2", "tablo2.header3" }}
+function newReactMap () { return new Map() }
+
+function newReactKey (reactMap, reactKey) { 
+	reactMap.set(reactKey, new Set());
+}
+
+// a reaction is an element of the set of a reactKey
+function newReaction (reactMap, reactKey, reaction) {
+	var res = newRes();
+	if (hasReactKey(reactMap, reactKey)) {
+		reactMap.get(reactKey).add(reaction);
+	}
+	else res.addError("Could not find reactKey " + reactKey + " in reactMap.");
+	return res;
+}
+
+function hasReactKey (reactMap, reactKey) { return reactMap.has(reactKey) }
+
+// does the key exist and does the reaction exist in the associated set ?
+function hasReaction (reactMap, reactKey, reaction) {
+	return (
+		hasReactKey(reactMap, reactKey) && 
+		reactMap.get(reactKey).has(reaction)
+	);
+}
+
+
+function getReactions (reactMap, reactKey) {
+	return reactMap.get(reactKey);
+}
+
+// get all reactKeys that contains the reaction
+function getReactKeysFromReaction (reactMap, reaction) {
+	var result = new Set();
+	reactMap.forEach(function(reactionSet, reactKey) {
+		if (reactionSet.has(reaction)) result.add(reactKey);
+	});
+	return result;
+}
+
+function updReactKey (reactMap, oldReactKey, newReactKey) {
+	if (! hasReactKey(reactMap, oldReactKey)) return false;
+	if (oldReactKey == newReactKey) return true;
+	var reactions = getReactions(reactMap, oldReactKey);
+	delReactKey(reactMap, oldReactKey);
+	if (hasReactKey(reactMap, newReactKey)) {
+		reactMap.set(oldReactKey, reactions); // cancel
+		return false;
+	}
+	else {
+		reactMap.set(newReactKey, reactions);
+		return true;
+	}
+}
+
+function delReactKey (reactMap, reactKey) { 
+	return reactMap.delete(reactKey) 
+}
+
+function delReaction (reactMap, reactKey, reaction) {
+	if(hasReactKey(reactMap, reactKey)) {
+		return reactMap.get(reactKey).delete(reaction);
+	}
+	else return false;
+}
+
+// delete a reaction from every key where it appears
+function delReactionFromAllKeys (reactMap, reaction) {
+	reactMap.forEach(function(reactionSet) {
+		reactionSet.delete(reaction);
+	});
+} 
+
 // ==================== NEW FUNCTIONS =======================
 
 // create a new TabloEnvironment
 function newTabenv () {
 	return {
 		tablos: new Map(),
-		follows: new Map()
+		reactMap: newReactMap()
 	}
 }
 
@@ -391,7 +480,7 @@ function newHeader (tabenv, tablo, alias, label, type) {
 		};
 		
 		tablo.headers.push(header);
-		tabenv.follows.set(aliasesToStr(tablo.alias, header.alias), []);
+		newReactKey(tabenv.reactMap, aliasesToStr(tablo.alias, header.alias));
 		
 		res.value = header;
 	}
@@ -420,35 +509,38 @@ function newFuncHeader (tabenv, tablo, alias, label, args, func) {
 
 	var res = newHeader(tabenv, tablo, alias, label, FUNC_HEADER);
 	
+	if (! res.success) return res;
+	
+	var header = res.value;
+	header.args = args;
+	header.func = func;
+	
 	// check args and func
-	if (res.success) {
-		checkHeaderArgs	(tabenv.tablos, args, res);
-		checkHeaderFunc (func, res);
-	}
+	checkHeaderArgs	(tabenv.tablos, args, header);
+	checkHeaderFunc (func, header);
 	
-	if (res.success) {
-		// add follows
-		var fullHeaderAlias = aliasesToStr(tablo.alias, alias); 
-		args.forEach(function (arg) {
-			switch (arg.type) {
-				case NULL_ARG: break;
-				case COL_SAMELINE_ARG: 
-					var argAlias = aliasObjToStr(arg.alias);
-					if (tabenv.follows.has(argAlias)) {
-						tabenv.follows.get(argAlias).push(fullHeaderAlias);
-					}
-					else tabenv.follows.set(argAlias, [fullHeaderAlias]);
-					break;
-				default: console.log("unknown arg type");
-			}
-		});
-		res.value.args = args;
-		res.value.func = func;
-	};
+	if (! res.success) return res;
 	
-	var res2 = updFuncHeaderAllCells (tabenv, tablo, res.value);
-	if (! res2.success) res.combine(res2);
+	// add reactions
+	var fullHeaderAlias = aliasesToStr(tablo.alias, alias); 
+	args.forEach(function (arg) {
+		switch (arg.type) {
+			case NULL_ARG: break;
+			case COL_SAMELINE_ARG: 
+				var argAlias = aliasObjToStr(arg.alias);
+				res.combine(newReaction(
+					tabenv.reactMap, argAlias, fullHeaderAlias
+				));
+				break;
+			default: console.log("unknown arg type");
+		}
+	});
 	
+	if (! res.success) return res;
+
+	res.combine(updFuncHeaderAllCells (tabenv, tablo, header));
+	
+	res.value = header;
 	return res;
 }
 
@@ -475,16 +567,15 @@ function newHeaderArg (tabenv, tablo, header, newArg) {
 	// add arg to tab arg
 	header.args.push(newArg);
 	
-	// add follower value
+	// add reaction
 	switch (newArg.type) {
 		case NULL_ARG: break;
 		case COL_SAMELINE_ARG: 
 			var argAliasStr = aliasObjToStr(newArg.alias);
 			var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
-			var followsVals = tabenv.follows.get(argAliasStr);
-			if (! followsVals.includes(fullHeaderAlias)) {
-				followsVals.push(fullHeaderAlias);
-			}
+			res.combine(newReaction(
+				tabenv.reactMap, argAliasStr, fullHeaderAlias
+			));
 			break;
 		default: console.log("unknown arg type");
 	}
@@ -560,43 +651,43 @@ function updTabloAlias (tabenv, tablo, newAlias) {
 	if (! res.success) return res;
 	
 	// we need to :
-	// 1. upd old tablo alias in follows keys
-	// 2. upd old tablo alias in follows values
-	// each step implies to modify the args accordingly to maintain coherence
+	// 1. upd old tablo alias in ReactKey
+	// 2. upd old tablo alias in Args
+	// 3. upd old tablo alias in Reactions
 	tablo.headers.forEach(function (header) {
 	
 		var oldHeaderFullAlias = aliasesToStr(oldAlias, header.alias);
 		var newHeaderFullAlias = aliasesToStr(newAlias, header.alias);
 		
-		// 1. upd old tablo alias in follows keys
-	
-		// update the follow key
-		var followers = tabenv.follows.get(oldHeaderFullAlias);
-		tabenv.follows.delete(oldHeaderFullAlias);
-		tabenv.follows.set(newHeaderFullAlias, followers);
+		// 1. upd old tablo alias in ReactKey
+		updReactKey(tabenv.reactMap, oldHeaderFullAlias, newHeaderFullAlias);
 		
-		// we also need to upd args that were referencing this header
-		followers.forEach(function (follower) {
-			var folAlias = aliasObjFromStr(follower);
-			var tablo2 = tabenv.tablos.get(folAlias.tablo);
-			var header2 = tablo2.getHeaderByAlias(folAlias.header);
+		// 2. upd old tablo alias in Args
+		var reactions = getReactions(tabenv.reactMap, newHeaderFullAlias);
+		reactions.forEach(function (reactionAliasStr) {
+			var reactionAlias = aliasObjFromStr(reactionAliasStr);
+			var tablo2 = tabenv.tablos.get(reactionAlias.tablo);
+			var header2 = tablo2.getHeaderByAlias(reactionAlias.header);
 			header2.args.forEach(function (arg, index) {
 				if (arg.alias.tablo == oldAlias) arg.alias.tablo = newAlias;
 			});
 		});
 		
-		// 2. upd old tablo alias in follows values
+		// 3. upd old tablo alias in reactions
 		switch (header.type) {
 			case DATA_HEADER: break;
-			// follows values correspond to args of this header
+			// reactions correspond to args of this header
 			case FUNC_HEADER:
 				header.args.forEach (function (arg) { switch(arg.type) {
 					case NULL_ARG: break;
 					case COL_SAMELINE_ARG:
 						var argAliasStr = aliasObjToStr(arg.alias);
-						var followers = tabenv.follows.get(argAliasStr);
-						var index = followers.indexOf(oldHeaderFullAlias);
-						followers[index] = newHeaderFullAlias;
+						delReaction(
+							tabenv.reactMap, argAliasStr, oldHeaderFullAlias
+						);
+						newReaction(
+							tabenv.reactMap, argAliasStr, newHeaderFullAlias
+						);
 						break;
 					default: console.log("unknown arg type");
 				}});
@@ -646,18 +737,17 @@ function updHeaderAlias (tabenv, tablo, header, newAlias) {
 	var oldHeaderFullAlias = aliasesToStr(tablo.alias, oldAlias);
 	var newHeaderFullAlias = aliasesToStr(tablo.alias, newAlias);
 		
-	// 1. upd old tablo alias in follows keys
+	// 1. upd old tablo alias in reactKey
 	
-	// update the follow key
-	var followers = tabenv.follows.get(oldHeaderFullAlias);
-	tabenv.follows.delete(oldHeaderFullAlias);
-	tabenv.follows.set(newHeaderFullAlias, followers);
+	// update reactKey
+	updReactKey(tabenv.reactMap, oldHeaderFullAlias, newHeaderFullAlias);
 		
-	// we also need to upd args that were referencing this header
-	followers.forEach(function (follower) {
-		var folAlias = aliasObjFromStr(follower);
-		var tablo2 = tabenv.tablos.get(folAlias.tablo);
-		var header2 = tablo2.getHeaderByAlias(folAlias.header);
+	// 2. upd old tablo alias in Args pointing to this header
+	var reactions = getReactions(tabenv.reactMap, newHeaderFullAlias);
+	reactions.forEach(function (reaction) {
+		var reactionAlias = aliasObjFromStr(reaction);
+		var tablo2 = tabenv.tablos.get(reactionAlias.tablo);
+		var header2 = tablo2.getHeaderByAlias(reactionAlias.header);
 		header2.args.forEach(function (arg, index) {
 			if (arg.alias.tablo == tablo.alias &&
 				arg.alias.header == oldAlias
@@ -667,18 +757,20 @@ function updHeaderAlias (tabenv, tablo, header, newAlias) {
 		});
 	});
 		
-	// 2. upd old tablo alias in follows values
+	// 3. upd old tablo alias in reactions (args of this header)
 	switch (header.type) {
 		case DATA_HEADER: break;
-		// follows values correspond to args of this header
 		case FUNC_HEADER:
 			header.args.forEach (function (arg) { switch(arg.type) {
 				case NULL_ARG: break;
 				case COL_SAMELINE_ARG:
 					var argAliasStr = aliasObjToStr(arg.alias);
-					var followers = tabenv.follows.get(argAliasStr);
-					var index = followers.indexOf(oldHeaderFullAlias);
-					followers[index] = newHeaderFullAlias;
+					delReaction(
+						tabenv.reactMap, argAliasStr, oldHeaderFullAlias
+					);
+					newReaction(
+						tabenv.reactMap, argAliasStr, newHeaderFullAlias
+					);
 					break;
 				default: console.log("unknown arg type");
 			}});
@@ -866,17 +958,27 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 			"Error while computing cell " + tablo.alias + "[" +
 			header.alias + "][" + numLine + "] : " + error.toString() + "."
 		);
-		tablo.data[numLine][header.order] = null;
 	}
 	
 	// trigger the reactions of other cells because of the update of this one
 	var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
-	tabenv.follows.get(fullHeaderAlias).forEach(function (follower) {
-		var folAlias = aliasObjFromStr(follower);
+	var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
+	reactions.forEach(function (reaction) {
+		var reactionAlias = aliasObjFromStr(reaction);
 		// TODO checks
-		var folTablo = tabenv.tablos.get(folAlias.tablo);
-		var folHeader = folTablo.getHeaderByAlias(folAlias.header);
-		res.combine(updFuncCell(tabenv, folTablo, folHeader, numLine));
+		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
+		if (reactionTablo === undefined) {
+			res.addError("cannot find tablo " + reactionAlias.tablo);
+			return;
+		}
+		var reactionHeader = 
+			reactionTablo.getHeaderByAlias(reactionAlias.header);
+		if (reactionHeader === undefined) {
+			res.addError("cannot find header " + reaction);
+			return;
+		}
+		res.combine(
+			updFuncCell(tabenv, reactionTablo, reactionHeader, numLine));
 	});
 	
 	if (! res.success) { 
@@ -904,7 +1006,7 @@ function delTablo (tabenv, tablo) {
 		return res;
 	}	
 	
-	// delete headers (this will delete follows too)
+	// delete headers (this will delete reactions too)
 	var loop = true;
 	while (loop) {
 		if (tablo.headers.length == 0) loop = false;
@@ -935,14 +1037,16 @@ function delHeader (tabenv, tablo, header) {
 	var headerFullAlias = aliasesToStr(tablo.alias, header.alias);
 
 	
-	// copy the followers (because they will update during treatment)
-	var followers = Array.from(tabenv.follows.get(headerFullAlias));
-	// set followers args to null
-	followers.forEach(function (follower) {
-		var folAlias = aliasObjFromStr(follower);
-		var folTablo = tabenv.tablos.get(folAlias.tablo);
-		var folHeader = folTablo.getHeaderByAlias(folAlias.header);
-		var folArgs = folHeader.args.map(function (arg) {
+	// copy the reactions (because they will update during treatment)
+	var reactions = Array.from(getReactions(tabenv.reactMap, headerFullAlias));
+	
+	// nullify the args pointing to this header
+	reactions.forEach(function (reaction) {
+		var reactionAlias = aliasObjFromStr(reaction);
+		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
+		var reactionHeader = 
+			reactionTablo.getHeaderByAlias(reactionAlias.header);
+		var reactionArgs = reactionHeader.args.map(function (arg) {
 			switch (arg.type) {
 				case NULL_ARG: return arg;
 				case COL_SAMELINE_ARG: 
@@ -958,14 +1062,20 @@ function delHeader (tabenv, tablo, header) {
 					return arg;
 			}
 		});
-		res.combine(updHeaderArgs(tabenv, folTablo, folHeader, folArgs));
+		// updHeaderArgs delete the reactions associated to nullified args.
+		// That is why we iterate on a copy of the reactions,
+		// to be sure to treat every reaction.
+		res.combine(updHeaderArgs(
+			tabenv, reactionTablo, reactionHeader, reactionArgs)
+		);
 	});
 
-	// delete follow key
-	tabenv.follows.delete(headerFullAlias);
+	// delete reactKey
+	delReactKey(tabenv.reactMap, headerFullAlias);
 	
-	// delete follow values (if func header)
+	// delete reactions (if func header)
 	if (header.type == FUNC_HEADER) {
+		// this function takes care of deleting reactions 
 		res.combine(delAllArgsFromHeader(tabenv, tablo, header));
 	}
 	
@@ -1009,21 +1119,19 @@ function delArgFromHeader (tabenv, tablo, header, indexArg) {
 	// remove the arg
 	header.args.splice(indexArg, 1);
 	
-	// delete the follow value associated to the arg
+	// delete the reaction associated to the arg
 	switch (arg.type) {
 		case NULL_ARG: break;
 		case COL_SAMELINE_ARG:
 			var argAliasStr = aliasObjToStr(arg.alias);
-			// Careful !! we must not delete the follow value if
-			// another arg has the same alias
+			// Careful ! we must not delete the reaction if
+			// another arg point to the same alias
 			var lastOne = header.args.every(function (otherArg) {
 				var otherArgAliasStr = aliasObjToStr(otherArg.alias);
 				return argAliasStr != otherArgAliasStr;
 			});
 			if (lastOne) {
-				var followers = tabenv.follows.get(argAliasStr);
-				var index = followers.indexOf(headerFullAlias);
-				followers.splice(index, 1);
+				delReaction(tabenv.reactMap, argAliasStr, headerFullAlias);
 			}
 			break;
 		default: console.log("unknown arg type");
