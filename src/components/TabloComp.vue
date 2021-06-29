@@ -15,11 +15,15 @@
 		</tr></thead>
 		<tbody>
 			<tr v-for="(_,numLine) in nbLines" >
-				<th v-if="displayNumLines" >
+				<th v-if="displayNumLines" 
+					class="clickable" 
+					@click="selectLine(numLine)" >
 					<span>{{numLine}}</span>
 				</th>
 				<td v-for="(_,numCol) in headers.length" >
-					<div>{{datatab[numLine][numCol] }}</div>
+					<div @click="startEdit(numLine,numCol)" class="clickable" >
+						{{ datatab[numLine][numCol] }}
+					</div>
 				</td>
 			</tr>
 		</tbody>
@@ -28,11 +32,12 @@
 
 <script>
 import * as TabLib from "../tablos.js" ;
+import * as U from "../util.js" ;
 
 var headerTypeToClass = ["dataheader", "funcheader" ];
 
 export default {
-	emits: [ "selectTablo", "selectHeader" ],
+	emits: [ "selectTablo", "selectHeader", "selectLine", "startEdit" ],
 	props: [ 
 		"alias",
 		"label",
@@ -40,16 +45,41 @@ export default {
 		"headers",
 		"nbLines",
 		"datatab",
-		"isSelected",
-		"selectedHeaderAlias"
+		"selected",
 	],
+	data: function () { return {
+		editForm: null
+	}},
 	methods: {
 		selectTablo: function () { this.$emit("selectTablo", this.alias); },
 		selectHeader: function (headerAlias) {
 			this.$emit("selectHeader", this.alias, headerAlias);
-		}
+		},
+		selectLine: function (numLine) {
+			this.$emit("selectLine", this.alias, numLine);
+		},
+		startEdit:  function (numLine, numCol) {
+			this.editForm = this.datatab[numLine][numCol];
+			this.$emit(
+				"startEdit", "cell", 
+				this.alias, this.headers[numCol].alias, numLine
+			);
+		},
+		changeEdit: function () {
+			this.$emit("changeEdit", this.editForm);
+		},
+		submitEdit: function () { 
+			this.$emit("submitEdit", this.editForm) ;
+		},
+		cancelEdit: function () { this.$emit("cancelEdit") },
 	},
 	computed: {
+		isSelected: function () {
+			return (
+				U.TRG_TABLO_EXT.includes(this.selected.target) &&
+				this.selected.tablo.alias == this.alias
+			);
+		},
 		headersClasses: function () {
 			return Array.from(this.headers).map(function (header) {
 				var classes = "header";

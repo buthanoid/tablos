@@ -9,21 +9,22 @@
 				:headers="tablo.headers"
 				:nb-lines="tablo.data.length"
 				:datatab="tablo.data"
-				:is-selected="tablo.alias == selectedTablo.alias" 
-				:selected-header-alias="selectedHeader.alias"
+				:selected="selected"
 				@select-tablo="selectTablo"
 				@select-header="selectHeader"
-			></tablo-comp>
+				@select-line="selectLine"
+				@select-cell="selectCell" >
+			</tablo-comp>
 		</div>
 		<div class="column-right" >
 			<button @click="newTablo" >nouveau tablo</button>
 			<tablo-infos
-				v-if="selectedTablo.alias != null"
-				:alias="selectedTablo.alias"
-				:label="selectedTablo.label"
-				:display-num-lines="selectedTablo.displayNumLines"
-				:nb-headers="selectedTablo.headers.length"
-				:nb-lines="selectedTablo.data.length"
+				v-if="displayTabloInfos" 
+				:alias="selected.tablo.alias"
+				:label="selected.tablo.label"
+				:display-num-lines="selected.tablo.displayNumLines"
+				:nb-headers="selected.tablo.headers.length"
+				:nb-lines="selected.tablo.data.length"
 				:edit="edit"
 				@del-tablo="delTablo"
 				@add-new-header="newHeader"
@@ -31,22 +32,26 @@
 				@start-edit="startEdit"
 				@change-edit="changeEditTablo"
 				@submit-edit="submitEditTablo"
-				@cancel-edit="cancelEdit"
-			></tablo-infos>
+				@cancel-edit="cancelEdit" >
+			</tablo-infos>
 			<header-infos
-				v-if="selectedHeader.alias != null"
+				v-if="displayHeaderInfos"
 				:tablos-list="tablosList"
 				:headers-list="headersList"
-				:tablo-alias="selectedTablo.alias"
-				:header="selectedHeader"
-				:nb-headers="selectedTablo.headers.length"
+				:tablo-alias="selected.tablo.alias"
+				:header="selected.header"
+				:nb-headers="selected.tablo.headers.length"
 				:edit="edit"
 				@start-edit="startEdit"
 				@change-edit="changeEditHeader"
 				@submit-edit="submitEditHeader"
 				@cancel-edit="cancelEdit"
-				@delete-header="deleteHeader"
-			></header-infos>
+				@delete-header="deleteHeader" >
+			</header-infos>
+			<line-infos
+				v-if="displayLineInfos" 
+				:num="selected.line" >
+			</line-infos>
 		</div>
 	</div>
 	<p v-if="lastAppError" class="incorrect" >
@@ -54,28 +59,36 @@
 		<span>{{lastAppError}}</span>
 	</p>
 	<hr />
-	{{tabenv.follows}}
+	ReactMap {{tabenv.reactMap}}
 	<hr />
-	{{selectedTablo}}
+	SelectedTablo {{selectedTablo}}
 	<hr />
-	{{selectedHeader}}
+	SelectedHeader {{selectedHeader}}
 	<hr />
-	{{edit}}
+	SelectedLine {{selectedLine}}
+	<hr />
+	Edit {{edit}}
 </template>
 
 <script>
 import TabloComp from "./components/TabloComp.vue";
 import TabloInfos from "./components/TabloInfos.vue";
 import HeaderInfos from "./components/HeaderInfos.vue";
+import LineInfos from "./components/LineInfos.vue";
 import * as TabLib from "./tablos.js";
+import * as U from "./util.js";
 
 export default {
-	components: { TabloComp, TabloInfos, HeaderInfos },
+	components: { TabloComp, TabloInfos, HeaderInfos, LineInfos },
  	data: function ()	{
 		return { 
 			tabenv: TabLib.newTabenv(),
-			selectedTablo: { alias: null },
-			selectedHeader: { alias: null },
+			selected: { 
+				target: U.TRG.NULL,
+				tablo: null,
+				header: null,
+				line: null
+			},
 			edit : {
 				target: null,
 				property: null,
@@ -117,34 +130,53 @@ export default {
 			this.lastAppError = res.errors;
 		},
 		newLine: function () {
-			TabLib.newLine(this.tabenv, this.selectedTablo);
-			this.lastAppError = "";
+			var res = TabLib.newLine(this.tabenv, this.selectedTablo);
+			this.lastAppError = res.errors;
 		},
 		selectNothing: function () {
-			this.selectedTablo = { alias: null }; 
-			this.selectedHeader = { alias: null };
+			this.selected.target = U.TRG.NULL;
+			this.selected.tablo = null ; 
+			this.selected.header = null ;
+			this.selected.line = null ;
+			this.selected.cell = false;
 		},
 		selectTablo: function (tabloAlias) {
-			if (tabloAlias == this.selectedTablo.alias) this.selectNothing();
-			else {
-				this.selectedTablo = this.tabenv.tablos.get(tabloAlias); 
-				this.selectedHeader = { alias: null };
-			}
+			this.selectNothing();
+			this.selected.target = U.TRG.TABLO;
+			this.selected.tablo = this.tabenv.tablos.get(tabloAlias);
 			this.cancelEdit();
 			this.lastAppError = "";
 		},
 		selectHeader: function (tabloAlias, headerAlias) {
-			if (this.selectedTablo.alias == tabloAlias &&
-				this.selectedHeader.alias == headerAlias) {
-				this.selectedHeader = { alias: null }; 
+			this.selectTablo(tabloAlias);
+			this.selected.target = U.TRG.HEADER;
+			this.selected.header = 
+				this.selected.tablo.getHeaderByAlias(headerAlias);
+			this.cancelEdit();
+			this.lastAppError = "";
+		},
+		selectLine: function (tabloAlias, numLine) {
+			this.selectHeader(tabloAlias, numLine);
+			this.selected.target = U.TRG.LINE;
+			this.selected.line = numLine ;
+		},
+		selectCell: function (tabloAlias, headerAlias, numLine) {
+		/*	if (this.selectedTablo.alias == tabloAlias &&
+				this.selectedHeader.alias == headerAlias &&
+				this.selectedLine.num == numLine &&
+				this.selectedCell.numLine == numLine
+			){ 
+				this.selectedCell = { numLine: null };
 			}
 			else {
 				this.selectedTablo = this.tabenv.tablos.get(tabloAlias);
 				this.selectedHeader = 
 					this.selectedTablo.getHeaderByAlias(headerAlias);
+				this.selectedLine = { num: numLine };
+				this.selectedCell = { numLine: numLine };
 			}
 			this.cancelEdit();
-			this.lastAppError = "";
+			this.lastAppError = "";*/
 		},
 		startEdit: function (target, property) {
 			this.edit.target = target;
@@ -174,6 +206,15 @@ export default {
 		}
 	},
 	computed: {
+		displayTabloInfos: function () { 
+			return U.TRG_TABLO_EXT.includes(this.selected.target);
+		},
+		displayHeaderInfos: function () {
+			return U.TRG.HEADER == this.selected.target;
+		},
+		displayLineInfos: function () {
+			return U.TRG.LINE == this.selected.target;
+		},
 		tablosList: function () {
 			var tablosList = [];
 			this.tabenv.tablos.forEach(function (tablo) {
@@ -346,7 +387,7 @@ function created () {
 		function (computed) { return computed - 12; }
 	));
 	var usersAftertax = res.value;
-
+	
 	TabLib.newLine(this.tabenv, users); 
 	TabLib.updDataCell(this.tabenv, users, usersName, 0, "yayatoto");
 	TabLib.updDataCell(this.tabenv, users, usersCash, 0, 10);
