@@ -130,7 +130,7 @@ export default {
 			
 			var res = TabLib.newDataHeader(
 				this.tabenv, this.selected.tablo, 
-				"newheader" + i, "New Header " + i
+				"newheader" + i, "New Header " + i, TabLib.DATA_TYPE.INT
 			);
 			
 			if (res.success) {
@@ -293,6 +293,11 @@ function changeEditHeader (newValue) {
 		case "type":
 			TabLib.checkHeaderType (newValue, res);
 			break;
+		case "dataType":
+			if (! Object.values(TabLib.DATA_TYPE).includes(newValue)) {
+				res.addError("unknwon data type " + newValue);
+			}
+			break;
 		case "args":
 			TabLib.checkHeaderArgs (this.tabenv.tablos, newValue, res);
 			break;
@@ -349,6 +354,11 @@ function submitEditHeader (newValue) {
 				this.tabenv, this.selected.tablo, this.selected.header, newValue
 			);
 			break;
+		case "dataType":
+			res = TabLib.updHeaderDataType (
+				this.tabenv, this.selected.tablo, this.selected.header, newValue 
+			);
+			break;
 		case "args":
 			res = TabLib.updHeaderArgs(
 				this.tabenv, this.selected.tablo, this.selected.header, newValue
@@ -375,6 +385,22 @@ function submitEditHeader (newValue) {
 }
 
 function submitEditCell (newValue) {
+	switch (this.selected.header.dataType) {
+		case TabLib.DATA_TYPE.INT:
+			newValue = parseInt(newValue);
+			break;
+		case TabLib.DATA_TYPE.FLOAT:
+			newValue = parseFloat(newValue);
+			break;
+		case TabLib.DATA_TYPE.STRING:
+			newValue = new String(newValue).valueOf();
+			break;
+		case TabLib.DATA_TYPE.JSON:
+			newValue = JSON.parse(newValue);
+			break;
+		default:
+			res.addError("unknown data type " + this.selected.header.dataType);
+	}
 	var res = TabLib.updDataCell(
 		this.tabenv, this.selected.tablo, this.selected.header,
 		this.selected.line, newValue
@@ -390,13 +416,16 @@ function created () {
 	res.combine(TabLib.newTablo(this.tabenv, "users", "Users"));
 	var users = res.value;
 	
-	res.combine (TabLib.newDataHeader(this.tabenv, users, "name", "Name"));
+	res.combine (TabLib.newDataHeader(
+		this.tabenv, users, "name", "Name", TabLib.DATA_TYPE.STRING));
 	var usersName = res.value;
 	
-	res.combine(TabLib.newDataHeader(this.tabenv, users, "cash", "Cash"));
+	res.combine(TabLib.newDataHeader(
+		this.tabenv, users, "cash", "Cash", TabLib.DATA_TYPE.INT));
 	var usersCash = res.value;
 	
-	res.combine(TabLib.newDataHeader(this.tabenv, users, "debt", "Debt"));
+	res.combine(TabLib.newDataHeader(
+		this.tabenv, users, "debt", "Debt", TabLib.DATA_TYPE.INT));
 	var usersDebt = res.value;
 		
 	res.combine(TabLib.newFuncHeader(

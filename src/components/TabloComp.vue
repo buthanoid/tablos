@@ -83,7 +83,10 @@ export default {
 			this.$emit("selectLine", this.alias, numLine);
 		},
 		selectCellStartEdit:  function (numLine, numCol) {
-			this.editForm = this.datatab[numLine][numCol];
+			if (this.headers[numCol].dataType == TabLib.DATA_TYPE.JSON) {
+				this.editForm = JSON.stringify(this.datatab[numLine][numCol]);
+			}
+			else this.editForm = this.datatab[numLine][numCol];
 			this.$emit("selectCell",
 				this.alias, this.headers[numCol].alias, numLine
 			);

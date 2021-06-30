@@ -51,7 +51,7 @@
 					v-model="editForm" 
 					ref="type" 
 					@change="changeEdit" >
-					<option :value="DATA_HEADER" >Data</option>
+					<option :value="DATA_HEADER" >Donnée</option>
 					<option :value="FUNC_HEADER" >Fonction</option>
 				</select>
 				<button @click="submitEdit" >Valider</button>
@@ -79,6 +79,27 @@
 					@click="upperOrder" >
 					<span>--&gt;</span>
 				</button>
+			</td>
+		</tr>
+		
+		<tr v-if="header.type == DATA_HEADER" >
+			<th>Type de donnée</th>
+			<td v-if="isEdited && edit.property == 'dataType'" >
+				<select 
+					v-model="editForm"
+					@change="changeEdit" >
+					<option 
+						v-for="dataType in Object.values(DATA_TYPE)" 
+						:value="dataType" >
+						<span>{{ DATA_TYPE_STR[dataType] }}</span>
+					</option>
+				</select>
+				<button @click="submitEdit" >valider</button>
+				<button @click="cancelEdit" >annuler</button>
+			</td>
+			<td v-else >
+				<span>{{ DATA_TYPE_STR[header.dataType] }}</span>			
+				<button @click="startEdit('dataType')" >modifier</button>
 			</td>
 		</tr>
 		
@@ -220,7 +241,7 @@ export default {
 		isEdited: function () { return this.edit.target == "header"; },
 		headerType: function () { 
 			switch (this.header.type) {
-				case TabLib.DATA_HEADER: return "Data";
+				case TabLib.DATA_HEADER: return "Donnée";
 				case TabLib.FUNC_HEADER: return "Fonction";
 				default: console.log("unknown header type");
 			}
@@ -245,6 +266,8 @@ export default {
 		},
 		DATA_HEADER: function () { return TabLib.DATA_HEADER },
 		FUNC_HEADER: function () { return TabLib.FUNC_HEADER },
+		DATA_TYPE: function () { return TabLib.DATA_TYPE },
+		DATA_TYPE_STR: function () { return TabLib.DATA_TYPE_STR },
 		NULL_ARG: function () { return TabLib.NULL_ARG },
 		COL_SAMELINE_ARG: function () { return TabLib.COL_SAMELINE_ARG }
 	}

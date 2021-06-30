@@ -4,6 +4,8 @@ export {
 	// constants
 	DATA_HEADER,
 	FUNC_HEADER,
+	DATA_TYPE,
+	DATA_TYPE_STR,
 	TAB_HEADER_TYPES,
 	NULL_ARG,
 	COL_SAMELINE_ARG,
@@ -54,6 +56,7 @@ export {
 	updHeaderLabel,
 	updHeaderType,
 	updHeaderOrder,
+	updHeaderDataType,
 	updHeaderArgs,
 	updHeaderFunc,
 	updLineAllFuncCells,
@@ -74,6 +77,20 @@ export {
 const DATA_HEADER = 0 ;
 const FUNC_HEADER = 1 ;
 const TAB_HEADER_TYPES = [ DATA_HEADER, FUNC_HEADER ];
+
+const DATA_TYPE = {
+	INT: 0,
+	FLOAT: 1,
+	STRING: 2,
+	JSON: 3
+};
+
+const DATA_TYPE_STR = [
+	"Entier",
+	"Décimal",
+	"Texte",
+	"JSON"
+];
 
 const NULL_ARG = -1 ;
 const COL_SAMELINE_ARG = 0 ;
@@ -489,8 +506,14 @@ function newHeader (tabenv, tablo, alias, label, type) {
 }
 
 // create a new data header and add it to tablo
-function newDataHeader (tabenv, tablo, alias, label) {
-	return newHeader(tabenv, tablo, alias, label, DATA_HEADER);
+function newDataHeader (tabenv, tablo, alias, label, dataType) {
+	var res = newHeader(tabenv, tablo, alias, label, DATA_HEADER);
+	if (! res.success) return res;
+	
+	var header = res.value;
+	header.dataType = dataType;
+	
+	return res;
 } 
 
 // create a new arg with type COL_SAMELINE_ARG
@@ -801,6 +824,7 @@ function updHeaderType (tabenv, tablo, header, newType) {
 					res.combine(delAllArgsFromHeader(tabenv, tablo, header));
 					if (res.success) {
 						header.type = DATA_HEADER;
+						header.dataType = DATA_TYPE.NUMBER;
 						header.args = undefined;
 						header.func = undefined;
 					}
@@ -812,6 +836,7 @@ function updHeaderType (tabenv, tablo, header, newType) {
 			switch (header.type) {
 				case DATA_HEADER:
 					header.type = FUNC_HEADER;
+					header.dataType = undefined;
 					header.args = [];
 					header.func = function () { return null; };
 					res.combine(updFuncHeaderAllCells(tabenv, tablo, header));
@@ -846,6 +871,43 @@ function updHeaderOrder (tabenv, tablo, header, newOrder) {
 	for (var numLine = 0 ; numLine < tablo.data.length ; numLine ++) {
 		arrayMove (tablo.data[numLine], oldOrder, newOrder) ;
 	}
+	
+	return res;
+}
+
+function updHeaderDataType (tabenv, tablo, header, newDataType) {
+	var res = newRes();
+	
+	if (! Object.values(DATA_TYPE).includes(newDataType)) {
+		res.addError("unknwon data type " + newDataType);
+		return res;
+	}
+	
+	if (header.dataType == newDataType) return res;
+	
+	header.dataType = newDataType;
+	
+	tablo.data.forEach(function (line, numLine) {
+		var oldVal = getCell(tablo, header, numLine);
+		var newVal ;
+		switch (newDataType) {
+			case DATA_TYPE.INT:
+				newVal = parseInt(oldVal);
+				break;
+			case DATA_TYPE.FLOAT:
+				newVal = parseFloat(oldVal);
+				break;
+			case DATA_TYPE.STRING:
+				newVal = new String(oldVal).valueOf();
+				break;
+			case DATA_TYPE.JSON:
+				newVal = JSON.parse(oldVal);
+				break;
+			default:
+				res.addError("unknown data type " + newDataType);
+		}
+		res.combine(updDataCell(tabenv, tablo, header, numLine, newVal));
+	});
 	
 	return res;
 }
