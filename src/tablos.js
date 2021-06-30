@@ -965,7 +965,6 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 	var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
 	reactions.forEach(function (reaction) {
 		var reactionAlias = aliasObjFromStr(reaction);
-		// TODO checks
 		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
 		if (reactionTablo === undefined) {
 			res.addError("cannot find tablo " + reactionAlias.tablo);
@@ -994,6 +993,37 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 // no checks done here. assumed done by the caller
 function updDataCell (tabenv, tablo, header, numLine, newVal) {
 	tablo.data[numLine][header.order] = newVal;
+	
+	var res = newRes();
+	
+	// trigger the reactions of other cells because of the update of this one
+	var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
+	var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
+	reactions.forEach(function (reaction) {
+		var reactionAlias = aliasObjFromStr(reaction);
+		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
+		if (reactionTablo === undefined) {
+			res.addError("cannot find tablo " + reactionAlias.tablo);
+			return;
+		}
+		var reactionHeader = 
+			reactionTablo.getHeaderByAlias(reactionAlias.header);
+		if (reactionHeader === undefined) {
+			res.addError("cannot find header " + reaction);
+			return;
+		}
+		res.combine(
+			updFuncCell(tabenv, reactionTablo, reactionHeader, numLine));
+	});
+	
+	if (! res.success) { 
+		res.addError(
+			"updFuncCell(" + tablo.alias + ", " + header.alias +
+			", " + numLine + ")."
+		);
+	}
+	
+	return res;
 }
 
 

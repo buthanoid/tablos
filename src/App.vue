@@ -10,10 +10,15 @@
 				:nb-lines="tablo.data.length"
 				:datatab="tablo.data"
 				:selected="selected"
+				:edit="edit"
 				@select-tablo="selectTablo"
 				@select-header="selectHeader"
 				@select-line="selectLine"
-				@select-cell="selectCell" >
+				@select-cell="selectCell"
+				@start-edit="startEdit"
+				@change-edit="changeEditCell"
+				@submit-edit="submitEditCell"
+				@cancel-edit="cancelEdit" >
 			</tablo-comp>
 		</div>
 		<div class="column-right" >
@@ -87,7 +92,8 @@ export default {
 				target: U.TRG.NULL,
 				tablo: null,
 				header: null,
-				line: null
+				line: null,
+				cell: false
 			},
 			edit : {
 				target: null,
@@ -156,27 +162,19 @@ export default {
 			this.lastAppError = "";
 		},
 		selectLine: function (tabloAlias, numLine) {
-			this.selectHeader(tabloAlias, numLine);
+			this.selectTablo(tabloAlias);
 			this.selected.target = U.TRG.LINE;
 			this.selected.line = numLine ;
+			this.cancelEdit();
+			this.lastAppError = "";
 		},
 		selectCell: function (tabloAlias, headerAlias, numLine) {
-		/*	if (this.selected.tablo.alias == tabloAlias &&
-				this.selected.header.alias == headerAlias &&
-				this.selectedLine.num == numLine &&
-				this.selectedCell.numLine == numLine
-			){ 
-				this.selectedCell = { numLine: null };
-			}
-			else {
-				this.selected.tablo = this.tabenv.tablos.get(tabloAlias);
-				this.selected.header = 
-					this.selected.tablo.getHeaderByAlias(headerAlias);
-				this.selectedLine = { num: numLine };
-				this.selectedCell = { numLine: numLine };
-			}
+			this.selectHeader(tabloAlias, headerAlias);
+			this.selected.target = U.TRG.CELL;
+			this.selected.line = numLine ;
+			this.selected.cell = true;
 			this.cancelEdit();
-			this.lastAppError = "";*/
+			this.lastAppError = "";
 		},
 		startEdit: function (target, property) {
 			this.edit.target = target;
@@ -187,8 +185,10 @@ export default {
 		},
 		changeEditTablo: changeEditTablo,
 		changeEditHeader: changeEditHeader,
+		changeEditCell: changeEditCell,
 		submitEditTablo: submitEditTablo,
 		submitEditHeader: submitEditHeader,
+		submitEditCell: submitEditCell,
 		cancelEdit: function () {
 			this.edit.target = null;
 			this.edit.property = null;
@@ -210,10 +210,10 @@ export default {
 			return U.TRG_TABLO_EXT.includes(this.selected.target);
 		},
 		displayHeaderInfos: function () {
-			return U.TRG.HEADER == this.selected.target;
+			return U.TRG_HEADER_EXT.includes(this.selected.target);
 		},
 		displayLineInfos: function () {
-			return U.TRG.LINE == this.selected.target;
+			return U.TRG_LINE_EXT.includes(this.selected.target);
 		},
 		tablosList: function () {
 			var tablosList = [];
@@ -290,6 +290,11 @@ function changeEditHeader (newValue) {
 	this.edit.msg = res.errors;
 }
 
+function changeEditCell (newValue) {
+	this.edit.valid = true;
+	this.edit.msg = "";
+}
+
 function submitEditTablo (newValue) {
 	var res;
 	switch (this.edit.property) {
@@ -353,6 +358,15 @@ function submitEditHeader (newValue) {
 			res.addError("unmanaged or unknown property"); 
 			console.log("unmanaged or unknown property");
 	}
+	this.cancelEdit();
+	this.lastAppError = res.errors;
+}
+
+function submitEditCell (newValue) {
+	var res = TabLib.updDataCell(
+		this.tabenv, this.selected.tablo, this.selected.header,
+		this.selected.line, newValue
+	);
 	this.cancelEdit();
 	this.lastAppError = res.errors;
 }

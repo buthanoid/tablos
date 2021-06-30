@@ -16,18 +16,37 @@
 		<tbody>
 			<tr v-for="(_,numLine) in nbLines" >
 				<th v-if="displayNumLines" 
-					class="clickable" 
+					:class="linesClasses[numLine]" 
 					@click="selectLine(numLine)" >
 					<span>{{numLine}}</span>
 				</th>
 				<td v-for="(_,numCol) in headers.length" >
-					<div @click="startEdit(numLine,numCol)" class="clickable" >
+					<div 
+						v-if="isCellEdited(numLine,numCol)" >
+						<input
+							v-model="editForm"
+							ref="cellEditInput"
+							@input="changeEdit"
+							@blur="submitEdit" 
+							@keyup.enter="submitEdit"
+							@keyup.esc="cancelEdit" />
+					</div>	
+					<div 
+						v-else
+						class="clickable" 
+						@click="selectCellStartEdit(numLine,numCol)" >
 						{{ datatab[numLine][numCol] }}
 					</div>
 				</td>
 			</tr>
 		</tbody>
 	</table>
+	<div>
+		<p v-if="isCellEdited && !(edit.valid)" class="incorrect" >
+			<span>Valeur invalide !</span> <br />
+			<span>{{edit.msg}}</span>
+		</p>
+	</div>
 </template>
 
 <script>
@@ -37,7 +56,10 @@ import * as U from "../util.js" ;
 var headerTypeToClass = ["dataheader", "funcheader" ];
 
 export default {
-	emits: [ "selectTablo", "selectHeader", "selectLine", "startEdit" ],
+	emits: [ 
+		"selectTablo", "selectHeader", "selectLine", "selectCell",
+		"startEdit", "changeEdit", "submitEdit", "cancelEdit"
+	],
 	props: [ 
 		"alias",
 		"label",
@@ -46,6 +68,7 @@ export default {
 		"nbLines",
 		"datatab",
 		"selected",
+		"edit"
 	],
 	data: function () { return {
 		editForm: null
@@ -58,12 +81,14 @@ export default {
 		selectLine: function (numLine) {
 			this.$emit("selectLine", this.alias, numLine);
 		},
-		startEdit:  function (numLine, numCol) {
+		selectCellStartEdit:  function (numLine, numCol) {
 			this.editForm = this.datatab[numLine][numCol];
-			this.$emit(
-				"startEdit", "cell", 
+			this.$emit("selectCell",
 				this.alias, this.headers[numCol].alias, numLine
 			);
+			if (this.headers[numCol].type == TabLib.DATA_HEADER) {
+				this.$emit("startEdit", "cell", null);
+			}
 		},
 		changeEdit: function () {
 			this.$emit("changeEdit", this.editForm);
@@ -80,13 +105,36 @@ export default {
 				this.selected.tablo.alias == this.alias
 			);
 		},
+		isCellEdited: function() {
+			return function (numLine, numCol) {
+				return (
+					this.isSelected && // is this tablo selected
+					this.selected.target == U.TRG.CELL && 
+					this.edit.target == "cell" &&
+					this.selected.header.order == numCol &&
+					this.selected.line == numLine
+				);
+			}
+		},
 		headersClasses: function () {
 			return Array.from(this.headers).map(function (header) {
 				var classes = "header";
 				classes += " " + headerTypeToClass[header.type];
 				if (this.isSelected &&
-					this.selected.target == U.TRG.HEADER &&
+					U.TRG_HEADER_EXT.includes(this.selected.target) &&
 					this.selected.header.alias == header.alias
+				) {
+					classes += " selected";
+				}
+				return classes;
+			}.bind(this));  
+		},
+		linesClasses: function () {
+			return Array.from(this.datatab).map(function (line, numLine) {
+				var classes = "line clickable";
+				if (this.isSelected &&
+					U.TRG_LINE_EXT.includes(this.selected.target) &&
+					this.selected.line == numLine
 				) {
 					classes += " selected";
 				}
