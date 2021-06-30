@@ -289,7 +289,7 @@ function checkHeaderType (type, res) {
 function checkHeaderOrder (tablo, order, res) {
 	if (order < 0 || order >= tablo.headers.length) {
 		res.addError(
-			"L'ordre doit être entre 0 et " + tablo.headers.length + ". "
+			"L'ordre doit être entre 0 et " + (tablo.headers.length - 1) + ". "
 		);
 	}
 }

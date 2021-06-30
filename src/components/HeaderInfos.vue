@@ -11,12 +11,14 @@
 					v-model="editForm"
 					ref="alias"
 					@input="changeEdit"
-					@blur="submitEdit" 
 					@keyup.enter="submitEdit"
 					@keyup.esc="cancelEdit" />
+				<button @click="submitEdit" >valider</button>
+				<button @click="cancelEdit" >Annuler</button>
 			</td>
-			<td v-else @click="startEdit('alias')" class="clickable" >
+			<td v-else >
 				<span>{{header.alias}}</span>
+				<button @click="startEdit('alias')" >modifier</button>
 			</td> 
 		</tr>
 		
@@ -29,12 +31,14 @@
 					v-model="editForm"
 					ref="label"
 					@input="changeEdit"
-					@blur="submitEdit" 
 					@keyup.enter="submitEdit"
 					@keyup.esc="cancelEdit" />
+				<button @click="submitEdit" >valider</button>
+				<button @click="cancelEdit" >Annuler</button>
 			</td>
-			<td v-else @click="startEdit('label')" class="clickable" >
+			<td v-else >
 				<span>{{header.label}}</span>
+				<button @click="startEdit('label')" >modifier</button>
 			</td> 
 		</tr>
 		
@@ -53,8 +57,9 @@
 				<button @click="submitEdit" >Valider</button>
 				<button @click="cancelEdit" >Annuler</button>
 			</td>
-			<td v-else @click="startEdit('type')" class="clickable" >
+			<td v-else >
 				<span>{{headerType}}</span>
+				<button @click="startEdit('type')" >modifier</button>
 			</td>
 		</tr>
 		
@@ -62,22 +67,18 @@
 			<th :class="{selected : isEdited && edit.property == 'order' }" >
 				<span>Ordre</span>
 			</th> 
-			<td v-if="isEdited && edit.property == 'order'" >
-				<select 
-					v-model="editForm" 
-					ref="order" 
-					@change="changeEdit" >
-					<option 
-						v-for="(_,index) in nbHeaders" 
-						:value="index" >
-						<span>{{index}}</span>
-					</option>
-				</select>
-				<button @click="submitEdit" >Valider</button>
-				<button @click="cancelEdit" >Annuler</button>
-			</td>
-			<td v-else @click="startEdit('order')" class="clickable" >
+			<td>
 				<span>{{header.order}}</span>
+				<button 
+					:disabled="header.order - 1 < 0"
+					@click="lowerOrder" >
+					<span>&lt;--</span>
+				</button>
+				<button 
+					:disabled="header.order + 1 >= nbHeaders"
+					@click="upperOrder" >
+					<span>--&gt;</span>
+				</button>
 			</td>
 		</tr>
 		
@@ -119,8 +120,9 @@
 				<button @click="submitEdit" >valider</button>
 				<button @click="cancelEdit" >annuler</button>
 			</td>
-			<td v-else @click="startEdit('args')" class="clickable" >
+			<td v-else >
 				<span>{{argsStr}}</span>
+				<button @click="startEdit('args')" >modifier</button>
 			</td>
 		</tr>
 		
@@ -133,12 +135,15 @@
 					v-model="editForm"
 					ref="func"
 					@input="changeEdit"
-					@blur="submitEdit"
-					@keyup.esc="cancelEdit"
-				></textarea>
+					@keyup.ctrl.enter="submitEdit" 
+					@keyup.esc="cancelEdit" >
+				</textarea>
+				<button @click="submitEdit" >valider</button>
+				<button @click="cancelEdit" >Annuler</button>
 			</td>
-			<td v-else @click="startEdit('func')" class="clickable">
+			<td v-else >
 				<pre>{{header.func}}</pre>
+				<button @click="startEdit('func')" >modifier</button>
 			</td> 
 		</tr>
 	</table>
@@ -158,22 +163,16 @@ import * as TabLib from "../tablos.js";
 
 export default {
 	emits: [ 
-		"startEdit", "changeEdit", "submitEdit",
-		"cancelEdit", "deleteHeader"
+		"startEdit", "changeEdit", "submitEdit", "cancelEdit", 
+		"deleteHeader", "lowerOrder", "upperOrder"
 	],
-	props: [ "tablosList", "headersList", "tabloAlias", "header", "nbHeaders", "edit" ],
+	props: [ 
+		"tablosList", "headersList", "tabloAlias", "header", 
+		"nbHeaders", "edit" 
+	],
 	data: function () { return {
 		editForm: null
 	}},
-	watch: {
-		edit: function (newEdit) {
-			if (newEdit.property) {
-				this.$nextTick(function () {
-					this.$refs[newEdit.property].focus();
-				}.bind(this));
-			}
-		}
-	},
 	methods: {
 		startEdit: function (property) {
 			// for args we need to copy it since it is a deep object
@@ -193,6 +192,8 @@ export default {
 		},
 		cancelEdit: function () { this.$emit("cancelEdit") },
 		deleteHeader: function () { this.$emit("deleteHeader") },
+		lowerOrder: function () { this.$emit("lowerOrder") },
+		upperOrder: function () { this.$emit("upperOrder") },
 		removeArg: function (index) {
 			if (this.edit.property == "args") {
 				this.editForm.splice(index, 1);

@@ -34,6 +34,7 @@
 				@del-tablo="delTablo"
 				@add-new-header="newHeader"
 				@add-new-line="newLine"
+				@toggle-display-num-lines="toggleDisplayNumLines"
 				@start-edit="startEdit"
 				@change-edit="changeEditTablo"
 				@submit-edit="submitEditTablo"
@@ -51,7 +52,9 @@
 				@change-edit="changeEditHeader"
 				@submit-edit="submitEditHeader"
 				@cancel-edit="cancelEdit"
-				@delete-header="deleteHeader" >
+				@delete-header="deleteHeader"
+				@lower-order="lowerOrder"
+				@upper-order="upperOrder" >
 			</header-infos>
 			<line-infos
 				v-if="displayLineInfos" 
@@ -137,6 +140,26 @@ export default {
 		},
 		newLine: function () {
 			var res = TabLib.newLine(this.tabenv, this.selected.tablo);
+			this.lastAppError = res.errors;
+		},
+		toggleDisplayNumLines: function () {
+			var res = TabLib.updTabloDisplayNumLines(
+				this.selected.tablo, ! this.selected.tablo.displayNumLines
+			);
+			this.lastAppError = res.errors;
+		},
+		lowerOrder: function () {
+			var res = TabLib.updHeaderOrder(
+				this.tabenv, this.selected.tablo, this.selected.header, 
+				this.selected.header.order - 1
+			);
+			this.lastAppError = res.errors;
+		},
+		upperOrder: function () {
+			var res = TabLib.updHeaderOrder(
+				this.tabenv, this.selected.tablo, this.selected.header, 
+				this.selected.header.order + 1
+			);
 			this.lastAppError = res.errors;
 		},
 		selectNothing: function () {
@@ -248,9 +271,6 @@ function changeEditTablo (newValue) {
 		case "label" :
 			TabLib.checkTabloLabel(newValue, res);
 			break;
-		case "displayNumLines":
-			TabLib.checkTabloDisplayNumLines(newValue, res);
-			break;
 		default: 
 			res.addError("unmanaged or unknown property");
 			console.log("unmanaged or unknown property");
@@ -272,9 +292,6 @@ function changeEditHeader (newValue) {
 			break;
 		case "type":
 			TabLib.checkHeaderType (newValue, res);
-			break;
-		case "order":
-			TabLib.checkHeaderOrder (this.selected.tablo, newValue, res);
 			break;
 		case "args":
 			TabLib.checkHeaderArgs (this.tabenv.tablos, newValue, res);
@@ -329,11 +346,6 @@ function submitEditHeader (newValue) {
 			break;
 		case "type":
 			res = TabLib.updHeaderType (
-				this.tabenv, this.selected.tablo, this.selected.header, newValue
-			);
-			break;
-		case "order":
-			res = TabLib.updHeaderOrder(
 				this.tabenv, this.selected.tablo, this.selected.header, newValue
 			);
 			break;

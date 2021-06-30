@@ -11,12 +11,14 @@
 					v-model="editForm"
 					ref="label"
 					@input="changeEdit"
-					@blur="submitEdit" 
 					@keyup.enter="submitEdit"
 					@keyup.esc="cancelEdit" />
+				<button @click="submitEdit" >valider</button>
+				<button @click="cancelEdit" >Annuler</button>
 			</td>
-			<td v-else @click="startEdit('alias')" class="clickable" >
+			<td v-else >
 				<span>{{alias}}</span>
+				<button @click="startEdit('alias')" >modifier</button>
 			</td> 
 		</tr>
 		
@@ -29,39 +31,44 @@
 					v-model="editForm"
 					ref="label"
 					@input="changeEdit"
-					@blur="submitEdit" 
 					@keyup.enter="submitEdit"
 					@keyup.esc="cancelEdit" />
+				<button @click="submitEdit" >valider</button>
+				<button @click="cancelEdit" >Annuler</button>
 			</td>
-			<td v-else @click="startEdit('label')" class="clickable" >
+			<td v-else >
 				<span>{{label}}</span>
+				<button @click="startEdit('label')" >modifier</button>
 			</td> 
 		</tr>
 		
 		<tr> 
-			<th :class="{selected : isEditedDisplayNumLines}" >
-				<span>Afficher les numéros de ligne</span>
-			</th> 
-			<td v-if="isEditedDisplayNumLines" >
-				<select 
-					v-model="editForm" 
-					ref="displayNumLines" 
-					@change="changeEdit"
-				>
-					<option :value="true" >Oui</option>
-					<option :value="false" >Non</option>
-				</select>
-				<button @click="submitEdit" >Valider</button>
-				<button @click="cancelEdit" >Annuler</button>
-			</td>
-			<td v-else @click="startEdit('displayNumLines')" class="clickable" >
-				<span v-if="displayNumLines" >Oui</span>
-				<span v-else >Non</span>
+			<th><span>Afficher les numéros de ligne</span></th>
+			<td v-if="displayNumLines" >
+				<span>Oui</span>
+				<button @click="toggleDisplayNumLines" >Désactiver</button>
+			</td> 
+			<td v-else >
+				<span>Non</span>
+				<button @click="toggleDisplayNumLines" >Activer</button>
 			</td> 
 		</tr>
 		
-		<tr> <th>Nombre de colonnes</th> <td>{{nbHeaders}}</td> </tr>
-		<tr> <th>Nombre de lignes</th> <td>{{nbLines}}</td> </tr>
+		<tr> 
+			<th>Nombre de colonnes</th> 
+			<td>
+				<span>{{nbHeaders}}</span>
+				<button @click="addNewHeader" >ajouter</button>
+			</td> 
+		</tr>
+		
+		<tr> 
+			<th>Nombre de lignes</th> 
+			<td>
+				<span>{{nbLines}}</span>
+				<button @click="addNewLine" >ajouter</button>
+			</td>
+		</tr>
 	</table>		
 	<div>
 		<p 
@@ -73,14 +80,13 @@
 		</p>
 	</div>
 	<button @click="delTablo" >supprimer le tablo</button> <br />
-	<button @click="addNewHeader" >ajouter une colonne</button> <br />
-	<button @click="addNewLine" >ajouter une ligne</button>
+	
 </template>
 
 <script>
 export default {
 	emits: [ 
-		"delTablo", "addNewHeader", "addNewLine", 
+		"delTablo", "addNewHeader", "addNewLine", "toggleDisplayNumLines",
 		"startEdit", "changeEdit", "submitEdit", "cancelEdit"
 	],
 	props: [
@@ -94,15 +100,6 @@ export default {
 	data: function () { return {
 		editForm: null	
 	}},
-	watch: {
-		edit: function (newEdit) {
-			if (newEdit.property) {
-				this.$nextTick(function () {
-					this.$refs[newEdit.property].focus();
-				}.bind(this));
-			}
-		}
-	},
 	methods: {
 		startEdit: function (property) {
 			this.editForm = this.$props[property];
@@ -113,13 +110,13 @@ export default {
 		cancelEdit: function () { this.$emit("cancelEdit") },
 		delTablo: function () { this.$emit("delTablo") },
 		addNewHeader: function () { this.$emit("addNewHeader") },
-		addNewLine: function () { this.$emit("addNewLine") }
+		addNewLine: function () { this.$emit("addNewLine") },
+		toggleDisplayNumLines: function () {
+			this.$emit("toggleDisplayNumLines");
+		}
 	},
 	computed: {
-		isEdited: function () { return this.edit.target == "tablo" ; },
-		isEditedDisplayNumLines: function () {
-			return this.isEdited && this.edit.property == "displayNumLines" ;
-		}
+		isEdited: function () { return this.edit.target == "tablo" ; }
 	}
 }
 </script>

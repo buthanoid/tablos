@@ -27,9 +27,10 @@
 							v-model="editForm"
 							ref="cellEditInput"
 							@input="changeEdit"
-							@blur="submitEdit" 
 							@keyup.enter="submitEdit"
 							@keyup.esc="cancelEdit" />
+						<button @click="submitEdit" >valider</button>
+						<button @click="cancelEdit" >Annuler</button>
 					</div>	
 					<div 
 						v-else
