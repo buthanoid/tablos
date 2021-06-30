@@ -84,8 +84,9 @@ export default {
 			return Array.from(this.headers).map(function (header) {
 				var classes = "header";
 				classes += " " + headerTypeToClass[header.type];
-				if (this.isSelected && 
-					this.selectedHeaderAlias == header.alias
+				if (this.isSelected &&
+					this.selected.target == U.TRG.HEADER &&
+					this.selected.header.alias == header.alias
 				) {
 					classes += " selected";
 				}

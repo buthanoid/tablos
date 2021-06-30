@@ -61,11 +61,11 @@
 	<hr />
 	ReactMap {{tabenv.reactMap}}
 	<hr />
-	SelectedTablo {{selectedTablo}}
+	selected.tablo {{selected.tablo}}
 	<hr />
-	SelectedHeader {{selectedHeader}}
+	selected.header {{selected.header}}
 	<hr />
-	SelectedLine {{selectedLine}}
+	SelectedLine {{selected.line}}
 	<hr />
 	Edit {{edit}}
 </template>
@@ -111,26 +111,26 @@ export default {
 			this.lastAppError = res.errors;
 		},
 		delTablo: function () {
-			var res = TabLib.delTablo(this.tabenv, this.selectedTablo);
+			var res = TabLib.delTablo(this.tabenv, this.selected.tablo);
 			this.selectNothing();
 			this.lastAppError = res.errors;
 		},
 		newHeader: function () {
 			var i = 0 ;
-			while (this.selectedTablo.getHeaderByAlias("newheader" + i)) i++;
+			while (this.selected.tablo.getHeaderByAlias("newheader" + i)) i++;
 			
 			var res = TabLib.newDataHeader(
-				this.tabenv, this.selectedTablo, 
+				this.tabenv, this.selected.tablo, 
 				"newheader" + i, "New Header " + i
 			);
 			
 			if (res.success) {
-				this.selectHeader(this.selectedTablo.alias, "newheader" + i);
+				this.selectHeader(this.selected.tablo.alias, "newheader" + i);
 			}
 			this.lastAppError = res.errors;
 		},
 		newLine: function () {
-			var res = TabLib.newLine(this.tabenv, this.selectedTablo);
+			var res = TabLib.newLine(this.tabenv, this.selected.tablo);
 			this.lastAppError = res.errors;
 		},
 		selectNothing: function () {
@@ -161,17 +161,17 @@ export default {
 			this.selected.line = numLine ;
 		},
 		selectCell: function (tabloAlias, headerAlias, numLine) {
-		/*	if (this.selectedTablo.alias == tabloAlias &&
-				this.selectedHeader.alias == headerAlias &&
+		/*	if (this.selected.tablo.alias == tabloAlias &&
+				this.selected.header.alias == headerAlias &&
 				this.selectedLine.num == numLine &&
 				this.selectedCell.numLine == numLine
 			){ 
 				this.selectedCell = { numLine: null };
 			}
 			else {
-				this.selectedTablo = this.tabenv.tablos.get(tabloAlias);
-				this.selectedHeader = 
-					this.selectedTablo.getHeaderByAlias(headerAlias);
+				this.selected.tablo = this.tabenv.tablos.get(tabloAlias);
+				this.selected.header = 
+					this.selected.tablo.getHeaderByAlias(headerAlias);
 				this.selectedLine = { num: numLine };
 				this.selectedCell = { numLine: numLine };
 			}
@@ -198,9 +198,9 @@ export default {
 		},
 		deleteHeader: function () {
 			var res = TabLib.delHeader(
-				this.tabenv, this.selectedTablo, this.selectedHeader
+				this.tabenv, this.selected.tablo, this.selected.header
 			);
-			this.selectedHeader = { alias: null };
+			this.selected.header = { alias: null };
 			this.cancelEdit();
 			this.lastAppError = res.errors;
 		}
@@ -242,7 +242,7 @@ function changeEditTablo (newValue) {
 	switch (this.edit.property) {
 		case "alias" :
 			TabLib.checkUpdTabloAlias(
-				this.tabenv, this.selectedTablo.alias, newValue, res
+				this.tabenv, this.selected.tablo.alias, newValue, res
 			);
 			break;
 		case "label" :
@@ -264,8 +264,8 @@ function changeEditHeader (newValue) {
 	switch (this.edit.property) {
 		case "alias":
 			TabLib.checkUpdHeaderAlias (
-				this.selectedTablo,
-				this.selectedTablo.alias, newValue, res);
+				this.selected.tablo,
+				this.selected.tablo.alias, newValue, res);
 			break;
 		case "label":
 			TabLib.checkHeaderLabel (newValue, res);
@@ -274,7 +274,7 @@ function changeEditHeader (newValue) {
 			TabLib.checkHeaderType (newValue, res);
 			break;
 		case "order":
-			TabLib.checkHeaderOrder (this.selectedTablo, newValue, res);
+			TabLib.checkHeaderOrder (this.selected.tablo, newValue, res);
 			break;
 		case "args":
 			TabLib.checkHeaderArgs (this.tabenv.tablos, newValue, res);
@@ -295,13 +295,13 @@ function submitEditTablo (newValue) {
 	switch (this.edit.property) {
 		case "alias":
 			res = 
-				TabLib.updTabloAlias(this.tabenv, this.selectedTablo, newValue);
+				TabLib.updTabloAlias(this.tabenv, this.selected.tablo, newValue);
 			break;
 		case "label":
-			res = TabLib.updTabloLabel(this.selectedTablo, newValue);
+			res = TabLib.updTabloLabel(this.selected.tablo, newValue);
 			break;
 		case "displayNumLines":
-			res = TabLib.updTabloDisplayNumLines(this.selectedTablo, newValue);
+			res = TabLib.updTabloDisplayNumLines(this.selected.tablo, newValue);
 			break;
 		default: 
 			res.addError("unmanaged or unknown property");
@@ -316,35 +316,35 @@ function submitEditHeader (newValue) {
 	switch (this.edit.property) {
 		case "alias":
 			res = TabLib.updHeaderAlias(
-				this.tabenv, this.selectedTablo, this.selectedHeader, newValue
+				this.tabenv, this.selected.tablo, this.selected.header, newValue
 			);
 			break;
 		case "label":
-			res = TabLib.updHeaderLabel(this.selectedHeader, newValue);
+			res = TabLib.updHeaderLabel(this.selected.header, newValue);
 			break;
 		case "type":
 			res = TabLib.updHeaderType (
-				this.tabenv, this.selectedTablo, this.selectedHeader, newValue
+				this.tabenv, this.selected.tablo, this.selected.header, newValue
 			);
 			break;
 		case "order":
 			res = TabLib.updHeaderOrder(
-				this.tabenv, this.selectedTablo, this.selectedHeader, newValue
+				this.tabenv, this.selected.tablo, this.selected.header, newValue
 			);
 			break;
 		case "args":
 			res = TabLib.updHeaderArgs(
-				this.tabenv, this.selectedTablo, this.selectedHeader, newValue
+				this.tabenv, this.selected.tablo, this.selected.header, newValue
 			);
 			res.combine(TabLib.updFuncHeaderAllCells(
-				this.tabenv, this.selectedTablo, this.selectedHeader
+				this.tabenv, this.selected.tablo, this.selected.header
 			));
 			break;
 		case "func":
 			res = TabLib.parseStrToFunction(newValue);
 			if (res.success) {
 				res.combine(TabLib.updHeaderFunc(
-					this.tabenv, this.selectedTablo, this.selectedHeader, 
+					this.tabenv, this.selected.tablo, this.selected.header, 
 					res.value
 				));
 			}
