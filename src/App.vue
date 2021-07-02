@@ -113,54 +113,45 @@ export default {
 			var i = 0;
 			while (this.tabenv.tablos.has("newtablo" + i)) i++;
 			
-			var res = TabLib.newTablo(
+			var tablo = TabLib.newTablo(
 				this.tabenv, "newtablo" + i, "New Tablo " + i);
 				
-			if (res.success) this.selectTablo("newtablo" + i);
-			this.lastAppError = res.errors;
+			this.selectTablo("newtablo" + i);
 		},
 		delTablo: function () {
-			var res = TabLib.delTablo(this.tabenv, this.selected.tablo);
+			TabLib.delTablo(this.tabenv, this.selected.tablo);
 			this.selectNothing();
-			this.lastAppError = res.errors;
 		},
 		newHeader: function () {
 			var i = 0 ;
 			while (this.selected.tablo.getHeaderByAlias("newheader" + i)) i++;
 			
-			var res = TabLib.newDataHeader(
+			var header = TabLib.newDataHeader(
 				this.tabenv, this.selected.tablo, 
 				"newheader" + i, "New Header " + i, TabLib.DATA_TYPE.INT
 			);
 			
-			if (res.success) {
-				this.selectHeader(this.selected.tablo.alias, "newheader" + i);
-			}
-			this.lastAppError = res.errors;
+			this.selectHeader(this.selected.tablo.alias, "newheader" + i);
 		},
 		newLine: function () {
-			var res = TabLib.newLine(this.tabenv, this.selected.tablo);
-			this.lastAppError = res.errors;
+			TabLib.newLine(this.tabenv, this.selected.tablo);
 		},
 		toggleDisplayNumLines: function () {
-			var res = TabLib.updTabloDisplayNumLines(
+			TabLib.updTabloDisplayNumLines(
 				this.selected.tablo, ! this.selected.tablo.displayNumLines
 			);
-			this.lastAppError = res.errors;
 		},
 		lowerOrder: function () {
-			var res = TabLib.updHeaderOrder(
+			TabLib.updHeaderOrder(
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				this.selected.header.order - 1
 			);
-			this.lastAppError = res.errors;
 		},
 		upperOrder: function () {
-			var res = TabLib.updHeaderOrder(
+			TabLib.updHeaderOrder(
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				this.selected.header.order + 1
 			);
-			this.lastAppError = res.errors;
 		},
 		selectNothing: function () {
 			this.selected.target = U.TRG.NULL;
@@ -220,12 +211,11 @@ export default {
 			this.lastAppError = "";
 		},
 		deleteHeader: function () {
-			var res = TabLib.delHeader(
+			TabLib.delHeader(
 				this.tabenv, this.selected.tablo, this.selected.header
 			);
 			this.selected.header = { alias: null };
 			this.cancelEdit();
-			this.lastAppError = res.errors;
 		}
 	},
 	computed: {
@@ -261,55 +251,61 @@ export default {
 };
 
 function changeEditTablo (newValue) {
-	var res = TabLib.newRes();
+	var errs;
 	switch (this.edit.property) {
 		case "alias" :
-			TabLib.checkUpdTabloAlias(
-				this.tabenv, this.selected.tablo.alias, newValue, res
-			);
+			errs = TabLib.checkUpdTabloAlias(
+				this.tabenv, this.selected.tablo, newValue);
 			break;
 		case "label" :
-			TabLib.checkTabloLabel(newValue, res);
+			errs = TabLib.checkUpdTabloLabel(
+				this.selected.tablo, newValue);
 			break;
-		default: 
-			res.addError("unmanaged or unknown property");
-			console.log("unmanaged or unknown property");
+		default: errs = [ ERR.TABLO.UNKNOWN_PROPERTY ];
 	}
-	this.edit.valid = res.success;
-	this.edit.msg = res.errors;
+	this.edit.valid = (errs.length == 0);
+	this.edit.msg = errs;
 }
 
 function changeEditHeader (newValue) {
-	var res = TabLib.newRes();
+	var errs ;
 	switch (this.edit.property) {
 		case "alias":
-			TabLib.checkUpdHeaderAlias (
-				this.selected.tablo,
-				this.selected.tablo.alias, newValue, res);
+			errs = TabLib.checkUpdHeaderAlias (
+				this.tabenv, this.selected.tablo, this.selected.header, 
+				newValue);
 			break;
 		case "label":
-			TabLib.checkHeaderLabel (newValue, res);
+			errs = TabLib.checkUpdHeaderLabel (this.selected.header, newValue);
 			break;
 		case "type":
-			TabLib.checkHeaderType (newValue, res);
+			errs = TabLib.checkUpdHeaderType (
+				this.tabenv, this.selected.tablo, this.selected.header, 
+				newValue);
 			break;
 		case "dataType":
-			if (! Object.values(TabLib.DATA_TYPE).includes(newValue)) {
-				res.addError("unknwon data type " + newValue);
-			}
+			errs = TabLib.checkUpdHeaderDataType(
+				this.tabenv, this.selected.tablo, this.selected.header,
+				newValue);
 			break;
 		case "args":
-			TabLib.checkHeaderArgs (this.tabenv.tablos, newValue, res);
+			errs = TabLib.checkUpdHeaderArgs (
+				this.tabenv, this.selected.tablo, this.selected.header,
+				newValue);
 			break;
 		case "func":
-			TabLib.checkHeaderFunc (newValue, res);
+			try {
+				var func = TabLib.parseStrToFunction(newValue);
+				errs = TabLib.checkUpdHeaderFunc (
+					this.tabenv, this.selected.tablo, this.selected.header,
+					func);
+			}
+			catch (errors) { errs = errors }
 			break;
-		default:
-			res.addError("unmanaged or unknown property");
-			console.log("unmanaged or unknown property");
+		default: errs = [ ERR.HEADER.UNKNOWN_PROPERTY ];
 	}
-	this.edit.valid = res.success;
-	this.edit.msg = res.errors;
+	this.edit.valid = (errs.length == 0);
+	this.edit.msg = errs;
 }
 
 function changeEditCell (newValue) {
@@ -318,70 +314,108 @@ function changeEditCell (newValue) {
 }
 
 function submitEditTablo (newValue) {
-	var res;
+	var errs ;
 	switch (this.edit.property) {
 		case "alias":
-			res = 
-				TabLib.updTabloAlias(this.tabenv, this.selected.tablo, newValue);
+			errs = TabLib.checkUpdTabloAlias(
+				this.tabenv, this.selected.tablo, newValue);
+			if (errs.length == 0) {
+				TabLib.updTabloAlias(
+					this.tabenv, this.selected.tablo, newValue);
+			}
 			break;
 		case "label":
-			res = TabLib.updTabloLabel(this.selected.tablo, newValue);
+			errs = TabLib.checkUpdTabloLabel(this.selected.tablo, newValue);
+			if (errs.length == 0) {
+				TabLib.updTabloLabel(this.selected.tablo, newValue);
+			}
 			break;
 		case "displayNumLines":
-			res = TabLib.updTabloDisplayNumLines(this.selected.tablo, newValue);
+			errs = TabLib.checkUpdTabloDisplayNumLines(
+				this.selected.tablo, newValue);
+			if (errs.length == 0) {
+				TabLib.updTabloDisplayNumLines(this.selected.tablo, newValue);
+			}
 			break;
-		default: 
-			res.addError("unmanaged or unknown property");
-			console.log("unmanaged or unknown property");
+		default: errs = [ ERR.TABLO.UNKNOWN_PROPERTY ];
 	}
 	this.cancelEdit();
-	this.lastAppError = res.errors;
+	this.lastAppErrors = errs;
 }
 
 function submitEditHeader (newValue) {
-	var res;
+	var errs ;
 	switch (this.edit.property) {
 		case "alias":
-			res = TabLib.updHeaderAlias(
-				this.tabenv, this.selected.tablo, this.selected.header, newValue
-			);
-			break;
-		case "label":
-			res = TabLib.updHeaderLabel(this.selected.header, newValue);
-			break;
-		case "type":
-			res = TabLib.updHeaderType (
-				this.tabenv, this.selected.tablo, this.selected.header, newValue
-			);
-			break;
-		case "dataType":
-			res = TabLib.updHeaderDataType (
-				this.tabenv, this.selected.tablo, this.selected.header, newValue 
-			);
-			break;
-		case "args":
-			res = TabLib.updHeaderArgs(
-				this.tabenv, this.selected.tablo, this.selected.header, newValue
-			);
-			res.combine(TabLib.updFuncHeaderAllCells(
-				this.tabenv, this.selected.tablo, this.selected.header
-			));
-			break;
-		case "func":
-			res = TabLib.parseStrToFunction(newValue);
-			if (res.success) {
-				res.combine(TabLib.updHeaderFunc(
+			errs = TabLib.checkUpdHeaderAlias(
+				this.tabenv, this.selected.tablo, this.selected.header, 
+				newValue);
+			if (errs.length == 0) {
+				TabLib.updHeaderAlias(
 					this.tabenv, this.selected.tablo, this.selected.header, 
-					res.value
-				));
+					newValue);
 			}
 			break;
-		default:
-			res.addError("unmanaged or unknown property"); 
-			console.log("unmanaged or unknown property");
+		case "label":
+			errs = TabLib.checkUpdHeaderLabel(this.selected.header, newValue);
+			if (errs.length == 0) {
+				TabLib.updHeaderLabel(this.selected.header, newValue);
+			}
+			break;
+		case "type":
+			errs = TabLib.checkUpdHeaderType (
+				this.tabenv, this.selected.tablo, this.selected.header, 
+				newValue);
+			if (errs.length == 0) {
+				TabLib.updHeaderType (
+					this.tabenv, this.selected.tablo, this.selected.header, 
+					newValue);
+			}
+			break;
+		case "dataType":
+			errs = TabLib.checkUpdHeaderDataType (
+				this.tabenv, this.selected.tablo, this.selected.header, 
+				newValue);
+			if (errs.length == 0) {
+				TabLib.updHeaderDataType (
+					this.tabenv, this.selected.tablo, this.selected.header, 
+					newValue );
+			}
+			break;
+		case "args":
+			errs = TabLib.checkUpdHeaderArgs(
+				this.tabenv, this.selected.tablo, this.selected.header, 
+				newValue);
+			if (errs.length == 0) {
+				TabLib.updHeaderArgs(
+					this.tabenv, this.selected.tablo, this.selected.header, 
+					newValue);
+				errs.concat(TabLib.checkUpdFuncHeaderAllCells(
+					this.tabenv, this.selected.tablo, this.selected.header));
+				if (errs.length == 0) {
+					TabLib.updFuncHeaderAllCells(
+						this.tabenv, this.selected.tablo, this.selected.header);
+				}
+			}
+			break;
+		case "func":
+			try {
+				var func = TabLib.parseStrToFunction(newValue);
+				errs = TabLib.checkUpdHeaderFunc(
+					this.tabenv, this.selected.tablo, this.selected.header, 
+					func);
+				if (errs.length == 0) {
+					TabLib.updHeaderFunc(
+						this.tabenv, this.selected.tablo, this.selected.header, 
+						func);
+				}
+			}
+			catch(error) { errs = [error] }
+			break;
+		default: errs = [ ERR.HEADER.UNKNOW_PROPERTY ];
 	}
 	this.cancelEdit();
-	this.lastAppError = res.errors;
+	this.lastAppErrors = errs;
 }
 
 function submitEditCell (newValue) {
@@ -398,15 +432,13 @@ function submitEditCell (newValue) {
 		case TabLib.DATA_TYPE.JSON:
 			newValue = JSON.parse(newValue);
 			break;
-		default:
-			res.addError("unknown data type " + this.selected.header.dataType);
+		default: this.lastAppError = ERR.HEADER.DATA_TYPE.UNKNOWN ;
 	}
-	var res = TabLib.updDataCell(
+	TabLib.updDataCell(
 		this.tabenv, this.selected.tablo, this.selected.header,
 		this.selected.line, newValue
 	);
 	this.cancelEdit();
-	this.lastAppError = res.errors;
 }
 
 function created () {

@@ -27,10 +27,8 @@ export {
 	delReactionFromAllKeys,
 	// new functions
 	newTabenv, 
-	checkNewTablo,
-	newTablo,
-	checkNewDataHeader,
-	newDataHeader,
+	newTablo, checkNewTablo,
+	newDataHeader, checkNewDataHeader,
 	newColSamelineArg,
 	newFuncHeader,
 	newLine,
@@ -40,16 +38,16 @@ export {
 	getCell,
 	getCellByAliases,
 	// upd functions
-	updTabloAlias,
-	updTabloLabel,
+	updTabloAlias, checkUpdTabloAlias,
+	updTabloLabel, checkUpdTabloLabel,
 	updTabloDisplayNumLines,
-	updHeaderAlias,
-	updHeaderLabel,
-	updHeaderType,
+	updHeaderAlias, checkUpdHeaderAlias,
+	updHeaderLabel, checkUpdHeaderLabel,
+	updHeaderType, checkUpdHeaderType,
 	updHeaderOrder,
-	updHeaderDataType,
-	updHeaderArgs,
-	updHeaderFunc,
+	updHeaderDataType, checkUpdHeaderDataType,
+	updHeaderArgs, checkUpdHeaderArgs,
+	updHeaderFunc, checkUpdHeaderFunc, 
 	updLineAllFuncCells,
 	updFuncHeaderAllCells,
 	updTabloAllFuncHeadersAllCells,
@@ -123,7 +121,8 @@ const ERR = {
 		},
 		FUNCTION: {
 			NOT_FUNCTION: "ERR.HEADER.FUNCTION.NOT_FUNCTION",
-			PARSE_ERROR: "ERR.HEADER.FUNCTION.PARSE_ERROR"
+			PARSE_ERROR: "ERR.HEADER.FUNCTION.PARSE_ERROR",
+			APP_ERROR: "ERR.HEADER.FUNCTION.APP_ERROR"
 		},
 		ARGS: {
 			NOT_ARRAY: "ERR.HEADER.ARGS.NOT_ARRAY"
@@ -146,13 +145,13 @@ const ERR = {
 function parseStrToFunction (strFunc) {
 	try {
 		var parsedFunc = new Function(
-			"\"use strict\"; return (" + func + ");"
+			"\"use strict\"; return (" + strFunc + ");"
 		) ();
 		
 		if (typeof parsedFunc == "function") return parsedFunc;
-		else throw (ERR.HEADER.FUNC.NOT_FUNCTION);
+		else throw (ERR.HEADER.FUNCTION.NOT_FUNCTION);
 	}
-	catch (error) { throw (ERR.HEADER.FUNC.PARSE_ERROR) };
+	catch (error) { throw (ERR.HEADER.FUNCTION.PARSE_ERROR) };
 }
 
 // convert alias object, to alias string
@@ -480,12 +479,10 @@ function checkHeaderArgs (tabenv, args) {
 
 // check the func of a func header
 function checkHeaderFunc (func) {
-	var parsedFunc ;
-	try { 
-		parsedFunc = parseStrToFunction(func);
-		return parsedFunc;
+	if (typeof func != "function") {
+		return [ ERR.HEADER.FUNCTION.NOT_FUNCTION ];
 	}
-	catch (error) { return [error]; }
+	else return [];
 }
 
 // check args for newFuncHeader()
@@ -620,8 +617,8 @@ function getCellByAliases (tabenv, tabloAlias, headerAlias, numLine) {
 function checkUpdTabloAlias (tabenv, tablo, newAlias) {
 	if (tablo.alias == newAlias) return [];
 	else {
-		var errsAlias = checkTabloAlias(alias) ;
-		if (tabenv.tablos.has(alias)) {
+		var errsAlias = checkTabloAlias(newAlias) ;
+		if (tabenv.tablos.has(newAlias)) {
 			errsAlias.push(ERR.TABLO.ALIAS.EXISTING);
 		}
 		return errsAlias;
@@ -720,8 +717,8 @@ function updTabloDisplayNumLines (tablo, displayNumLines) {
 function checkUpdHeaderAlias (tabenv, tablo, header, newAlias) {
 	if (header.alias == newAlias) return [];
 	else {
-		var errsAlias = checkHeaderAlias(alias);
-		if (tablo.getHeaderByAlias(alias) != undefined) {
+		var errsAlias = checkHeaderAlias(newAlias);
+		if (tablo.getHeaderByAlias(newAlias) != undefined) {
 			errsAlias.push(ERR.HEADER.ALIAS.EXISTING);
 		}
 		return errsAlias;
@@ -808,7 +805,7 @@ function updHeaderType (tabenv, tablo, header, newType) {
 				case FUNC_HEADER: 
 					delAllArgsFromHeader(tabenv, tablo, header);
 					header.type = DATA_HEADER;
-					header.dataType = DATA_TYPE.NUMBER;
+					header.dataType = DATA_TYPE.INT;
 					header.args = undefined;
 					header.func = undefined;
 					break;
@@ -936,6 +933,7 @@ function checkUpdHeaderArgs (tabenv, tablo, header, newArgs) {
 	if (header.type != FUNC_HEADER) return [ ERR.HEADER.NOT_FUNC ];
 	var errsArgs = checkHeaderArgs (tabenv, newArgs);
 	// TODO check delAllArgsFromHeader
+	return errsArgs
 }
 
 function updHeaderArgs (tabenv, tablo, header, newArgs) {
@@ -1059,7 +1057,7 @@ function checkUpdFuncCell (tabenv, tablo, header, numLine) {
 		try {
 			var funcResult = header.func.apply(null, funcArgs);
 		}
-		catch (error) { throw [ ERR.HEADER.FUNC.APP_ERROR ] }
+		catch (error) { throw [ ERR.HEADER.FUNCTION.APP_ERROR ] }
 		
 		// trigger the reactions of other cells
 		var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
@@ -1095,7 +1093,7 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 			default: console.log("unknown arg type");
 		}
 	});
-	console.log(funcArgs);
+	
 	// compute the func applied to the args, for the cell
 	var funcResult = header.func.apply(null, funcArgs);
 	tablo.data[numLine][header.order] = funcResult;
