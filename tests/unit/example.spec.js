@@ -10,7 +10,7 @@ function makenv1Tablo () {
 	
 	var tablo1Alias = "tablo1";
 	var tablo1Label = "Tablo 1";
-	env.tablo1 = T.newTablo(env.tabenv, tablo1Alias, tablo1Label).value;
+	env.tablo1 = T.newTablo(env.tabenv, tablo1Alias, tablo1Label);
 
 	return env;
 };	
@@ -25,7 +25,7 @@ function makenv1Tablo1Data1Line () {
 	var header1Label = "Header 1";
 	env.header1FullAlias = T.aliasesToStr(env.tablo1.alias, header1Alias);
 	env.header1 = T.newDataHeader(
-		env.tabenv, env.tablo1, header1Alias, header1Label).value;
+		env.tabenv, env.tablo1, header1Alias, header1Label);
 	T.newLine(env.tabenv, env.tablo1);
 	T.updDataCell(env.tabenv, env.tablo1, env.header1, 0, 33);
 		
@@ -41,7 +41,7 @@ function makenv2Tablo1Func1Line () {
 
 	var tablo2Alias = "tablo2";
 	var tablo2Label = "Tablo 2";
-	env.tablo2 = T.newTablo(env.tabenv, tablo2Alias, tablo2Label).value;
+	env.tablo2 = T.newTablo(env.tabenv, tablo2Alias, tablo2Label);
 	
 	var header2Alias = "header2";
 	var header2Label = "Header 2";
@@ -50,7 +50,7 @@ function makenv2Tablo1Func1Line () {
 		env.tabenv, env.tablo2, header2Alias, header2Label,
 		[ T.newColSamelineArg(env.tablo1.alias, env.header1.alias) ],
 		function (data) { return data + 1 }
-	).value;
+	);
 	T.newLine(env.tabenv, env.tablo2);
 	
 	return env;
@@ -63,7 +63,7 @@ function makenv1Tablo2Data1Line () {
 	env.header2FullAlias = T.aliasesToStr(env.tablo1.alias, header2Alias);
 	env.header2 = T.newDataHeader(
 		env.tabenv, env.tablo1, header2Alias, header2Label
-	).value;
+	);
 	T.updDataCell(env.tabenv, env.tablo1, env.header2, 0, 1000);
 	return env;
 }
@@ -73,7 +73,7 @@ function makenv2Tablo2Data1Func1Line () {
 	
 	var tablo2Alias = "tablo2";
 	var tablo2Label = "Tablo 2";
-	env.tablo2 = T.newTablo(env.tabenv, tablo2Alias, tablo2Label).value;
+	env.tablo2 = T.newTablo(env.tabenv, tablo2Alias, tablo2Label);
 	
 	var header3Alias = "header3";
 	var header3Label = "Header 3";
@@ -82,7 +82,7 @@ function makenv2Tablo2Data1Func1Line () {
 		env.tabenv, env.tablo2, header3Alias, header3Label,
 		[ T.newColSamelineArg(env.tablo1.alias, env.header1.alias) ],
 		function (data) { return data + 1 }
-	).value;
+	);
 	T.newLine(env.tabenv, env.tablo2);
 	
 	return env;
@@ -98,21 +98,21 @@ function makenv2Tablo2Data2Func1Line () {
 		env.tabenv, env.tablo2, header4Alias, header4Label,
 		[ T.newColSamelineArg(env.tablo1.alias, env.header2.alias) ],
 		function (data) { return data + 1 }
-	).value;
+	);
 	
 	return env;
 }
 
 describe ("newReactMap", function () {
-	var res ;
+	var reactMap ;
 	
 	it("newReactMap()", function() {
-		res = T.newReactMap();
+		reactMap = T.newReactMap();
 	});
 	
 	it("result value", function() {
-		assert.equal(res.__proto__, Map.prototype);
-		assert.isEmpty(res);
+		assert.equal(Object.getPrototypeOf(reactMap), Map.prototype);
+		assert.isEmpty(reactMap);
 	});
 });
 
@@ -136,7 +136,7 @@ describe ("newReactKey", function () {
 
 
 describe ("newReaction", function () {
-	var reactMap, reactKey1, reaction1, res;
+	var reactMap, reactKey1, reaction1;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -146,19 +146,16 @@ describe ("newReaction", function () {
 	});
 	
 	it("newReaction()", function() {
-		res = T.newReaction(reactMap, reactKey1, reaction1);
+		T.newReaction(reactMap, reactKey1, reaction1);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("reactMap updated", function() {
 		assert.isTrue(reactMap.get(reactKey1).has(reaction1));
 	});
 });
 
 describe ("newReaction with bad reactKey", function () {
-	var reactMap, reactKey1, badReactKey1, reaction1, res;
+	var reactMap, reactKey1, badReactKey1, reaction1;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -169,19 +166,16 @@ describe ("newReaction with bad reactKey", function () {
 	});
 	
 	it("newReaction()", function() {
-		res = T.newReaction(reactMap, badReactKey1, reaction1);
+		T.newReaction(reactMap, badReactKey1, reaction1);
 	});
 	
-	it("result value", function() {
-		assert.isFalse(res.success);
-	});
 	it("reactMap not updated", function() {
 		assert.isFalse(T.hasReaction(reactMap, reactKey1, reaction1));
 	});
 });
 
 describe ("hasReactKey", function () {
-	var reactMap, reactKey1, res;
+	var reactMap, reactKey1, result;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -190,16 +184,16 @@ describe ("hasReactKey", function () {
 	});
 	
 	it("hasReactKey()", function() {
-		res = T.hasReactKey(reactMap, reactKey1);
+		result = T.hasReactKey(reactMap, reactKey1);
 	});
 	
 	it("result value", function() {
-		assert.isTrue(res);
+		assert.isTrue(result);
 	});
 });
 
 describe ("hasReaction", function () {
-	var reactMap, reactKey1, reaction1, res;
+	var reactMap, reactKey1, reaction1, result;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -210,16 +204,16 @@ describe ("hasReaction", function () {
 	});
 	
 	it("hasReaction()", function() {
-		res = T.hasReaction(reactMap, reactKey1, reaction1);
+		result = T.hasReaction(reactMap, reactKey1, reaction1);
 	});
 	
 	it("result value", function() {
-		assert.isTrue(res);
+		assert.isTrue(result);
 	});
 });
 
 describe ("getReactions", function () {
-	var reactMap, reactKey1, reaction1, res;
+	var reactMap, reactKey1, reaction1, reactions;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -230,19 +224,19 @@ describe ("getReactions", function () {
 	});
 	
 	it("getReactions()", function() {
-		res = T.getReactions(reactMap, reactKey1, reaction1);
+		reactions = T.getReactions(reactMap, reactKey1, reaction1);
 	});
 	
 	it("result value", function() {
-		assert.equal(res.__proto__, Set.prototype);
-		assert.equal(res.size, 1);
-		assert.isTrue(res.has(reaction1));
+		assert.equal(Object.getPrototypeOf(reactions), Set.prototype);
+		assert.equal(reactions.size, 1);
+		assert.isTrue(reactions.has(reaction1));
 	});
 });
 
 
 describe ("getReactKeysFromReaction", function () {
-	var reactMap, reactKey1, reaction1, res;
+	var reactMap, reactKey1, reaction1, keys;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -253,17 +247,17 @@ describe ("getReactKeysFromReaction", function () {
 	});
 	
 	it("getReactKeysFromReaction()", function() {
-		res = T.getReactKeysFromReaction(reactMap, reaction1);
+		keys = T.getReactKeysFromReaction(reactMap, reaction1);
 	});
 	
 	it("result value", function() {
-		assert.equal(1, res.size);
-		assert.isTrue(res.has(reactKey1));
+		assert.equal(1, keys.size);
+		assert.isTrue(keys.has(reactKey1));
 	});
 });
 
 describe("updReactKey", function () {
-	var reactMap, reactKey1, newReactKey1, reaction1, res;
+	var reactMap, reactKey1, newReactKey1, reaction1;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -275,12 +269,9 @@ describe("updReactKey", function () {
 	});
 	
 	it("updReactKey()", function() {
-		res = T.updReactKey(reactMap, reactKey1, newReactKey1);
+		T.updReactKey(reactMap, reactKey1, newReactKey1);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res);
-	});
 	it("reactMap updated", function () {
 		assert.isFalse(T.hasReactKey(reactMap, reactKey1));
 		assert.isTrue(T.hasReactKey(reactMap, newReactKey1));
@@ -289,7 +280,7 @@ describe("updReactKey", function () {
 });
 
 describe ("delReactKey", function () {
-	var reactMap, reactKey1, reaction1, res;
+	var reactMap, reactKey1, reaction1;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -300,19 +291,16 @@ describe ("delReactKey", function () {
 	});
 	
 	it("delReactKey()", function() {
-		res = T.delReactKey(reactMap, reactKey1);
+		T.delReactKey(reactMap, reactKey1);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res);
-	});
 	it("reactMap updated", function () {
 		assert.isFalse(T.hasReactKey(reactMap, reactKey1));
 	});
 });
 
 describe ("delReaction", function () {
-	var reactMap, reactKey1, reaction1, res;
+	var reactMap, reactKey1, reaction1;
 	
 	before(function() {
 		reactKey1 = "key1";
@@ -323,12 +311,9 @@ describe ("delReaction", function () {
 	});
 	
 	it("delReaction()", function() {
-		res = T.delReaction(reactMap, reactKey1, reaction1);
+		T.delReaction(reactMap, reactKey1, reaction1);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res);
-	});
 	it("reactMap updated", function () {
 		assert.isFalse(
 			T.hasReaction(reactMap, reactKey1, reaction1)
@@ -366,7 +351,7 @@ describe ("delReactionFromAllKeys", function () {
 
 describe("newTablo() basique", function () {
 
-	var tabenv, resTablo, tablo, tabloAlias, tabloLabel;
+	var tabenv, tablo, tabloAlias, tabloLabel;
 
 	before(function() {
 		tabloAlias = "tablo1";
@@ -375,12 +360,10 @@ describe("newTablo() basique", function () {
 	});
 	
 	it("newTablo()", function () {
-		resTablo = T.newTablo(tabenv, tabloAlias, tabloLabel);
-		tablo = resTablo.value;
+		tablo = T.newTablo(tabenv, tabloAlias, tabloLabel);
 	});
 	
 	it("return value", function () {	
-		assert.isTrue(resTablo.success);
 		assert.equal(tablo.alias, tabloAlias);
 		assert.equal(tablo.label, tabloLabel); 
 	});
@@ -391,7 +374,7 @@ describe("newTablo() basique", function () {
 
 describe("newDataHeader", function () {
 
-	var env, header, headerAlias, headerLabel, headerFullAlias, res;
+	var env, header, headerAlias, headerLabel, headerFullAlias;
 		
 	before(function () {
 		env = makenv1Tablo();
@@ -401,12 +384,10 @@ describe("newDataHeader", function () {
 	});
 
 	it("newDataHeader()", function () {
-		res = T.newDataHeader(env.tabenv, env.tablo1, headerAlias, headerLabel);
-		header = res.value;
+		header = T.newDataHeader(env.tabenv, env.tablo1, headerAlias, headerLabel);
 	});
 	
 	it("return value", function () { 
-		assert.isTrue(res.success);
 		assert.equal(header.alias, headerAlias);
 		assert.equal(header.label, headerLabel);
 		assert.equal(header.type, T.DATA_HEADER);
@@ -445,7 +426,7 @@ describe("newColSamelineArg()", function () {
 describe("newFuncHeader", function () {
 
 	var env, header2, header2Alias, header2Label, header2FullAlias, 
-		header2Args, header2Func, res;
+		header2Args, header2Func;
 
 	before(function () {
 		env = makenv1Tablo1Data1Line();
@@ -459,14 +440,12 @@ describe("newFuncHeader", function () {
 	});
 		
 	it("newFuncHeader()", function () {
-		res = T.newFuncHeader(
+		header2 = T.newFuncHeader(
 			env.tabenv, env.tablo1, 
 			header2Alias, header2Label, header2Args, header2Func);
-		header2 = res.value;
 	});
 	
 	it("return value", function () { 
-		assert.isTrue(res.success);
 		assert.equal(header2.alias, header2Alias);
 		assert.equal(header2.label, header2Label);
 		assert.equal(header2.type, T.FUNC_HEADER);
@@ -500,21 +479,17 @@ describe("newFuncHeader", function () {
 
 describe("newLine()", function () {
 
-	var env, resNewLine1, resNewLine2;
+	var env;
 
 	before(function () {
 		env = makenv2Tablo1Func1Line();
 	});
 		
 	it("newLine()", function () {
-		resNewLine1 = T.newLine(env.tabenv, env.tablo1);
-		resNewLine2 = T.newLine(env.tabenv, env.tablo2);
+		T.newLine(env.tabenv, env.tablo1);
+		T.newLine(env.tabenv, env.tablo2);
 	});
 	
-	it("return value", function () {
-		assert.isTrue(resNewLine1.success);
-		assert.isTrue(resNewLine2.success);
-	});
 	it("tablo updated", function () {
 		// the number of lines is two because one line existed in env
 		assert.equal(env.tablo1.data.length, 2);
@@ -527,7 +502,7 @@ describe("newLine()", function () {
 
 describe("newHeaderArg() avec zéro arg initialement", function () {
 
-	var env, header2, header2FullAlias, newArg, res;
+	var env, header2, header2FullAlias, newArg;
 
 	before(function () {
 		env = makenv1Tablo1Data1Line();
@@ -539,17 +514,14 @@ describe("newHeaderArg() avec zéro arg initialement", function () {
 		header2 = T.newFuncHeader(
 			env.tabenv, env.tablo1, header2Alias, 
 			header2Label, header2Args, header2Func
-		).value;
+		);
 		newArg = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
 	});
 		
 	it("newHeaderArg()", function () {
-		res = T.newHeaderArg(env.tabenv, env.tablo1, header2, newArg);
+		T.newHeaderArg(env.tabenv, env.tablo1, header2, newArg);
 	});
 	
-	it("return value", function () {
-		assert.isTrue(res.success);
-	});
 	it("header updated", function () {
 		assert.equal(header2.args.length, 1);
 		assert.equal(header2.args[0], newArg);
@@ -617,27 +589,26 @@ describe("getCell()", function() {
 });
 
 describe("getCellByAliases()", function() {
-	var env,res;
+	var env, cell;
 	
 	before(function () {
 		env = makenv1Tablo1Data1Line();
 	});
 	
 	it("getCellByAliases()", function() {
-		res = T.getCellByAliases(
+		cell = T.getCellByAliases(
 			env.tabenv, env.tablo1.alias, env.header1.alias, 0);
 	});
 	
 	it("return value", function () {
-		assert.isTrue(res.success);
-		assert.equal(res.value, 33);
+		assert.equal(cell, 33);
 	});
 });
 
 describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo1 alias", 
 	function () {
 	
-		var env, newTablo1Alias, res,
+		var env, newTablo1Alias,
 			oldHeader1FullAlias, newHeader1FullAlias;
 		
 		before(function(){
@@ -649,12 +620,9 @@ describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo1 alias",
 		});
 		
 		it("updTabloAlias()", function() {
-			res = T.updTabloAlias(env.tabenv, env.tablo1, newTablo1Alias);
+			T.updTabloAlias(env.tabenv, env.tablo1, newTablo1Alias);
 		});
 		
-		it("return value", function() {
-			assert.isTrue(res.success);
-		});
 		it("tablo1 updated", function() {
 			assert.equal(env.tablo1.alias, newTablo1Alias);
 		});
@@ -680,7 +648,7 @@ describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo1 alias",
 describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo2 alias", 
 	function () {
 	
-		var env, newTablo2Alias, res,
+		var env, newTablo2Alias,
 			oldHeader2FullAlias, newHeader2FullAlias;
 		
 		before(function(){
@@ -692,12 +660,9 @@ describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo2 alias",
 		});
 		
 		it("updTabloAlias()", function() {
-			res = T.updTabloAlias(env.tabenv, env.tablo2, newTablo2Alias);
+			T.updTabloAlias(env.tabenv, env.tablo2, newTablo2Alias);
 		});
 		
-		it("return value", function() {
-			assert.isTrue(res.success);
-		});
 		it("tablo2 updated", function() {
 			assert.equal(env.tablo2.alias, newTablo2Alias);
 		});
@@ -717,21 +682,18 @@ describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo2 alias",
 
 describe("updTabloLabel()", function () {
 
-	var tablo, newLabel, res;
+	var tablo, newLabel;
 	
 	before(function() {
 		var tabenv = T.newTabenv();
-		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1").value;
+		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1");
 		newLabel = "Tablo 1 new label";
 	});
 
 	it("updTabloLabel()", function () {
-		res = T.updTabloLabel(tablo, newLabel);
+		T.updTabloLabel(tablo, newLabel);
 	});
 	
-	it("result value", function () {
-		assert.isTrue(res.success);
-	});
 	it("tablo updated", function () {
 		assert.equal(tablo.label, newLabel);
 	});
@@ -739,20 +701,17 @@ describe("updTabloLabel()", function () {
 
 describe("updTabloDisplayNumLines()", function () {
 
-	var tablo, res;
+	var tablo;
 	
 	before(function() {
 		var tabenv = T.newTabenv();
-		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1").value;
+		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1");
 	});
 
 	it("updTabloDisplayNumLines()", function () {
-		res = T.updTabloDisplayNumLines(tablo, false);
+		T.updTabloDisplayNumLines(tablo, false);
 	});
 	
-	it("result value", function () {
-		assert.isTrue(res.success);
-	});
 	it("tablo updated", function () {
 		assert.isFalse(tablo.displayNumLines);
 	});
@@ -763,7 +722,7 @@ describe(
 	"update header1 alias", 
 	function() {
 
-		var env, newHeader1Alias, oldHeader1FullAlias, newHeader1FullAlias, res;
+		var env, newHeader1Alias, oldHeader1FullAlias, newHeader1FullAlias;
 
 		before(function() { 
 			env = makenv2Tablo1Func1Line() 
@@ -774,13 +733,10 @@ describe(
 		});
 
 		it("updHeaderAlias()", function() {
-			res = T.updHeaderAlias(
+			T.updHeaderAlias(
 				env.tabenv, env.tablo1, env.header1, newHeader1Alias);
 		});
 
-		it("return value", function() {
-			assert.isTrue(res.success);
-		});
 		it("header1 updated", function () {
 			assert.equal(env.header1.alias, newHeader1Alias);
 		});
@@ -804,7 +760,7 @@ describe(
 	"updHeaderAlias() tablo2 header2 pointing to tablo1 header1. " +
 	"update header2 alias", 
 	function() {
-		var env, newHeader2Alias, oldHeader2FullAlias, newHeader2FullAlias, res;
+		var env, newHeader2Alias, oldHeader2FullAlias, newHeader2FullAlias;
 
 		before(function() { 
 			env = makenv2Tablo1Func1Line() 
@@ -815,13 +771,10 @@ describe(
 		});
 
 		it("updHeaderAlias()", function() {
-			res = T.updHeaderAlias(
+			T.updHeaderAlias(
 				env.tabenv, env.tablo2, env.header2, newHeader2Alias);
 		});
 
-		it("return value", function() {
-			assert.isTrue(res.success);
-		});
 		it("header2 updated", function () {
 			assert.equal(env.header2.alias, newHeader2Alias);
 		});
@@ -839,43 +792,37 @@ describe(
 });
 
 describe("updHeaderLabel()", function () {
-	var header1, newLabel, res;
+	var header1, newLabel;
 
 	before(function() {
 		var tabenv = T.newTabenv();
-		var tablo1 = T.newTablo(tabenv, "tablo1", "Tablo 1").value;
+		var tablo1 = T.newTablo(tabenv, "tablo1", "Tablo 1");
 		var oldLabel = "Old Label";
 		newLabel = "New Label";
-		header1 = T.newDataHeader(tabenv, tablo1, "header1", oldLabel).value;
+		header1 = T.newDataHeader(tabenv, tablo1, "header1", oldLabel);
 	});
 
 	it("updHeaderLabel()", function() {
-		res = T.updHeaderLabel(header1, newLabel);
+		T.updHeaderLabel(header1, newLabel);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("header updated", function() {
 		assert.equal(header1.label, newLabel);
 	});
 });
 
 describe("updHeaderType() DATA to FUNC", function () {
-	var env, res;
+	var env;
 
 	before(function() { 
 		env = makenv2Tablo1Func1Line() ;
 	});
 
 	it("updHeaderType()", function() {
-		res = T.updHeaderType(
+		T.updHeaderType(
 			env.tabenv, env.tablo1, env.header1, T.FUNC_HEADER);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("header updated", function() {
 		assert.equal(env.header1.type, T.FUNC_HEADER);
 		assert.equal(env.header1.args.length, 0);
@@ -889,20 +836,17 @@ describe("updHeaderType() DATA to FUNC", function () {
 
 
 describe("updHeaderType() FUNC to DATA", function () {
-	var env, res;
+	var env;
 
 	before(function() {
 		env = makenv2Tablo1Func1Line() ;
 	});
 
 	it("updHeaderType()", function() {
-		res = T.updHeaderType(
+		T.updHeaderType(
 			env.tabenv, env.tablo2, env.header2, T.DATA_HEADER);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("header updated", function() {
 		assert.equal(env.header2.type, T.DATA_HEADER);
 		assert.isUndefined(env.header2.args);
@@ -914,19 +858,16 @@ describe("updHeaderType() FUNC to DATA", function () {
 });
 
 describe("updHeaderOrder()", function() {
-	var env, res;
+	var env;
 
 	before(function() {
 		env = makenv1Tablo2Data1Line();
 	});
 
 	it("updHeaderOrder()", function () {
-		res = T.updHeaderOrder(env.tabenv, env.tablo1, env.header2, 0);
+		T.updHeaderOrder(env.tabenv, env.tablo1, env.header2, 0);
 	});
 	
-	it("return value", function () {
-		assert.isTrue(res.success);
-	});
 	it("headers updated", function () {
 		assert.equal(env.header1.order, 1);
 		assert.equal(env.header2.order, 0);
@@ -940,7 +881,7 @@ describe("updHeaderOrder()", function() {
 });
 
 describe("updHeaderArgs()", function() {
-	var env, newArg, res;
+	var env, newArg;
 	
 	before(function() {
 		env = makenv2Tablo2Data1Func1Line();
@@ -948,12 +889,9 @@ describe("updHeaderArgs()", function() {
 	
 	it("updHeaderArgs()", function() {
 		newArg = T.newColSamelineArg(env.tablo1.alias, env.header2.alias);
-		res = T.updHeaderArgs(env.tabenv, env.tablo2, env.header3, [newArg]);
+		T.updHeaderArgs(env.tabenv, env.tablo2, env.header3, [newArg]);
 	});
 	
-	it("return value", function() {
-		assert.isTrue(res.success);
-	});
 	it("header updated", function() {
 		assert.equal(env.header3.args.length, 1);
 		assert.equal(env.header3.args[0], newArg);
@@ -978,7 +916,7 @@ describe("updHeaderArgs()", function() {
 });
 
 describe("updHeaderFunc()", function() {
-	var env, newFunc, res;
+	var env, newFunc;
 	
 	before(function () {
 		env = makenv2Tablo1Func1Line();
@@ -986,12 +924,9 @@ describe("updHeaderFunc()", function() {
 	
 	it("updHeaderFunc()", function() {
 		newFunc = function(data) { return data + 1000 };
-		res = T.updHeaderFunc(env.tabenv, env.tablo2, env.header2, newFunc);
+		T.updHeaderFunc(env.tabenv, env.tablo2, env.header2, newFunc);
 	});
 	
-	it("return value", function() {
-		assert.isTrue(res.success);
-	});
 	it("header updated", function() {
 		assert.equal(env.header2.func, newFunc);
 	});
@@ -1004,7 +939,7 @@ describe("updHeaderFunc()", function() {
 });
 
 describe("updFuncHeaderAllCells()", function() {
-	var env, res;
+	var env;
 	
 	before(function() {
 		env = makenv2Tablo1Func1Line();
@@ -1012,12 +947,9 @@ describe("updFuncHeaderAllCells()", function() {
 	});
 	
 	it("updFuncHeaderAllCells()", function() {
-		res = T.updFuncHeaderAllCells(env.tabenv, env.tablo2, env.header2);
+		T.updFuncHeaderAllCells(env.tabenv, env.tablo2, env.header2);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("tablo data updated", function () {
 		assert.equal(
 			T.getCell(env.tablo2, env.header2, 0),
@@ -1027,7 +959,7 @@ describe("updFuncHeaderAllCells()", function() {
 });
 
 describe("updTabloAllFuncHeadersAllCells()", function() {
-	var env, res;
+	var env;
 	
 	before(function() {
 		env = makenv2Tablo2Data2Func1Line();
@@ -1036,12 +968,9 @@ describe("updTabloAllFuncHeadersAllCells()", function() {
 	});
 	
 	it("updTabloAllFuncHeadersAllCells()", function() {
-		res = T.updTabloAllFuncHeadersAllCells(env.tabenv, env.tablo2);
+		T.updTabloAllFuncHeadersAllCells(env.tabenv, env.tablo2);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("tablo data updated", function () {
 		assert.equal(
 			T.getCell(env.tablo2, env.header3, 0),
@@ -1055,7 +984,7 @@ describe("updTabloAllFuncHeadersAllCells()", function() {
 });
 
 describe("updLineAllFuncCells()", function() {
-	var env, res;
+	var env;
 	
 	before(function() {
 		env = makenv2Tablo2Data2Func1Line();
@@ -1064,12 +993,9 @@ describe("updLineAllFuncCells()", function() {
 	});
 	
 	it("updLineAllFuncCells()", function() {
-		res = T.updLineAllFuncCells(env.tabenv, env.tablo2, 0);
+		T.updLineAllFuncCells(env.tabenv, env.tablo2, 0);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("tablo data updated", function () {
 		assert.equal(
 			T.getCell(env.tablo2, env.header3, 0),
@@ -1083,7 +1009,7 @@ describe("updLineAllFuncCells()", function() {
 });
 
 describe("updFuncCell()", function() {
-	var env, res;
+	var env;
 	
 	before(function() {
 		env = makenv2Tablo1Func1Line();
@@ -1091,12 +1017,9 @@ describe("updFuncCell()", function() {
 	});
 	
 	it("updFuncCell()", function() {
-		res = T.updFuncCell(env.tabenv, env.tablo2, env.header2, 0);
+		T.updFuncCell(env.tabenv, env.tablo2, env.header2, 0);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("tablo data updated", function () {
 		assert.equal(
 			T.getCell(env.tablo2, env.header2, 0),
@@ -1123,19 +1046,16 @@ describe("updDataCell()", function() {
 
 
 describe("delTablo", function() {
-	var env, res;
+	var env;
 	
 	before(function() {
 		env = makenv2Tablo1Func1Line();
 	});
 	
 	it("delTablo()", function() {
-		res = T.delTablo(env.tabenv, env.tablo1);
+		T.delTablo(env.tabenv, env.tablo1);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("tablo deleted", function() {
 		assert.isFalse(env.tabenv.tablos.has(env.tablo1.alias));
 	});
@@ -1154,19 +1074,16 @@ describe("delTablo", function() {
 });
 
 describe("delHeader", function() {
-	var env, res;
+	var env;
 	
 	before(function() {
 		env = makenv2Tablo1Func1Line();
 	});
 	
 	it("delHeader()", function() {
-		res = T.delHeader(env.tabenv, env.tablo1, env.header1);
+		T.delHeader(env.tabenv, env.tablo1, env.header1);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("header deleted", function() {
 		assert.isEmpty(env.tablo1.headers);
 	});
@@ -1185,19 +1102,16 @@ describe("delHeader", function() {
 });
 
 describe("delArgFromHeader", function() {
-	var env, res;
+	var env;
 	
 	before(function() {
 		env = makenv2Tablo1Func1Line();
 	});
 	
 	it("delArgFromHeader()", function() {
-		res = T.delArgFromHeader(env.tabenv, env.tablo2, env.header2, 0);
+		T.delArgFromHeader(env.tabenv, env.tablo2, env.header2, 0);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("arg deleted", function() {
 		assert.isEmpty(env.header2.args);
 	});
@@ -1209,19 +1123,16 @@ describe("delArgFromHeader", function() {
 });
 
 describe("delAllArgsFromHeader", function() {
-	var env, res;
+	var env;
 	
 	before(function() {
 		env = makenv2Tablo1Func1Line();
 	});
 	
 	it("delAllArgsFromHeader()", function() {
-		res = T.delAllArgsFromHeader(env.tabenv, env.tablo2, env.header2);
+		T.delAllArgsFromHeader(env.tabenv, env.tablo2, env.header2);
 	});
 	
-	it("result value", function() {
-		assert.isTrue(res.success);
-	});
 	it("arg deleted", function() {
 		assert.isEmpty(env.header2.args);
 	});

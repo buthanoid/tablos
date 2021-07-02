@@ -11,19 +11,8 @@ export {
 	COL_SAMELINE_ARG,
 	TAB_ARG_TYPES,
 	// utilities
-	newRes,
 	parseStrToFunction,
 	aliasesToStr,
-	// check functions
-	checkUpdTabloAlias,
-	checkTabloLabel,
-	checkTabloDisplayNumLines,
-	checkUpdHeaderAlias,
-	checkHeaderLabel,
-	checkHeaderType,
-	checkHeaderOrder,
-	checkHeaderArgs,
-	checkHeaderFunc,
 	// reactMap functions
 	newReactMap,
 	newReactKey,
@@ -38,7 +27,9 @@ export {
 	delReactionFromAllKeys,
 	// new functions
 	newTabenv, 
+	checkNewTablo,
 	newTablo,
+	checkNewDataHeader,
 	newDataHeader,
 	newColSamelineArg,
 	newFuncHeader,
@@ -96,70 +87,72 @@ const NULL_ARG = -1 ;
 const COL_SAMELINE_ARG = 0 ;
 const TAB_ARG_TYPES = [ NULL_ARG, COL_SAMELINE_ARG ];
 
+const ERR = {
+	REACT_MAP: { 
+		NOT_REACT_MAP: "ERR.REACT_MAP.NOT_REACT_MAP"
+	},
+	TABENV: { 
+		NOT_TABENV: "ERR.TABENV.NOT_TABENV"
+	},
+	TABLO: {
+		ALIAS: {
+			EMPTY: "ERR.TABLO.ALIAS.EMPTY",
+			NOT_STRING: "ERR.TABLO.ALIAS.NOT_STRING",
+			EXISTING: "ERR.TABLO.ALIAS.EXISTING"
+		},
+		LABEL: {
+			NOT_STRING: "ERR.TABLO.LABEL.NOT_STRING",
+			EMPTY: "ERR.TABLO.LABEL.EMPTY"
+		}
+	},
+	HEADER: {
+		ALIAS: {
+			EMPTY: "ERR.HEADER.ALIAS.EMPTY",
+			NOT_STRING: "ERR.HEADER.ALIAS.NOT_STRING",
+			EXISTING: "ERR.HEADER.ALIAS.EXISTING"
+		},
+		LABEL: {
+			NOT_STRING: "ERR.HEADER.LABEL.NOT_STRING",
+			EMPTY: "ERR.HEADER.LABEL.EMPTY"
+		},
+		TYPE: {
+			UNKNOWN: "ERR.HEADER.TYPE.UNKNOWN"
+		},
+		DATA_TYPE: {
+			UNKNOWN: "ERR.HEADER.DATA_TYPE.UNKNOWN"
+		},
+		FUNCTION: {
+			NOT_FUNCTION: "ERR.HEADER.FUNCTION.NOT_FUNCTION",
+			PARSE_ERROR: "ERR.HEADER.FUNCTION.PARSE_ERROR"
+		},
+		ARGS: {
+			NOT_ARRAY: "ERR.HEADER.ARGS.NOT_ARRAY"
+		},
+		ARG: {
+			COL_SAME_LINE: {
+				NOT_COL_SAME_LINE:
+					"ERR.HEADER.ARG.COL_SAME_LINE.NOT_COL_SAME_LINE",
+				NON_EXISTING_TABLO_ALIAS: 
+					"ERR.HEADER.ARG.COL_SAME_LINE.NON_EXISTING_TABLO_ALIAS",
+				NON_EXISTING_HEADER_ALIAS: 
+					"ERR.HEADER.ARG.COL_SAME_LINE.NON_EXISTING_HEADER_ALIAS"
+			}
+		}
+	}
+};
 
 // ================= UTILITIES =======================
 
-// structure that represents a success (or a failure)
-// the value field is optional. it can be full or null, no matter of success
-// the errMsg is filled with informative string in case of failure
-// the warnMsg is filled with informative string, about a noncritical error
-// a res object is meant to be sent to a function that will modify it in place
-function newRes () { 
-	return { 
-		success: true, 
-		value: null,
-		errors: "",
-		warnings: "",
-		addError: function (errMsg) {
-			this.success = false;
-			this.errors += errMsg + " ";
-		},
-		addWarn: function (warnMsg) { 
-			this.warnings += warnMsg + " "; 
-		},
-		combine: function (otherRes) {
-			this.success = this.success && otherRes.success ;
-			this.value = otherRes.value;
-			this.errors += otherRes.errors ;
-			this.warnings += otherRes.warnings ;
-		}
-	}
-}
-
 function parseStrToFunction (strFunc) {
-
-	var res = newRes();
-
-	// non empty
-	if (strFunc == "") res.addError("La fonction ne doit pas être vide.");
-	
-	// no parse errors
-	else {
-		try {
-			var parsedFunc = new Function(
-				"\"use strict\"; return (" + strFunc + ");"
-			) ();
-			
-			// parsed must have type function
-			if (typeof parsedFunc != "function") {
-				res.addError( 
-					"Le parsage de la fonction doit donner " +
-					"le type fonction, et non le type : " + 
-					(typeof parsedFunc) + "."
-				);
-			}
-			
-			if (res.success) res.value = parsedFunc;
-		}
-		catch (error) {
-			addError(
-				"Le parsage de la fonction donne l'erreur suivante : " +
-				error.toString() + "."
-			);
-		}
+	try {
+		var parsedFunc = new Function(
+			"\"use strict\"; return (" + func + ");"
+		) ();
+		
+		if (typeof parsedFunc == "function") return parsedFunc;
+		else throw (ERR.HEADER.FUNC.NOT_FUNCTION);
 	}
-	
-	return res;
+	catch (error) { throw (ERR.HEADER.FUNC.PARSE_ERROR) };
 }
 
 // convert alias object, to alias string
@@ -204,165 +197,15 @@ function arrayMove (array, oldIndex, newIndex) {
 	}
 }
 
-
-// ==================== CHECK FUNCTIONS =======================
-
-// checks the alias of a new tablo 
-// note : there exists a different check for an update of the alias of a tablo
-function checkNewTabloAlias (tabenv, alias, res) {
-
-	// non empty
-	if (alias == "") res.addError("L'alias de tablo ne doit pas être vide.");
-	
-	// unique in the tabenv
-	else if (tabenv.tablos.has(alias)) {
-		res.addError(
-			"L'alias de tablo doit être unique au sein de l'environnement. "
-		);
-	}
-	
-	// TODO : check that only latin small letter, and digits but not first
-}
-
-function checkUpdTabloAlias (tabenv, oldAlias, newAlias, res) {
-
-	// non empty
-	if (newAlias == "") res.addError("L'alias de tablo ne doit pas être vide.");
-	
-	// unique in the tabenv
-	else if (oldAlias != newAlias && tabenv.tablos.has(newAlias)) {
-		res.addError(
-			"L'alias de tablo doit être unique au sein de l'environnement. "
-		);
-	}
-	
-	// TODO : check that only latin small letter, and digits but not first
-}
-
-// checks the label of a tablo
-function checkTabloLabel (label, res) {
-	// non empty
-	if (label == "") res.addError("Le label de tablo ne doit pas être vide.");
-}
-
-function checkTabloDisplayNumLines (displayNumLines, res) {
-	// boolean type
-	if (typeof displayNumLines != "boolean") {
-		res.addError(
-			"Le type de displayNumLines doit être boolean " +
-			"et non : " + (typeof displayNumLines) + "."
-		);
-	}
-}
-
-// check alias a of a new header
-// note that the check for the update of alias of existing header is different
-function checkNewHeaderAlias (tablo, alias, res) {
-	// non empty
-	if (alias == "") res.addError("L'alias de header ne doit pas être vide.");
-	
-	// unique in the tablo
-	else if (tablo.getHeaderByAlias(alias)) {
-		res.addError(
-			"L'alias de header " + alias + " existe déjà " +
-			"dans le tablo " + tablo.alias + "."
-		);
-	}
-	
-	// TODO : check that only latin small letter, and digits but not first
-}
-
-function checkUpdHeaderAlias (tablo, oldAlias, newAlias, res) {
-	// non empty
-	if (newAlias == "") res.addError("L'alias de header ne doit pas être vide.");
-	
-	// unique in the tablo
-	else if (oldAlias != newAlias && tablo.getHeaderByAlias(newAlias)) {
-		res.addError(
-			"L'alias de header doit être unique au sein du tablo. "
-		);
-	}
-	
-	// TODO : check that only latin small letter, and digits but not first
-}
-
-// checks the label of a header
-function checkHeaderLabel (label, res) {
-	// non empty
-	if (label == "") res.addError("Le label de header ne doit pas être vide.");
-}
-
-// checks the type of a header
-function checkHeaderType (type, res) {
-	if (! TAB_HEADER_TYPES.includes(type)) {
-		res.addError(
-			"Le type de header doit être parmi les suivants : " + 
-			TAB_HEADER_TYPES.toString() + "."
-		);
-	}
-}
-
-// checks the order of a header
-function checkHeaderOrder (tablo, order, res) {
-	if (order < 0 || order >= tablo.headers.length) {
-		res.addError(
-			"L'ordre doit être entre 0 et " + (tablo.headers.length - 1) + ". "
-		);
-	}
-}
-
-// check arg of a func header
-function checkHeaderArg (tablos, arg, res) {
-	switch (arg.type) {
-		case NULL_ARG: break;
-		case COL_SAMELINE_ARG:
-			// existing tablo
-			var tablo = tablos.get(arg.alias.tablo);
-			if (tablo === undefined) {
-				res.addError(
-					"Le tablo spécifié par l'alias " + arg.alias.tablo + 
-					" dans l'argument du header est inconnu."
-				);
-			}
-			// existing header
-			else {
-				var header = tablo.getHeaderByAlias(arg.alias.header);
-				if (header === undefined) {
-					res.addError(
-						"Le header spécifié par l'alias " + 
-						aliasesToStr(arg.alias.tablo, arg.alias.header) +
-						" dans l'argument du header est inconnu."
-					);
-				}
-			}
-			break;
-		default: 
-			res.addError(
-				"Le type de l'argument est inconnu. Il vaut " +
-				arg.type + " et devrait être parmi les valeurs suivantes : " +
-				TAB_ARG_TYPES.toString() + "."
-			); 	
-	}
-}
-
-// check all args of a func header
-function checkHeaderArgs (tablos, args, res) {
-	args.forEach(function (arg) {
-		checkHeaderArg(tablos, arg, res);
-	});
-}
-
-// check the func of a func header
-function checkHeaderFunc (func, res) {
-
-	// function type
-	if (typeof func != "function") {
-		res.addError("La fonction doit être de type : function.");
-	}
-}
-
-
 // ==================== REACTS FUNCTIONS =======================
+
+// checks that arg is a reactMap 
+// (it just checks that it is a Map, actually
+//  there is no checks on keys or values)
+function checkIsReactMap (reactMap) {
+	if (Object.getPrototypeOf(reactMap) === Map.prototype) return [];
+	else return [ ERR.REACT_MAP.NOT_REACT_MAP ];
+}
 
 // a ReactMap is a Map, from Alias string, to Alias string set
 // exemple { "tablo1.header1" -> { "tablo2.header2", "tablo2.header3" }}
@@ -374,12 +217,10 @@ function newReactKey (reactMap, reactKey) {
 
 // a reaction is an element of the set of a reactKey
 function newReaction (reactMap, reactKey, reaction) {
-	var res = newRes();
 	if (hasReactKey(reactMap, reactKey)) {
 		reactMap.get(reactKey).add(reaction);
 	}
-	else res.addError("Could not find reactKey " + reactKey + " in reactMap.");
-	return res;
+	//else res.addError("Could not find reactKey " + reactKey + " in reactMap.");
 }
 
 function hasReactKey (reactMap, reactKey) { return reactMap.has(reactKey) }
@@ -441,6 +282,19 @@ function delReactionFromAllKeys (reactMap, reaction) {
 
 // ==================== NEW FUNCTIONS =======================
 
+// check that a value is a tabenv 
+function checkIsTabenv (tabenv) {
+	if (
+		tabenv.hasOwnProperty("tablos") &&
+		tabenv.hasOwnProperty("reactMap") &&
+		Object.getPrototypeOf(tabenv.tablos) === Map.prototype &&
+		checkIsReactMap(tabenv.reactMap)
+	){ 
+		return [] 
+	} 
+	else return [ ERR.TABENV.NOT_TABENV ] ; 
+}
+
 // create a new TabloEnvironment
 function newTabenv () {
 	return {
@@ -449,72 +303,139 @@ function newTabenv () {
 	}
 }
 
+// checks the alias for a tablo
+function checkTabloAlias (alias) {
+	if (typeof alias != "string") return [ ERR.TABLO.ALIAS.NOT_STRING ];
+	else if (alias.length == 0) return [ ERR.TABLO.ALIAS.EMPTY ];
+	// TODO : check that only latin small letter, and digits but not first
+	else return [];
+}
+
+// checks the label for a tablo
+function checkTabloLabel (label) {
+	if (typeof label != "string") return [ ERR.TABLO.LABEL.NOT_STRING ];
+	else if (label.length == 0) return [ ERR.TABLO.LABEL.EMPTY ];
+	else return [];
+}
+
+// check args for newTablo()
+// tabenv is not checked
+function checkNewTablo (tabenv, alias, label) {
+	var errsAlias = checkTabloAlias(alias) ;
+	if (tabenv.tablos.has(alias)) {
+		errsAlias.push(ERR.TABLO.ALIAS.EXISTING);
+	}
+	var errsLabel = checkTabloLabel(label);
+	return errsAlias.concat(errsLabel);
+}
+
 // create a new tablo and add it to tabenv
 function newTablo (tabenv, alias, label) {
+
+		
+	var tablo = {
+		alias: alias,
+		label: label,
+		headers: [],
+		data:[],
+		displayNumLines: true,
+		
+		getHeaderByAlias: function (targetHeaderAlias) {
+			return this.headers.find(function (header) {
+				return header.alias == targetHeaderAlias;
+			});
+		}
+	};
 	
-	var res = newRes();
-	checkNewTabloAlias(tabenv, alias, res);
-	checkTabloLabel(label, res);
-	
-	if (res.success) {
-		
-		var tablo = {
-			alias: alias,
-			label: label,
-			headers: [],
-			data:[],
-			displayNumLines: true,
-			
-			getHeaderByAlias: function (targetHeaderAlias) {
-				return this.headers.find(function (header) {
-					return header.alias == targetHeaderAlias;
-				});
-			}
-		};
-		
-		tabenv.tablos.set(alias, tablo);
-		
-		res.value = tablo;
+	tabenv.tablos.set(alias, tablo);
+
+	return tablo;
+}
+
+// check alias a of a new header
+function checkHeaderAlias (alias) {
+	if (typeof alias != "string") return [ ERR.HEADER.ALIAS.NOT_STRING ];
+	else if (alias.length == 0) return [ ERR.HEADER.ALIAS.EMPTY ];
+	// TODO : check that only latin small letter, and digits but not first
+	else return [];
+}
+
+// checks the label of a header
+function checkHeaderLabel (label) {
+	if (typeof label != "string") return [ ERR.HEADER.LABEL.NOT_STRING ];
+	else if (label.length == 0) return [ ERR.HEADER.LABEL.EMPTY ];
+	else return [];
+}
+
+// checks the type of a header
+function checkHeaderType (type) {
+	if (! TAB_HEADER_TYPES.includes(type)) return [ ERR.HEADER.TYPE.UNKNOWN ];
+	else return [];
+}
+
+// check args for newHeader()
+// tabenv and tablo are not checked
+function checkNewHeader (tabenv, tablo, alias, label, type) {
+	var errsAlias = checkHeaderAlias(alias);
+	if (tablo.getHeaderByAlias(alias) != undefined) {
+		errsAlias.push(ERR.HEADER.ALIAS.EXISTING);
 	}
-	
-	return res;
+	var errsLabel = checkHeaderLabel(label);
+	var errsType = checkHeaderType(type);
+	return errsAlias.concat(errsLabel, errsType);
 }
 
 // create a new header and add it to a tablo
 function newHeader (tabenv, tablo, alias, label, type) {
 
-	var res = newRes();
-	checkNewHeaderAlias (tablo, alias, res);
-	checkHeaderLabel (label, res);
-	checkHeaderType (type, res);
+	var header = {
+		alias: alias,
+		label: label,
+		type: type,
+		order: tablo.headers.length
+	};
 	
-	if (res.success) {
-		var header = {
-			alias: alias,
-			label: label,
-			type: type,
-			order: tablo.headers.length
-		};
-		
-		tablo.headers.push(header);
-		newReactKey(tabenv.reactMap, aliasesToStr(tablo.alias, header.alias));
-		
-		res.value = header;
+	tablo.headers.push(header);
+	newReactKey(tabenv.reactMap, aliasesToStr(tablo.alias, header.alias));
+	
+	return header;
+}
+
+function checkHeaderDataType (dataType) {
+	if (! Object.values(DATA_TYPE).includes(dataType)) {
+		return [ ERR.HEADER.DATA_TYPE.UNKNOWN ];
 	}
-	
-	return res;
+	else return [];
+}
+
+// check args for checkNewDataHeader()
+// tabenv and tablo are not checked
+function checkNewDataHeader (tabenv, tablo, alias, label, dataType) {
+	var errsNewHeader = checkNewHeader(
+		tabenv, tablo, alias, label, DATA_HEADER);
+	var errsDataType = checkHeaderDataType(dataType);
+	return errsNewHeader.concat(errsDataType);
 }
 
 // create a new data header and add it to tablo
 function newDataHeader (tabenv, tablo, alias, label, dataType) {
-	var res = newHeader(tabenv, tablo, alias, label, DATA_HEADER);
-	if (! res.success) return res;
-	
-	var header = res.value;
+	var header = newHeader(tabenv, tablo, alias, label, DATA_HEADER);
 	header.dataType = dataType;
-	
-	return res;
+	return header;
 } 
+
+// check args for newColSamelineArg()
+function checkNewColSamelineArg (tabenv, tabloAlias, headerAlias) {
+	var tablo = tabenv.tablos.get(tabloAlias);
+	if (tablo == undefined) {
+		return [ ERR.HEADER.ARG.COL_SAME_LINE.NON_EXISTING_TABLO_ALIAS ];
+	}
+	var header = tablo.getHeaderByAlias(headerAlias);
+	if (header == undefined) {
+		return [ ERR.HEADER.ARG.COL_SAME_LINE.NON_EXISTING_HEADER_ALIAS ];
+	}
+	else return [];
+}
 
 // create a new arg with type COL_SAMELINE_ARG
 function newColSamelineArg(tabloAlias, headerAlias) {
@@ -527,23 +448,65 @@ function newColSamelineArg(tabloAlias, headerAlias) {
 	};
 }
 
+// check arg of a func header
+function checkHeaderArg (tabenv, arg) { switch (arg.type) {
+	case NULL_ARG: return [];
+	case COL_SAMELINE_ARG:
+		if (arg.hasOwnProperty("alias") &&
+			arg.alias.hasOwnProperty("tablo") &&
+			arg.alias.hasOwnProperty("header")
+		){
+			return checkNewColSamelineArg(
+				tabenv, arg.alias.tablo, arg.alias.header);
+		}
+		else return [ ERR.HEADER.ARG.COL_SAME_LINE.NOT_COL_SAME_LINE ];
+	default: return [ ERR.HEADER.ARG.UNKNOWN_TYPE ];
+}}
+
+// check all args of a func header
+// tabenv is not checked
+function checkHeaderArgs (tabenv, args) {
+	if (Object.getPrototypeOf(args) != Array.prototype) {
+		return [ ERR.HEADER.ARGS.NOT_ARRAY ];
+	}
+	else {
+		var errs = [];
+		args.forEach(function (arg) {
+			errs.concat(checkHeaderArg(tabenv, arg));
+		});
+		return errs;
+	}
+}
+
+// check the func of a func header
+function checkHeaderFunc (func) {
+	var parsedFunc ;
+	try { 
+		parsedFunc = parseStrToFunction(func);
+		return parsedFunc;
+	}
+	catch (error) { return [error]; }
+}
+
+// check args for newFuncHeader()
+// tabenv and tablo are not checked
+function checkNewFuncHeader (tabenv, tablo, alias, label, args, func) {
+	var errsNewHeader = checkNewHeader(
+		tabenv, tablo, alias, label, FUNC_HEADER);
+	var errsArgs = checkHeaderArgs (tabenv, args);
+	var errsFunc = checkHeaderFunc (func) ;
+	// TODO: check updFuncHeaderAllCells
+	return errsNewHeader.concat(errsArgs, errsFunc);
+}
+
 // create a new func header and add it to tablo
 function newFuncHeader (tabenv, tablo, alias, label, args, func) {
 
-	var res = newHeader(tabenv, tablo, alias, label, FUNC_HEADER);
+	var header = newHeader(tabenv, tablo, alias, label, FUNC_HEADER);
 	
-	if (! res.success) return res;
-	
-	var header = res.value;
 	header.args = args;
 	header.func = func;
-	
-	// check args and func
-	checkHeaderArgs	(tabenv.tablos, args, header);
-	checkHeaderFunc (func, header);
-	
-	if (! res.success) return res;
-	
+
 	// add reactions
 	var fullHeaderAlias = aliasesToStr(tablo.alias, alias); 
 	args.forEach(function (arg) {
@@ -551,42 +514,39 @@ function newFuncHeader (tabenv, tablo, alias, label, args, func) {
 			case NULL_ARG: break;
 			case COL_SAMELINE_ARG: 
 				var argAlias = aliasObjToStr(arg.alias);
-				res.combine(newReaction(
+				newReaction(
 					tabenv.reactMap, argAlias, fullHeaderAlias
-				));
+				);
 				break;
 			default: console.log("unknown arg type");
 		}
 	});
-	
-	if (! res.success) return res;
 
-	res.combine(updFuncHeaderAllCells (tabenv, tablo, header));
-	
-	res.value = header;
-	return res;
+	updFuncHeaderAllCells (tabenv, tablo, header);
+
+	return header;
 }
 
+// TODO: check updLineAllFuncCells
 // create a new line for a tablo
 function newLine (tabenv, tablo) {	
 	var line = new Array(tablo.headers.length);
 	line.fill(null);
 	tablo.data.push(line);
-	var res = newRes();
-	res.combine(updLineAllFuncCells(tabenv, tablo, tablo.data.length - 1));
-	return res;
+	updLineAllFuncCells(tabenv, tablo, tablo.data.length - 1);
+}
+
+// check args of newHeaderArg()
+// tabenv and tablo and header are not checked
+function checkNewHeaderArg (tabenv, tablo, header, newArg) {
+	if (header.type != FUNC_HEADER) return [ ERR.HEADER.NOT_FUNC_HEADER ];
+	else return checkHeaderArg (tabenv, arg);
+	// TODO: check updFuncHeaderAllCells
 }
 
 // add a new arg to a header 
 function newHeaderArg (tabenv, tablo, header, newArg) {
-	var res = newRes();
-	if (header.type != FUNC_HEADER) {
-		res.addError("header is not func type so has no args to update");
-	}
-	else checkHeaderArg (tabenv.tablos, newArg, res);
-	
-	if (! res.success) return res;
-	
+
 	// add arg to tab arg
 	header.args.push(newArg);
 	
@@ -596,16 +556,14 @@ function newHeaderArg (tabenv, tablo, header, newArg) {
 		case COL_SAMELINE_ARG: 
 			var argAliasStr = aliasObjToStr(newArg.alias);
 			var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
-			res.combine(newReaction(
+			newReaction(
 				tabenv.reactMap, argAliasStr, fullHeaderAlias
-			));
+			);
 			break;
-		default: console.log("unknown arg type");
+		default: throw ERR.HEADER.ARG.UNKNOWN_TYPE;
 	}
 	
-	res.combine(updFuncHeaderAllCells (tabenv, tablo, header));
-	
-	return res;
+	updFuncHeaderAllCells (tabenv, tablo, header);
 }
 
 // return a strict copy of the header arg
@@ -620,7 +578,7 @@ function copyArg (arg) {
 					header: arg.alias.header
 				}
 			};
-		default: console.log("unknown arg type");
+		default: throw ERR.HEADER.ARG.UNKNOWN_TYPE;
 	}
 }
 
@@ -632,46 +590,49 @@ function getCell (tablo, header, numLine) {
 	return tablo.data[numLine][header.order];
 }
 
+
+// check getCellByAliases()
+function checkGetCellByAliases (tabenv, tabloAlias, headerAlias, numLine) {
+	var tablo = tabenv.tablos.get(tabloAlias);
+	if (tablo === undefined) return [ ERR.TABLO.NOT_FOUND ];
+	
+	var header = tablo.getHeaderByAlias(headerAlias);
+	if (header === undefined) return [ ERR.HEADER.NOT_FOUND ];
+	
+	if (numLine < 0 || numLine >= tablo.data.length) {
+		return [ ERR.TABLO.LINE.OUT_OF_BOUNDS ];
+	}
+}
+
 // get cell value by aliases and do checks
 function getCellByAliases (tabenv, tabloAlias, headerAlias, numLine) {
-	var res = newRes();
-	
 	var tablo = tabenv.tablos.get(tabloAlias);
-	if (tablo === undefined) {
-		res.addError("Cannot find tablo : " + tabloAlias + ".");
-	}
-	else {
-		var header = tablo.getHeaderByAlias(headerAlias);
-		if (header === undefined) {
-			res.addError(
-				"getCellByAliases() : Cannot find header " + 
-				tabloAlias + "[" + headerAlias + "]."
-			);
-		}
-		if (numLine < 0 || numLine >= tablo.data.length) {
-			res.addError(
-				"NumLine " + numLine + " is out ouf bounds [0, " + 
-				tablo.data.length + "]."
-			);
-		}
-	}
-	
-	if (res.success) res.value = getCell(tablo, header, numLine);
-	return res;
+	var header = tablo.getHeaderByAlias(headerAlias);
+	return getCell(tablo, header, numLine);
 }
 
 
 // ==================== UPD FUNCTIONS =======================
 
 
+// check args of updTabloAlias()
+// tabenv and tablo are not checked 
+function checkUpdTabloAlias (tabenv, tablo, newAlias) {
+	if (tablo.alias == newAlias) return [];
+	else {
+		var errsAlias = checkTabloAlias(alias) ;
+		if (tabenv.tablos.has(alias)) {
+			errsAlias.push(ERR.TABLO.ALIAS.EXISTING);
+		}
+		return errsAlias;
+	}
+}
+
 function updTabloAlias (tabenv, tablo, newAlias) {
 
 	var oldAlias = tablo.alias;
 	
-	var res = newRes();
-	checkUpdTabloAlias(tabenv, oldAlias, newAlias, res);
-	
-	if (! res.success) return res;
+	if (oldAlias == newAlias) return;
 	
 	// we need to :
 	// 1. upd old tablo alias in ReactKey
@@ -723,36 +684,54 @@ function updTabloAlias (tabenv, tablo, newAlias) {
 	tablo.alias = newAlias;
 	tabenv.tablos.delete(oldAlias);
 	tabenv.tablos.set(newAlias, tablo);
-	
-	return res;
+}
+
+
+// check args of updTabloLabel()
+// tablo is not checked
+function checkUpdTabloLabel (tablo, label) {
+	return checkTabloLabel(label) ;
 }
 
 // upd the label of a tablo
 function updTabloLabel (tablo, label) {
-	var res = newRes();
-	checkTabloLabel(label, res);
-	if (res.success) {
-		tablo.label = label;
+	tablo.label = label;
+}
+
+function checkTabloDisplayNumLines (displayNumLines) {
+	if (typeof displayNumLines != "boolean") {
+		return [ ERR.TABLO.DISPLAY_NUM_LINES.NOT_BOOLEAN ];
 	}
-	return res;
+}
+
+// check args for updTabloDisplayNumLines()
+// tablo is not checked
+function checkUpdTabloDisplayNumLines (tablo, displayNumLines) {
+	return checkTabloDisplayNumLines(displayNumLines);
 }
 
 // upd the displayNumLines of a tablo
 function updTabloDisplayNumLines (tablo, displayNumLines) {
-	var res = newRes();
-	checkTabloDisplayNumLines(displayNumLines, res);
-	if (res.success) {
-		tablo.displayNumLines = displayNumLines;
+	tablo.displayNumLines = displayNumLines;
+}
+
+// check args for updHeaderAlias()
+// tabenv, tablo and header are not checked
+function checkUpdHeaderAlias (tabenv, tablo, header, newAlias) {
+	if (header.alias == newAlias) return [];
+	else {
+		var errsAlias = checkHeaderAlias(alias);
+		if (tablo.getHeaderByAlias(alias) != undefined) {
+			errsAlias.push(ERR.HEADER.ALIAS.EXISTING);
+		}
+		return errsAlias;
 	}
-	return res;
 }
 
 function updHeaderAlias (tabenv, tablo, header, newAlias) {
 	var oldAlias = header.alias;
 
-	var res = newRes();
-	checkUpdHeaderAlias(tablo, oldAlias, newAlias, res);
-	if (! res.success) return res;
+	if (oldAlias == newAlias) return;
 	
 	// the header himself
 	header.alias = newAlias;
@@ -800,36 +779,40 @@ function updHeaderAlias (tabenv, tablo, header, newAlias) {
 			break;
 		default: console.log("unknown header type");				
 	}
-	
-	return res;
+}
+
+// check args of updHeaderLabel()
+// header is not checked
+function checkUpdHeaderLabel (header, label) {
+	return checkHeaderLabel(label);
 }
 
 function updHeaderLabel (header, label) {
-	var res = newRes();
-	checkHeaderLabel (label, res);
-	if (res.success) header.label = label;
-	return res;
+	header.label = label;
+}
+
+
+// check args for updHeaderType()
+// tabenv, tablo, header are not checked
+function checkUpdHeaderType (tabenv, tablo, header, newType) {
+	return checkHeaderType(newType)
+	// TODO: check updFuncHeaderAllCells
 }
 
 function updHeaderType (tabenv, tablo, header, newType) {
-	var res = newRes();
-	checkHeaderType(newType, res); 
-	if (! res.success) return res;
-	
+
 	switch (newType) {
 		case DATA_HEADER:
 			switch (header.type) {
 				case DATA_HEADER: break;
 				case FUNC_HEADER: 
-					res.combine(delAllArgsFromHeader(tabenv, tablo, header));
-					if (res.success) {
-						header.type = DATA_HEADER;
-						header.dataType = DATA_TYPE.NUMBER;
-						header.args = undefined;
-						header.func = undefined;
-					}
+					delAllArgsFromHeader(tabenv, tablo, header);
+					header.type = DATA_HEADER;
+					header.dataType = DATA_TYPE.NUMBER;
+					header.args = undefined;
+					header.func = undefined;
 					break;
-				default: console.log("unknown header type");
+				default: throw ERR.HEADER.UNKNOWN_TYPE;
 			}
 			break;
 		case FUNC_HEADER:
@@ -839,25 +822,34 @@ function updHeaderType (tabenv, tablo, header, newType) {
 					header.dataType = undefined;
 					header.args = [];
 					header.func = function () { return null; };
-					res.combine(updFuncHeaderAllCells(tabenv, tablo, header));
+					updFuncHeaderAllCells(tabenv, tablo, header);
 					break;
 				case FUNC_HEADER: break;
-				default: console.log("unknown header type");
+				default: throw ERR.HEADER.UNKNOWN_TYPE;
 			}
 			break;
-		default: console.log("unknown header type");
+		default: throw ERR.HEADER.UNKNOWN_TYPE;
 	}
-	
-	if (! res.success) res.addError("updHeaderType().");
-	return res;
+}
+
+// checks the order of a header
+function checkHeaderOrder (tablo, order) {
+	if (order < 0 || order >= tablo.headers.length) {
+		return ERR.HEADER.ORDER.OUT_OF_BOUNDS;
+	}
+}
+
+// check args for updHeaderOrder()
+// tabenv, tablo, and header are not checked
+function checkUpdHeaderOrder (tabenv, tablo, header, newOrder) {
+	return checkHeaderOrder (tablo, newOrder)
 }
 
 function updHeaderOrder (tabenv, tablo, header, newOrder) {
-	var res = newRes();
-	checkHeaderOrder(tablo, newOrder, res);
-	if (! res.success) return res;
 	
 	var oldOrder = header.order;
+	
+	if (oldOrder == newOrder) return;
 	
 	// move the headers
 	arrayMove (tablo.headers, oldOrder, newOrder);
@@ -871,19 +863,47 @@ function updHeaderOrder (tabenv, tablo, header, newOrder) {
 	for (var numLine = 0 ; numLine < tablo.data.length ; numLine ++) {
 		arrayMove (tablo.data[numLine], oldOrder, newOrder) ;
 	}
+}
+
+// check args for updHeaderDataType()
+// tabenv, tablo, and header are not checked
+function checkUpdHeaderDataType (tabenv, tablo, header, newDataType) {
+	var errsDataType = checkHeaderDataType(newDataType);
+	if (errsDataType.length > 0) return errsDataType;
 	
-	return res;
+	var errs = [];
+	
+	tablo.data.forEach(function (line, numLine) {
+		try { 
+			var oldVal = getCell(tablo, header, numLine);
+			switch (newDataType) {
+				case DATA_TYPE.INT:
+					parseInt(oldVal);
+					break;
+				case DATA_TYPE.FLOAT:
+					parseFloat(oldVal);
+					break;
+				case DATA_TYPE.STRING:
+					new String(oldVal).valueOf();
+					break;
+				case DATA_TYPE.JSON:
+					JSON.parse(oldVal);
+					break;
+				default: throw ERR.HEADER.DATA_TYPE.UNKNOWN;
+			}
+			// TODO: check updDataCell
+		}
+		catch (error){ 
+			errs.push(ERR.HEADER.DATA_TYPE.CELL_PARSE_ERROR); 
+		}
+	});
+	
+	return errs;
 }
 
 function updHeaderDataType (tabenv, tablo, header, newDataType) {
-	var res = newRes();
 	
-	if (! Object.values(DATA_TYPE).includes(newDataType)) {
-		res.addError("unknwon data type " + newDataType);
-		return res;
-	}
-	
-	if (header.dataType == newDataType) return res;
+	if (header.dataType == newDataType) return;
 	
 	header.dataType = newDataType;
 	
@@ -906,91 +926,158 @@ function updHeaderDataType (tabenv, tablo, header, newDataType) {
 			default:
 				res.addError("unknown data type " + newDataType);
 		}
-		res.combine(updDataCell(tabenv, tablo, header, numLine, newVal));
+		updDataCell(tabenv, tablo, header, numLine, newVal);
 	});
-	
-	return res;
+}
+
+// check args for updHeaderArgs()
+// tabenv, tablo, and header are not checked
+function checkUpdHeaderArgs (tabenv, tablo, header, newArgs) {
+	if (header.type != FUNC_HEADER) return [ ERR.HEADER.NOT_FUNC ];
+	var errsArgs = checkHeaderArgs (tabenv, newArgs);
+	// TODO check delAllArgsFromHeader
 }
 
 function updHeaderArgs (tabenv, tablo, header, newArgs) {
-	var res = newRes();
-	if (header.type != FUNC_HEADER) {
-		res.addError("header is not func type so has no args to update");
-	}
-	else checkHeaderArgs(tabenv.tablos, newArgs, res);
-	if (! res.success) return res;
 
 	var fullAlias = aliasesToStr(tablo.alias, header.alias);
 	
 	// it is simpler to delete all args then add new args
 	
-	res.combine(delAllArgsFromHeader (tabenv, tablo, header));
-	if (! res.success) return res;
+	delAllArgsFromHeader (tabenv, tablo, header);
 	
 	newArgs.forEach(function (newArg) {
-		res.combine(newHeaderArg (tabenv, tablo, header, newArg));
+		newHeaderArg (tabenv, tablo, header, newArg);
 	});
-	
-	if (! res.success) res.addError("updHeaderArgs(" + header.alias + ").");
-	return res;
+}
+
+// check args for updHeaderFunc()
+// tabenv, tablo and header are not checked
+function checkUpdHeaderFunc (tabenv, tablo, header, newFunc) {
+	return checkHeaderFunc(newFunc);
+	// TODO check updFuncHeaderAllCells
 }
 
 function updHeaderFunc (tabenv, tablo, header, newFunc) {
-	var res = newRes();
-	checkHeaderFunc(newFunc, res);
-	if (! res.success) return res;
-	
 	header.func = newFunc ;
-	res.combine(updFuncHeaderAllCells(tabenv, tablo, header));
-	
-	return res;
+	updFuncHeaderAllCells(tabenv, tablo, header);
 }
 
+// check args for updFuncHeaderAllCells()
+function checkUpdFuncHeaderAllCells (tabenv, tablo, header) {
+	if (header.type != FUNC_HEADER) return [ ERR.HEADER.NOT_FUNC ];
+	var errs = [];
+	for (var i = 0 ; i < tablo.data.length ; i ++) {
+		errs.concat(checkUpdFuncCell(tabenv, tablo, header, i));
+	} 
+	return errs;
+}
 
 function updFuncHeaderAllCells (tabenv, tablo, header) {
-	var res = newRes();
-	if (tablo.getHeaderByAlias(header.alias) === undefined) {
-		res.addError("Cannot find header in the tablo.");
-	}
-	else if (header.type != FUNC_HEADER) {
-		res.addError("Header type must be Function to upd func cells");
-	}
-	if (! res.success) return res;
-	
 	for (var i = 0 ; i < tablo.data.length ; i ++) {
-		res.combine(updFuncCell(tabenv, tablo, header, i));
+		updFuncCell(tabenv, tablo, header, i);
 	} 
-	
-	return res;
+}
+
+// check args for updTabloAllFuncHeadersAllCells()
+function checkUpdTabloAllFuncHeadersAllCells (tabenv, tablo) {
+	var errs = [];
+	tablo.headers.forEach(function (header) {
+		if (header.type == FUNC_HEADER) {
+			errs.concat(checkUpdFuncHeaderAllCells(tabenv, tablo, header));
+		}
+	});
+	return errs;
 }
 
 function updTabloAllFuncHeadersAllCells (tabenv, tablo) {
-	var res = newRes();
 	tablo.headers.forEach(function (header) {
 		if (header.type == FUNC_HEADER) {
-			res.combine(updFuncHeaderAllCells(tabenv, tablo, header));
+			updFuncHeaderAllCells(tabenv, tablo, header);
 		}
 	});
-	return res;
+}
+
+// check args for updLineAllFuncCells()
+function checkUpdLineAllFuncCells (tabenv, tablo, numLine) {
+	if (numLine < 0 || numLine >= tablo.data.length) {
+		return [ ERR.TABLO.LINE.OUT_OF_BOUNDS ] ;
+	}
+	var errs = [];
+	tablo.headers.forEach(function (header) {
+		if (header.type == FUNC_HEADER) {
+			errs.concat(checkUpdFuncCell(tabenv, tablo, header, numLine));
+		}
+	});
+	return errs;
 }
 
 function updLineAllFuncCells (tabenv, tablo, numLine) {
-	var res = newRes();
-	if (numLine < 0 || numLine >= tablo.data.length) {
-		res.addError("numLine is out of bounds.");
-		return res;
-	}
 	tablo.headers.forEach(function (header) {
 		if (header.type == FUNC_HEADER) {
-			res.combine(updFuncCell(tabenv, tablo, header, numLine));
+			updFuncCell(tabenv, tablo, header, numLine);
 		}
 	});
-	return res;
 }
 
-// no checks done here, it is assumed there are done by the caller
+// check updFuncCell()
+function checkUpdFuncCell (tabenv, tablo, header, numLine) {
+
+	if (numLine < 0 || numLine >= tablo.data.length) {
+		return [ ERR.TABLO.LINE.OUT_OF_BOUNDS ] ;
+	}
+
+	try {
+
+		// compute the args for the cell
+		var funcArgs = new Array(header.args.length);
+
+		funcArgs.fill(null);
+		header.args.forEach(function (headerArg, index) {
+			switch (headerArg.type) {
+				case NULL_ARG: break;
+				case COL_SAMELINE_ARG:
+					var errs = checkGetCellByAliases (
+						tabenv, 
+						headerArg.alias.tablo, headerArg.alias.header, 
+						numLine
+					);
+					if (errs.length > 0) throw errs;
+					else {
+						funcArgs[index] = getCellByAliases (
+							tabenv, 
+							headerArg.alias.tablo, headerArg.alias.header, 
+							numLine
+						);
+					}
+					break;
+				default: throw [ ERR.HEADER.ARG.UNKNOWN_TYPE ];
+			}
+		});
+		
+		// compute the func applied to the args, for the cell
+		try {
+			var funcResult = header.func.apply(null, funcArgs);
+		}
+		catch (error) { throw [ ERR.HEADER.FUNC.APP_ERROR ] }
+		
+		// trigger the reactions of other cells
+		var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
+		var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
+		reactions.forEach(function (reaction) {
+			var reactionAlias = aliasObjFromStr(reaction);
+			var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
+			var reactionHeader = 
+				reactionTablo.getHeaderByAlias(reactionAlias.header);
+			var errs = checkUpdFuncCell(
+				tabenv, reactionTablo, reactionHeader, numLine);
+			if (errs.length > 0) throw errs;
+		});
+	}
+	catch (errors) { return errors; }
+}
+
 function updFuncCell (tabenv, tablo, header, numLine) {
-	var res = newRes();
 
 	// compute the args for the cell
 	var funcArgs = new Array(header.args.length);
@@ -999,28 +1086,19 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 		switch (headerArg.type) {
 			case NULL_ARG: break;
 			case COL_SAMELINE_ARG:
-				res.combine(getCellByAliases (
+				funcArgs[index] = getCellByAliases (
 					tabenv, 
 					headerArg.alias.tablo, headerArg.alias.header, 
 					numLine
-				));
-				if (res.success) funcArgs[index] = res.value;
+				);
 				break;
 			default: console.log("unknown arg type");
 		}
 	});
-	
+	console.log(funcArgs);
 	// compute the func applied to the args, for the cell
-	try {
-		var funcResult = header.func.apply(null, funcArgs);
-		tablo.data[numLine][header.order] = funcResult;
-	}
-	catch (error) {
-		res.addError(
-			"Error while computing cell " + tablo.alias + "[" +
-			header.alias + "][" + numLine + "] : " + error.toString() + "."
-		);
-	}
+	var funcResult = header.func.apply(null, funcArgs);
+	tablo.data[numLine][header.order] = funcResult;
 	
 	// trigger the reactions of other cells because of the update of this one
 	var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
@@ -1028,103 +1106,69 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 	reactions.forEach(function (reaction) {
 		var reactionAlias = aliasObjFromStr(reaction);
 		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
-		if (reactionTablo === undefined) {
-			res.addError("cannot find tablo " + reactionAlias.tablo);
-			return;
-		}
 		var reactionHeader = 
 			reactionTablo.getHeaderByAlias(reactionAlias.header);
-		if (reactionHeader === undefined) {
-			res.addError("cannot find header " + reaction);
-			return;
-		}
-		res.combine(
-			updFuncCell(tabenv, reactionTablo, reactionHeader, numLine));
+		updFuncCell(tabenv, reactionTablo, reactionHeader, numLine);
 	});
-	
-	if (! res.success) { 
-		res.addError(
-			"updFuncCell(" + tablo.alias + ", " + header.alias +
-			", " + numLine + ")."
-		);
-	}
-		
-	return res;
 }
 
-// no checks done here. assumed done by the caller
+// check updDataCell()
+function checkUpdDataCell (tabenv, tablo, header, numLine, newVal) {
+	
+	if (numLine < 0 || numLine >= tablo.data.length) {
+		return [ ERR.TABLO.LINE.OUT_OF_BOUNDS ] ;
+	}
+	
+	// trigger the reactions of other cells because of the update of this one
+	try {
+		var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
+		var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
+		reactions.forEach(function (reaction) {
+			var reactionAlias = aliasObjFromStr(reaction);
+			var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
+			var reactionHeader = 
+				reactionTablo.getHeaderByAlias(reactionAlias.header);
+			var errs = checkUpdFuncCell(
+				tabenv, reactionTablo, reactionHeader, numLine);
+			if (errs.length > 0) throw errs;
+		});
+	}
+	catch (errors) { return errors; }
+}
+
 function updDataCell (tabenv, tablo, header, numLine, newVal) {
 	tablo.data[numLine][header.order] = newVal;
 	
-	var res = newRes();
-	
 	// trigger the reactions of other cells because of the update of this one
 	var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
 	var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
 	reactions.forEach(function (reaction) {
 		var reactionAlias = aliasObjFromStr(reaction);
 		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
-		if (reactionTablo === undefined) {
-			res.addError("cannot find tablo " + reactionAlias.tablo);
-			return;
-		}
 		var reactionHeader = 
 			reactionTablo.getHeaderByAlias(reactionAlias.header);
-		if (reactionHeader === undefined) {
-			res.addError("cannot find header " + reaction);
-			return;
-		}
-		res.combine(
-			updFuncCell(tabenv, reactionTablo, reactionHeader, numLine));
+		updFuncCell(tabenv, reactionTablo, reactionHeader, numLine);
 	});
-	
-	if (! res.success) { 
-		res.addError(
-			"updFuncCell(" + tablo.alias + ", " + header.alias +
-			", " + numLine + ")."
-		);
-	}
-	
-	return res;
 }
 
 
 // ==================== DEL FUNCTIONS =======================
 
 function delTablo (tabenv, tablo) {
-	var res = newRes();
-	if (! tabenv.tablos.has(tablo.alias)) {
-		res.addError("Cannot find tablo in the tabenv : " + tablo.alias + ".");
-		return res;
-	}	
 	
 	// delete headers (this will delete reactions too)
 	var loop = true;
 	while (loop) {
 		if (tablo.headers.length == 0) loop = false;
-		else {
-			res.combine(delHeader(tabenv, tablo, tablo.headers[0]));
-			loop = res.success;
-		}
+		else delHeader(tabenv, tablo, tablo.headers[0]);
 	}
 	
-	tabenv.tablos.delete(tablo.alias)
-	
-	if (! res.success) res.addError("delTablo(" + tablo.alias + ").");
-	return res;
+	tabenv.tablos.delete(tablo.alias);
 }
 
 
 
 function delHeader (tabenv, tablo, header) { 
-	var res = newRes();
-	if (! tablo.getHeaderByAlias(header.alias)) {
-		res.addError(
-			"delHeader() : header " + header.alias + 
-			" does not exist in tablo " + tablo.alias + "."
-		);
-		return res;
-	}
 	
 	var headerFullAlias = aliasesToStr(tablo.alias, header.alias);
 
@@ -1148,18 +1192,14 @@ function delHeader (tabenv, tablo, header) {
 						return { type: NULL_ARG };
 					}
 					else return arg;
-				default: 
-					res.addError("unmanaged or unknown arg type");
-					console.log("unmanaged or unknown arg type");
-					return arg;
+				default: throw (ERR.HEADER.ARG.UNKNOWN_TYPE) ;
 			}
 		});
 		// updHeaderArgs delete the reactions associated to nullified args.
 		// That is why we iterate on a copy of the reactions,
 		// to be sure to treat every reaction.
-		res.combine(updHeaderArgs(
-			tabenv, reactionTablo, reactionHeader, reactionArgs)
-		);
+		updHeaderArgs(
+			tabenv, reactionTablo, reactionHeader, reactionArgs);
 	});
 
 	// delete reactKey
@@ -1168,7 +1208,7 @@ function delHeader (tabenv, tablo, header) {
 	// delete reactions (if func header)
 	if (header.type == FUNC_HEADER) {
 		// this function takes care of deleting reactions 
-		res.combine(delAllArgsFromHeader(tabenv, tablo, header));
+		delAllArgsFromHeader(tabenv, tablo, header);
 	}
 	
 	// delete data
@@ -1183,27 +1223,10 @@ function delHeader (tabenv, tablo, header) {
 	for (var i = 0; i < tablo.headers.length; i ++) {
 		tablo.headers[i].order = i ; 
 	}
-	
-	if (! res.success) res.addError("delHeader(" + header.alias + ").");
-	return res;
 }
 
 // careful : does not update data
 function delArgFromHeader (tabenv, tablo, header, indexArg) {
-	var res = newRes();
-	if (header.type != FUNC_HEADER) {
-		res.addError(
-			"delArgFromHeader() : Le header doit être de type Fonction " +
-			"pour lui retirer un arg, et non de type " + header.type + "."
-		);
-	}
-	else if (indexArg < 0 || indexArg >= header.args.length) {
-		res.addError(
-			"L'index " + indexArg + " à supprimer doit être compris entre "
-			+ "0 et " + header.args.length + " pour ce header."
-		);
-	}
-	if (! res.success) return res;
 	
 	var arg = header.args[indexArg];
 	var headerFullAlias = aliasesToStr(tablo.alias, header.alias);
@@ -1228,32 +1251,17 @@ function delArgFromHeader (tabenv, tablo, header, indexArg) {
 			break;
 		default: console.log("unknown arg type");
 	}
-	
-	return res;
 }
 
 // careful : does not update data
 function delAllArgsFromHeader (tabenv, tablo, header) {
-	var res = newRes();
-	if (header.type != FUNC_HEADER) {
-		res.addError(
-			"delAllArgsFromHeader(): le header doit être de type Fonction " +
-			"pour lui retirer un arg, et non de type " + header.type + "."
-		);
-		return res;
-	}
 	
 	// looping deleting all args, each time the first one
 	var loop = true;
 	while (loop) {
 		if (header.args.length == 0) loop = false;
-		else {
-			res.combine(delArgFromHeader(tabenv, tablo, header, 0));
-			loop = res.success;
-		}
+		else delArgFromHeader(tabenv, tablo, header, 0);
 	}
-	
-	return res;
 }
 
 

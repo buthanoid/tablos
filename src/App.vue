@@ -411,37 +411,35 @@ function submitEditCell (newValue) {
 
 function created () {
 	
-	var res = TabLib.newRes();
+	var errs = [];
 	
-	res.combine(TabLib.newTablo(this.tabenv, "users", "Users"));
-	var users = res.value;
+	errs.concat(TabLib.checkNewTablo(this.tabenv, "users", "Users"));
+	var users = TabLib.newTablo(this.tabenv, "users", "Users");
+
 	
-	res.combine (TabLib.newDataHeader(
+	errs.concat(TabLib.checkNewDataHeader(
 		this.tabenv, users, "name", "Name", TabLib.DATA_TYPE.STRING));
-	var usersName = res.value;
+	var usersName = TabLib.newDataHeader(
+		this.tabenv, users, "name", "Name", TabLib.DATA_TYPE.STRING);
 	
-	res.combine(TabLib.newDataHeader(
-		this.tabenv, users, "cash", "Cash", TabLib.DATA_TYPE.INT));
-	var usersCash = res.value;
+	var usersCash = TabLib.newDataHeader(
+		this.tabenv, users, "cash", "Cash", TabLib.DATA_TYPE.INT);
 	
-	res.combine(TabLib.newDataHeader(
-		this.tabenv, users, "debt", "Debt", TabLib.DATA_TYPE.INT));
-	var usersDebt = res.value;
+	var usersDebt = TabLib.newDataHeader(
+		this.tabenv, users, "debt", "Debt", TabLib.DATA_TYPE.INT);
 		
-	res.combine(TabLib.newFuncHeader(
+	var usersComputed = TabLib.newFuncHeader(
 		this.tabenv, users, "computed", "Computed", [ 
 			TabLib.newColSamelineArg("users", "cash"), 
 			TabLib.newColSamelineArg("users", "debt") ],
 		function (cash, debt) { return cash - debt; }
-	));
-	var usersComputed = res.value;
+	);
 	
-	res.combine(TabLib.newFuncHeader(
+	var usersAftertax = TabLib.newFuncHeader(
 		this.tabenv, users, "aftertax", "After Tax",
 		[ TabLib.newColSamelineArg("users", "computed") ],
 		function (computed) { return computed - 12; }
-	));
-	var usersAftertax = res.value;
+	);
 	
 	TabLib.newLine(this.tabenv, users); 
 	TabLib.updDataCell(this.tabenv, users, usersName, 0, "yayatoto");
@@ -453,17 +451,15 @@ function created () {
 	TabLib.updDataCell(this.tabenv, users, usersCash, 1, 35);
 	TabLib.updDataCell(this.tabenv, users, usersDebt, 1, 100);
 
-	res.combine(TabLib.newTablo(this.tabenv, "total", "Total"));
-	var total = res.value;
+	var total = TabLib.newTablo(this.tabenv, "total", "Total");
 	
-	res.combine(TabLib.newFuncHeader(
+	var totalName = TabLib.newFuncHeader(
 		this.tabenv, total, "name", "Name",
 		[ TabLib.newColSamelineArg("users", "name") ],
 		function (name) { return name }
-	));
-	var totalName = res.value;
+	);
 	
-	res.combine(TabLib.newFuncHeader(
+	var totalTotal = TabLib.newFuncHeader(
 		this.tabenv, total, "total", "Total", [
 			TabLib.newColSamelineArg("users", "cash"), 
 			TabLib.newColSamelineArg("users", "debt"),
@@ -472,13 +468,15 @@ function created () {
 		function (cash, debt, computed, aftertax) {
 			return cash + debt + computed + aftertax; 
 		}
-	));
-	var totalTotal = res.value;
+	);
 	
 	TabLib.newLine(this.tabenv, total);
 	TabLib.updLineAllFuncCells (this.tabenv, total, 0);
 	
 	TabLib.newLine(this.tabenv, total);
 	TabLib.updLineAllFuncCells (this.tabenv, total, 1);
+	
+	if (errs.length > 0 ) this.lastAppError = errs;
+	else this.lastAppError = "";
 }
 </script>
