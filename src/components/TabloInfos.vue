@@ -1,10 +1,10 @@
 <template>
 	<table>
-		<caption>Tablo</caption>
+		<caption>{{texts["Tablo"]}}</caption>
 
 		<tr> 
 			<th :class="{selected : isEdited && edit.property == 'alias'}" >
-				<span>Alias</span>
+				<span>{{texts["Alias"]}}</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'alias'" >
 				<input 
@@ -13,18 +13,20 @@
 					@input="changeEdit"
 					@keyup.enter="submitEdit"
 					@keyup.esc="cancelEdit" />
-				<button @click="submitEdit" >valider</button>
-				<button @click="cancelEdit" >Annuler</button>
+				<button @click="submitEdit" >{{texts["submit"]}}</button>
+				<button @click="cancelEdit" >{{texts["cancel"]}}</button>
 			</td>
 			<td v-else >
 				<span>{{alias}}</span>
-				<button @click="startEdit('alias')" >modifier</button>
+				<button @click="startEdit('alias')" >
+					<span>{{texts["modify"]}}</span>
+				</button>
 			</td> 
 		</tr>
 		
 		<tr> 
 			<th :class="{selected : isEdited && edit.property == 'label'}" >
-				<span>Label</span>
+				<span>{{texts["Label"]}}</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'label'" >
 				<input 
@@ -33,40 +35,46 @@
 					@input="changeEdit"
 					@keyup.enter="submitEdit"
 					@keyup.esc="cancelEdit" />
-				<button @click="submitEdit" >valider</button>
-				<button @click="cancelEdit" >Annuler</button>
+				<button @click="submitEdit" >{{texts["submit"]}}</button>
+				<button @click="cancelEdit" >{{texts["cancel"]}}</button>
 			</td>
 			<td v-else >
 				<span>{{label}}</span>
-				<button @click="startEdit('label')" >modifier</button>
+				<button @click="startEdit('label')" >
+					<span>{{texts["modify"]}}</span>
+				</button>
 			</td> 
 		</tr>
 		
 		<tr> 
-			<th><span>Afficher les numéros de ligne</span></th>
+			<th><span>{{texts["DisplayLineNumbers"]}}</span></th>
 			<td v-if="displayNumLines" >
-				<span>Oui</span>
-				<button @click="toggleDisplayNumLines" >Désactiver</button>
+				<span>{{texts["Yes"]}}</span>
+				<button @click="toggleDisplayNumLines" >
+					<span>{{texts["disable"]}}</span>
+				</button>
 			</td> 
 			<td v-else >
-				<span>Non</span>
-				<button @click="toggleDisplayNumLines" >Activer</button>
+				<span>{{texts["No"]}}</span>
+				<button @click="toggleDisplayNumLines" >
+					<span>{{texts["enable"]}}</span>
+				</button>
 			</td> 
 		</tr>
 		
 		<tr> 
-			<th>Nombre de colonnes</th> 
+			<th>{{texts["HeaderNumber"]}}</th> 
 			<td>
 				<span>{{nbHeaders}}</span>
-				<button @click="addNewHeader" >ajouter</button>
+				<button @click="addNewHeader" >{{texts["add"]}}</button>
 			</td> 
 		</tr>
 		
 		<tr> 
-			<th>Nombre de lignes</th> 
+			<th>{{texts["LineNumber"]}}</th> 
 			<td>
 				<span>{{nbLines}}</span>
-				<button @click="addNewLine" >ajouter</button>
+				<button @click="addNewLine" >{{texts["add"]}}</button>
 			</td>
 		</tr>
 	</table>		
@@ -75,11 +83,11 @@
 			v-if="isEdited && edit.valid === false" 
 			class="incorrect" 
 		>
-			<span>Valeur invalide !</span> <br />
+			<span>{{texts["incorrectValue"]}}</span> <br />
 			<span v-if="edit.msg" >{{edit.msg}}</span>
 		</p>
 	</div>
-	<button @click="delTablo" >supprimer le tablo</button> <br />
+	<button @click="delTablo" >{{texts["deleteTablo"]}}</button> <br />
 	
 </template>
 
@@ -95,7 +103,8 @@ export default {
 		"displayNumLines",
 		"nbHeaders",
 		"nbLines",
-		"edit"
+		"edit",
+		"texts"
 	],
 	data: function () { return {
 		editForm: null	

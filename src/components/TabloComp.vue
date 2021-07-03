@@ -29,8 +29,12 @@
 							@input="changeEdit"
 							@keyup.enter="submitEdit"
 							@keyup.esc="cancelEdit" />
-						<button @click="submitEdit" >valider</button>
-						<button @click="cancelEdit" >Annuler</button>
+						<button @click="submitEdit" >
+							<span>{{texts["submit"]}}</span>
+						</button>
+						<button @click="cancelEdit" >
+							<span>{{texts["cancel"]}}</span>
+						</button>
 					</div>	
 					<div 
 						v-else
@@ -44,7 +48,7 @@
 	</table>
 	<div>
 		<p v-if="isSomeCellEdited && !(edit.valid)" class="incorrect" >
-			<span>Valeur invalide !</span> <br />
+			<span>{{texts["incorrectValue"]}}</span> <br />
 			<span>{{edit.msg}}</span>
 		</p>
 	</div>
@@ -69,7 +73,8 @@ export default {
 		"nbLines",
 		"datatab",
 		"selected",
-		"edit"
+		"edit",
+		"texts"
 	],
 	data: function () { return {
 		editForm: null

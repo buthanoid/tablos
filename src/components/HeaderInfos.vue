@@ -1,10 +1,10 @@
 <template>
 	<table>
-		<caption>Colonne</caption>
+		<caption>{{ texts["Header"] }}</caption>
 		
 		<tr> 
 			<th :class="{selected : isEdited && edit.property == 'alias'}" >
-				<span>Alias</span>
+				<span>{{ texts["Alias"] }}</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'alias'" >
 				<input 
@@ -13,18 +13,20 @@
 					@input="changeEdit"
 					@keyup.enter="submitEdit"
 					@keyup.esc="cancelEdit" />
-				<button @click="submitEdit" >valider</button>
-				<button @click="cancelEdit" >Annuler</button>
+				<button @click="submitEdit" >{{texts["submit"]}}</button>
+				<button @click="cancelEdit" >{{texts["cancel"]}}</button>
 			</td>
 			<td v-else >
 				<span>{{header.alias}}</span>
-				<button @click="startEdit('alias')" >modifier</button>
+				<button @click="startEdit('alias')" >
+					<span>{{texts["modify"]}}</span>
+				</button>
 			</td> 
 		</tr>
 		
 		<tr> 
 			<th :class="{selected : isEdited && edit.property == 'label'}" >
-				<span>Label</span>
+				<span>{{texts["Label"]}}</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'label'" >
 				<input 
@@ -33,39 +35,46 @@
 					@input="changeEdit"
 					@keyup.enter="submitEdit"
 					@keyup.esc="cancelEdit" />
-				<button @click="submitEdit" >valider</button>
-				<button @click="cancelEdit" >Annuler</button>
+				<button @click="submitEdit" >{{texts["submit"]}}</button>
+				<button @click="cancelEdit" >{{texts["cancel"]}}</button>
 			</td>
 			<td v-else >
 				<span>{{header.label}}</span>
-				<button @click="startEdit('label')" >modifier</button>
+				<button @click="startEdit('label')" >
+					<span>{{texts["modify"]}}</span>
+				</button>
 			</td> 
 		</tr>
 		
 		<tr> 
 			<th :class="{selected : isEdited && edit.property == 'type' }" >
-				<span>Type</span>
+				<span>{{texts["Type"]}}</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'type'" >
 				<select 
 					v-model="editForm" 
 					ref="type" 
 					@change="changeEdit" >
-					<option :value="TYPE.HEADER.DATA" >Donnée</option>
-					<option :value="TYPE.HEADER.FUNC" >Fonction</option>
+					<option
+						v-for="headerType in Object.values(TYPE.HEADER)"
+						:value="headerType" >
+						<span>{{ texts[headerType] }}</span>
+					</option>
 				</select>
-				<button @click="submitEdit" >Valider</button>
-				<button @click="cancelEdit" >Annuler</button>
+				<button @click="submitEdit" >{{texts["submit"]}}</button>
+				<button @click="cancelEdit" >{{texts["cancel"]}}</button>
 			</td>
 			<td v-else >
-				<span>{{headerType}}</span>
-				<button @click="startEdit('type')" >modifier</button>
+				<span>{{ texts[header.type] }}</span>
+				<button @click="startEdit('type')" >
+					<span>{{texts["modify"]}}</span>
+				</button>
 			</td>
 		</tr>
 		
 		<tr> 
 			<th :class="{selected : isEdited && edit.property == 'order' }" >
-				<span>Ordre</span>
+				<span>{{texts["Order"]}}</span>
 			</th> 
 			<td>
 				<span>{{header.order}}</span>
@@ -83,7 +92,7 @@
 		</tr>
 		
 		<tr v-if="header.type == TYPE.HEADER.DATA" >
-			<th>Type de donnée</th>
+			<th>{{texts["DataType"]}}</th>
 			<td v-if="isEdited && edit.property == 'dataType'" >
 				<select 
 					v-model="editForm"
@@ -91,21 +100,23 @@
 					<option 
 						v-for="dataType in Object.values(TYPE.DATA)" 
 						:value="dataType" >
-						<span>{{ dataType }}</span>
+						<span>{{ texts[dataType] }}</span>
 					</option>
 				</select>
-				<button @click="submitEdit" >valider</button>
-				<button @click="cancelEdit" >annuler</button>
+				<button @click="submitEdit" >{{texts["submit"]}}</button>
+				<button @click="cancelEdit" >{{texts["cancel"]}}</button>
 			</td>
 			<td v-else >
-				<span>{{ header.dataType }}</span>			
-				<button @click="startEdit('dataType')" >modifier</button>
+				<span>{{ texts[header.dataType] }}</span>			
+				<button @click="startEdit('dataType')" >
+					<span>{{texts["modify"]}}</span>
+				</button>
 			</td>
 		</tr>
 		
 		<tr v-if="header.type == TYPE.HEADER.FUNC" > 
 			<th :class="{selected : isEdited && edit.property == 'args' }" >
-				<span>Arguments</span>
+				<span>{{texts["Arguments"]}}</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'args'" >
 				<div v-for="(arg,index) in editForm" :key="index" >
@@ -130,26 +141,30 @@
 							</option>
 						</select>
 						<span>][#] </span>
-						<button @click="removeArg(index)" >retirer</button>
+						<button @click="removeArg(index)" >
+							<span>{{texts["remove"]}}</span>
+						</button>
 					</div>
 					<div v-if="arg.type == TYPE.HEADER_ARG.NULL" >
 						<span>nul </span>
-						<button @click="removeArg(index)" >retirer</button>
+						<button @click="removeArg(index)" >
+							<span>{{texts["remove"]}}</span>
+						</button>
 					</div>
 				</div>
-				<button @click="addArg" >ajouter un argument</button> <br/>
-				<button @click="submitEdit" >valider</button>
-				<button @click="cancelEdit" >annuler</button>
+				<button @click="addArg" >{{texts["addArg"]}}</button> <br/>
+				<button @click="submitEdit" >{{texts["submit"]}}</button>
+				<button @click="cancelEdit" >{{texts["cancel"]}}</button>
 			</td>
 			<td v-else >
 				<span>{{argsStr}}</span>
-				<button @click="startEdit('args')" >modifier</button>
+				<button @click="startEdit('args')" >{{texts["modify"]}}</button>
 			</td>
 		</tr>
 		
 		<tr v-if="header.type == TYPE.HEADER.FUNC" > 
 			<th :class="{selected : isEdited && edit.property == 'func'}" >
-				<span>Fonction</span>
+				<span>{{texts["Function"]}}</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'func'" >
 				<textarea
@@ -159,12 +174,12 @@
 					@keyup.ctrl.enter="submitEdit" 
 					@keyup.esc="cancelEdit" >
 				</textarea>
-				<button @click="submitEdit" >valider</button>
-				<button @click="cancelEdit" >Annuler</button>
+				<button @click="submitEdit" >{{texts["submit"]}}</button>
+				<button @click="cancelEdit" >{{texts["cancel"]}}</button>
 			</td>
 			<td v-else >
 				<pre>{{header.func}}</pre>
-				<button @click="startEdit('func')" >modifier</button>
+				<button @click="startEdit('func')" >{{texts["modify"]}}</button>
 			</td> 
 		</tr>
 	</table>
@@ -172,15 +187,17 @@
 		<p 
 			v-if="isEdited && edit.valid === false" 
 			class="incorrect" >
-			<span>Valeur invalide !</span> <br />
+			<span>{{texts["incorrectValue"]}}</span> <br />
 			<span v-if="edit.msg" >{{edit.msg}}</span>
 		</p>
 	</div>
-	<button @click="deleteHeader" >supprimer la colonne</button>
+	<button @click="deleteHeader" >{{texts["deleteHeader"]}}</button>
 </template>
 
 <script>
-import * as T from "../tablos.js";
+"use strict";
+
+import * as T from "../tablos.js" ;
 
 export default {
 	emits: [ 
@@ -189,7 +206,7 @@ export default {
 	],
 	props: [ 
 		"tablosList", "headersList", "tabloAlias", "header", 
-		"nbHeaders", "edit" 
+		"nbHeaders", "edit", "texts",
 	],
 	data: function () { return {
 		editForm: null
@@ -239,18 +256,12 @@ export default {
 	},
 	computed: {
 		isEdited() { return this.edit.target == "header"; },
-		headerType() { 
-			switch (this.header.type) {
-				case T.TYPE.HEADER.DATA: return "Donnée";
-				case T.TYPE.HEADER.FUNC: return "Fonction";
-				default: throw(T.ERR.HEADER.TYPE.UNKNOWN) ;
-			}
-		},
 		argsStr() { 
 			if (this.header.type == T.TYPE.HEADER.FUNC) {
 				return this.header.args.map(function (arg) {
 					switch (arg.type) {
-						case T.TYPE.HEADER_ARG.NULL: return "nul";
+						case T.TYPE.HEADER_ARG.NULL: 
+							return this.texts[T.TYPE.HEADER_ARG.NULL];
 						case T.TYPE.HEADER_ARG.COL_SAME_LINE: 
 							var str = 
 								arg.alias.tablo + 
@@ -264,7 +275,7 @@ export default {
 			}
 			else return null;
 		},
-		TYPE() { return T.TYPE },
+		TYPE() { return T.TYPE }
 	}
 }
 </script>

@@ -11,6 +11,7 @@
 				:datatab="tablo.data"
 				:selected="selected"
 				:edit="edit"
+				:texts="texts"
 				@select-tablo="selectTablo"
 				@select-header="selectHeader"
 				@select-line="selectLine"
@@ -22,7 +23,11 @@
 			</tablo-comp>
 		</div>
 		<div class="column-right" >
-			<button @click="newTablo" >nouveau tablo</button>
+			<select v-model="lang" >
+				<option value="en" >English</option>
+				<option value="fr" >Français</option>
+			</select> <br />
+			<button @click="newTablo" >{{texts["newTablo"]}}</button>
 			<tablo-infos
 				v-if="displayTabloInfos" 
 				:alias="selected.tablo.alias"
@@ -31,6 +36,7 @@
 				:nb-headers="selected.tablo.headers.length"
 				:nb-lines="selected.tablo.data.length"
 				:edit="edit"
+				:texts="texts"
 				@del-tablo="delTablo"
 				@add-new-header="newHeader"
 				@add-new-line="newLine"
@@ -48,6 +54,7 @@
 				:header="selected.header"
 				:nb-headers="selected.tablo.headers.length"
 				:edit="edit"
+				:texts="texts"
 				@start-edit="startEdit"
 				@change-edit="changeEditHeader"
 				@submit-edit="submitEditHeader"
@@ -63,7 +70,7 @@
 		</div>
 	</div>
 	<p v-if="lastAppError" class="incorrect" >
-		<span>Dernière erreur :</span> <br />
+		<span>{{texts["LastError"]}} :</span> <br />
 		<span>{{lastAppError}}</span>
 	</p>
 	<hr />
@@ -87,11 +94,14 @@ import HeaderInfos from "./components/HeaderInfos.vue";
 import LineInfos from "./components/LineInfos.vue";
 import * as T from "./tablos.js";
 import * as U from "./util.js";
+import * as TEXTS_EN from "./texts_en.js";
+import * as TEXTS_FR from "./texts_fr.js";
 
 export default {
 	components: { TabloComp, TabloInfos, HeaderInfos, LineInfos },
  	data: function ()	{
 		return { 
+			lang: "en",
 			tabenv: T.newTabenv(),
 			selected: { 
 				target: U.TRG.NULL,
@@ -221,6 +231,13 @@ export default {
 		}
 	},
 	computed: {
+		texts() {
+			switch (this.lang) {
+				case "en": return TEXTS_EN.TEXTS;
+				case "fr": return TEXTS_FR.TEXTS;
+				default: throw ("unmanaged lang " + this.lang);
+			}
+		},
 		displayTabloInfos: function () { 
 			return U.TRG_TABLO_EXT.includes(this.selected.target);
 		},
