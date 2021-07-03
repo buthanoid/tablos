@@ -79,18 +79,20 @@
 </template>
 
 <script>
+"use strict";
+
 import TabloComp from "./components/TabloComp.vue";
 import TabloInfos from "./components/TabloInfos.vue";
 import HeaderInfos from "./components/HeaderInfos.vue";
 import LineInfos from "./components/LineInfos.vue";
-import * as TabLib from "./tablos.js";
+import * as T from "./tablos.js";
 import * as U from "./util.js";
 
 export default {
 	components: { TabloComp, TabloInfos, HeaderInfos, LineInfos },
  	data: function ()	{
 		return { 
-			tabenv: TabLib.newTabenv(),
+			tabenv: T.newTabenv(),
 			selected: { 
 				target: U.TRG.NULL,
 				tablo: null,
@@ -113,42 +115,42 @@ export default {
 			var i = 0;
 			while (this.tabenv.tablos.has("newtablo" + i)) i++;
 			
-			var tablo = TabLib.newTablo(
+			var tablo = T.newTablo(
 				this.tabenv, "newtablo" + i, "New Tablo " + i);
 				
 			this.selectTablo("newtablo" + i);
 		},
 		delTablo: function () {
-			TabLib.delTablo(this.tabenv, this.selected.tablo);
+			T.delTablo(this.tabenv, this.selected.tablo);
 			this.selectNothing();
 		},
 		newHeader: function () {
 			var i = 0 ;
 			while (this.selected.tablo.getHeaderByAlias("newheader" + i)) i++;
 			
-			var header = TabLib.newDataHeader(
+			var header = T.newDataHeader(
 				this.tabenv, this.selected.tablo, 
-				"newheader" + i, "New Header " + i, TabLib.DATA_TYPE.INT
+				"newheader" + i, "New Header " + i, T.DATA_TYPE.INT
 			);
 			
 			this.selectHeader(this.selected.tablo.alias, "newheader" + i);
 		},
 		newLine: function () {
-			TabLib.newLine(this.tabenv, this.selected.tablo);
+			T.newLine(this.tabenv, this.selected.tablo);
 		},
 		toggleDisplayNumLines: function () {
-			TabLib.updTabloDisplayNumLines(
+			T.updTabloDisplayNumLines(
 				this.selected.tablo, ! this.selected.tablo.displayNumLines
 			);
 		},
 		lowerOrder: function () {
-			TabLib.updHeaderOrder(
+			T.updHeaderOrder(
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				this.selected.header.order - 1
 			);
 		},
 		upperOrder: function () {
-			TabLib.updHeaderOrder(
+			T.updHeaderOrder(
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				this.selected.header.order + 1
 			);
@@ -211,10 +213,10 @@ export default {
 			this.lastAppError = "";
 		},
 		deleteHeader: function () {
-			TabLib.delHeader(
+			T.delHeader(
 				this.tabenv, this.selected.tablo, this.selected.header
 			);
-			this.selected.header = { alias: null };
+			this.selectTablo(this.selected.tablo.alias);
 			this.cancelEdit();
 		}
 	},
@@ -254,14 +256,14 @@ function changeEditTablo (newValue) {
 	var errs;
 	switch (this.edit.property) {
 		case "alias" :
-			errs = TabLib.checkUpdTabloAlias(
+			errs = T.checkUpdTabloAlias(
 				this.tabenv, this.selected.tablo, newValue);
 			break;
 		case "label" :
-			errs = TabLib.checkUpdTabloLabel(
+			errs = T.checkUpdTabloLabel(
 				this.selected.tablo, newValue);
 			break;
-		default: errs = [ ERR.TABLO.UNKNOWN_PROPERTY ];
+		default: errs = [ T.ERR.TABLO.UNKNOWN_PROPERTY ];
 	}
 	this.edit.valid = (errs.length == 0);
 	this.edit.msg = errs;
@@ -271,38 +273,38 @@ function changeEditHeader (newValue) {
 	var errs ;
 	switch (this.edit.property) {
 		case "alias":
-			errs = TabLib.checkUpdHeaderAlias (
+			errs = T.checkUpdHeaderAlias (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			break;
 		case "label":
-			errs = TabLib.checkUpdHeaderLabel (this.selected.header, newValue);
+			errs = T.checkUpdHeaderLabel (this.selected.header, newValue);
 			break;
 		case "type":
-			errs = TabLib.checkUpdHeaderType (
+			errs = T.checkUpdHeaderType (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			break;
 		case "dataType":
-			errs = TabLib.checkUpdHeaderDataType(
+			errs = T.checkUpdHeaderDataType(
 				this.tabenv, this.selected.tablo, this.selected.header,
 				newValue);
 			break;
 		case "args":
-			errs = TabLib.checkUpdHeaderArgs (
+			errs = T.checkUpdHeaderArgs (
 				this.tabenv, this.selected.tablo, this.selected.header,
 				newValue);
 			break;
 		case "func":
 			try {
-				var func = TabLib.parseStrToFunction(newValue);
-				errs = TabLib.checkUpdHeaderFunc (
+				var func = T.parseStrToFunction(newValue);
+				errs = T.checkUpdHeaderFunc (
 					this.tabenv, this.selected.tablo, this.selected.header,
 					func);
 			}
 			catch (errors) { errs = errors }
 			break;
-		default: errs = [ ERR.HEADER.UNKNOWN_PROPERTY ];
+		default: errs = [ T.ERR.HEADER.UNKNOWN_PROPERTY ];
 	}
 	this.edit.valid = (errs.length == 0);
 	this.edit.msg = errs;
@@ -317,27 +319,27 @@ function submitEditTablo (newValue) {
 	var errs ;
 	switch (this.edit.property) {
 		case "alias":
-			errs = TabLib.checkUpdTabloAlias(
+			errs = T.checkUpdTabloAlias(
 				this.tabenv, this.selected.tablo, newValue);
 			if (errs.length == 0) {
-				TabLib.updTabloAlias(
+				T.updTabloAlias(
 					this.tabenv, this.selected.tablo, newValue);
 			}
 			break;
 		case "label":
-			errs = TabLib.checkUpdTabloLabel(this.selected.tablo, newValue);
+			errs = T.checkUpdTabloLabel(this.selected.tablo, newValue);
 			if (errs.length == 0) {
-				TabLib.updTabloLabel(this.selected.tablo, newValue);
+				T.updTabloLabel(this.selected.tablo, newValue);
 			}
 			break;
 		case "displayNumLines":
-			errs = TabLib.checkUpdTabloDisplayNumLines(
+			errs = T.checkUpdTabloDisplayNumLines(
 				this.selected.tablo, newValue);
 			if (errs.length == 0) {
-				TabLib.updTabloDisplayNumLines(this.selected.tablo, newValue);
+				T.updTabloDisplayNumLines(this.selected.tablo, newValue);
 			}
 			break;
-		default: errs = [ ERR.TABLO.UNKNOWN_PROPERTY ];
+		default: errs = [ T.ERR.TABLO.UNKNOWN_PROPERTY ];
 	}
 	this.cancelEdit();
 	this.lastAppErrors = errs;
@@ -347,72 +349,72 @@ function submitEditHeader (newValue) {
 	var errs ;
 	switch (this.edit.property) {
 		case "alias":
-			errs = TabLib.checkUpdHeaderAlias(
+			errs = T.checkUpdHeaderAlias(
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			if (errs.length == 0) {
-				TabLib.updHeaderAlias(
+				T.updHeaderAlias(
 					this.tabenv, this.selected.tablo, this.selected.header, 
 					newValue);
 			}
 			break;
 		case "label":
-			errs = TabLib.checkUpdHeaderLabel(this.selected.header, newValue);
+			errs = T.checkUpdHeaderLabel(this.selected.header, newValue);
 			if (errs.length == 0) {
-				TabLib.updHeaderLabel(this.selected.header, newValue);
+				T.updHeaderLabel(this.selected.header, newValue);
 			}
 			break;
 		case "type":
-			errs = TabLib.checkUpdHeaderType (
+			errs = T.checkUpdHeaderType (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			if (errs.length == 0) {
-				TabLib.updHeaderType (
+				T.updHeaderType (
 					this.tabenv, this.selected.tablo, this.selected.header, 
 					newValue);
 			}
 			break;
 		case "dataType":
-			errs = TabLib.checkUpdHeaderDataType (
+			errs = T.checkUpdHeaderDataType (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			if (errs.length == 0) {
-				TabLib.updHeaderDataType (
+				T.updHeaderDataType (
 					this.tabenv, this.selected.tablo, this.selected.header, 
 					newValue );
 			}
 			break;
 		case "args":
-			errs = TabLib.checkUpdHeaderArgs(
+			errs = T.checkUpdHeaderArgs(
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			if (errs.length == 0) {
-				TabLib.updHeaderArgs(
+				T.updHeaderArgs(
 					this.tabenv, this.selected.tablo, this.selected.header, 
 					newValue);
-				errs.concat(TabLib.checkUpdFuncHeaderAllCells(
+				errs.concat(T.checkUpdFuncHeaderAllCells(
 					this.tabenv, this.selected.tablo, this.selected.header));
 				if (errs.length == 0) {
-					TabLib.updFuncHeaderAllCells(
+					T.updFuncHeaderAllCells(
 						this.tabenv, this.selected.tablo, this.selected.header);
 				}
 			}
 			break;
 		case "func":
 			try {
-				var func = TabLib.parseStrToFunction(newValue);
-				errs = TabLib.checkUpdHeaderFunc(
+				var func = T.parseStrToFunction(newValue);
+				errs = T.checkUpdHeaderFunc(
 					this.tabenv, this.selected.tablo, this.selected.header, 
 					func);
 				if (errs.length == 0) {
-					TabLib.updHeaderFunc(
+					T.updHeaderFunc(
 						this.tabenv, this.selected.tablo, this.selected.header, 
 						func);
 				}
 			}
 			catch(error) { errs = [error] }
 			break;
-		default: errs = [ ERR.HEADER.UNKNOW_PROPERTY ];
+		default: errs = [ T.ERR.HEADER.UNKNOW_PROPERTY ];
 	}
 	this.cancelEdit();
 	this.lastAppErrors = errs;
@@ -420,21 +422,21 @@ function submitEditHeader (newValue) {
 
 function submitEditCell (newValue) {
 	switch (this.selected.header.dataType) {
-		case TabLib.DATA_TYPE.INT:
+		case T.DATA_TYPE.INT:
 			newValue = parseInt(newValue);
 			break;
-		case TabLib.DATA_TYPE.FLOAT:
+		case T.DATA_TYPE.FLOAT:
 			newValue = parseFloat(newValue);
 			break;
-		case TabLib.DATA_TYPE.STRING:
+		case T.DATA_TYPE.STRING:
 			newValue = new String(newValue).valueOf();
 			break;
-		case TabLib.DATA_TYPE.JSON:
+		case T.DATA_TYPE.JSON:
 			newValue = JSON.parse(newValue);
 			break;
-		default: this.lastAppError = ERR.HEADER.DATA_TYPE.UNKNOWN ;
+		default: this.lastAppError = T.ERR.HEADER.DATA_TYPE.UNKNOWN ;
 	}
-	TabLib.updDataCell(
+	T.updDataCell(
 		this.tabenv, this.selected.tablo, this.selected.header,
 		this.selected.line, newValue
 	);
@@ -445,68 +447,68 @@ function created () {
 	
 	var errs = [];
 	
-	errs.concat(TabLib.checkNewTablo(this.tabenv, "users", "Users"));
-	var users = TabLib.newTablo(this.tabenv, "users", "Users");
+	errs.concat(T.checkNewTablo(this.tabenv, "users", "Users"));
+	var users = T.newTablo(this.tabenv, "users", "Users");
 
 	
-	errs.concat(TabLib.checkNewDataHeader(
-		this.tabenv, users, "name", "Name", TabLib.DATA_TYPE.STRING));
-	var usersName = TabLib.newDataHeader(
-		this.tabenv, users, "name", "Name", TabLib.DATA_TYPE.STRING);
+	errs.concat(T.checkNewDataHeader(
+		this.tabenv, users, "name", "Name", T.DATA_TYPE.STRING));
+	var usersName = T.newDataHeader(
+		this.tabenv, users, "name", "Name", T.DATA_TYPE.STRING);
 	
-	var usersCash = TabLib.newDataHeader(
-		this.tabenv, users, "cash", "Cash", TabLib.DATA_TYPE.INT);
+	var usersCash = T.newDataHeader(
+		this.tabenv, users, "cash", "Cash", T.DATA_TYPE.INT);
 	
-	var usersDebt = TabLib.newDataHeader(
-		this.tabenv, users, "debt", "Debt", TabLib.DATA_TYPE.INT);
+	var usersDebt = T.newDataHeader(
+		this.tabenv, users, "debt", "Debt", T.DATA_TYPE.INT);
 		
-	var usersComputed = TabLib.newFuncHeader(
+	var usersComputed = T.newFuncHeader(
 		this.tabenv, users, "computed", "Computed", [ 
-			TabLib.newColSamelineArg("users", "cash"), 
-			TabLib.newColSamelineArg("users", "debt") ],
+			T.newColSamelineArg("users", "cash"), 
+			T.newColSamelineArg("users", "debt") ],
 		function (cash, debt) { return cash - debt; }
 	);
 	
-	var usersAftertax = TabLib.newFuncHeader(
+	var usersAftertax = T.newFuncHeader(
 		this.tabenv, users, "aftertax", "After Tax",
-		[ TabLib.newColSamelineArg("users", "computed") ],
+		[ T.newColSamelineArg("users", "computed") ],
 		function (computed) { return computed - 12; }
 	);
 	
-	TabLib.newLine(this.tabenv, users); 
-	TabLib.updDataCell(this.tabenv, users, usersName, 0, "yayatoto");
-	TabLib.updDataCell(this.tabenv, users, usersCash, 0, 10);
-	TabLib.updDataCell(this.tabenv, users, usersDebt, 0, 5);
+	T.newLine(this.tabenv, users); 
+	T.updDataCell(this.tabenv, users, usersName, 0, "yayatoto");
+	T.updDataCell(this.tabenv, users, usersCash, 0, 10);
+	T.updDataCell(this.tabenv, users, usersDebt, 0, 5);
 
-	TabLib.newLine(this.tabenv, users);
-	TabLib.updDataCell(this.tabenv, users, usersName, 1, "magdalena");
-	TabLib.updDataCell(this.tabenv, users, usersCash, 1, 35);
-	TabLib.updDataCell(this.tabenv, users, usersDebt, 1, 100);
+	T.newLine(this.tabenv, users);
+	T.updDataCell(this.tabenv, users, usersName, 1, "magdalena");
+	T.updDataCell(this.tabenv, users, usersCash, 1, 35);
+	T.updDataCell(this.tabenv, users, usersDebt, 1, 100);
 
-	var total = TabLib.newTablo(this.tabenv, "total", "Total");
+	var total = T.newTablo(this.tabenv, "total", "Total");
 	
-	var totalName = TabLib.newFuncHeader(
+	var totalName = T.newFuncHeader(
 		this.tabenv, total, "name", "Name",
-		[ TabLib.newColSamelineArg("users", "name") ],
+		[ T.newColSamelineArg("users", "name") ],
 		function (name) { return name }
 	);
 	
-	var totalTotal = TabLib.newFuncHeader(
+	var totalTotal = T.newFuncHeader(
 		this.tabenv, total, "total", "Total", [
-			TabLib.newColSamelineArg("users", "cash"), 
-			TabLib.newColSamelineArg("users", "debt"),
-			TabLib.newColSamelineArg("users", "computed"),
-			TabLib.newColSamelineArg("users", "aftertax") ],
+			T.newColSamelineArg("users", "cash"), 
+			T.newColSamelineArg("users", "debt"),
+			T.newColSamelineArg("users", "computed"),
+			T.newColSamelineArg("users", "aftertax") ],
 		function (cash, debt, computed, aftertax) {
 			return cash + debt + computed + aftertax; 
 		}
 	);
 	
-	TabLib.newLine(this.tabenv, total);
-	TabLib.updLineAllFuncCells (this.tabenv, total, 0);
+	T.newLine(this.tabenv, total);
+	T.updLineAllFuncCells (this.tabenv, total, 0);
 	
-	TabLib.newLine(this.tabenv, total);
-	TabLib.updLineAllFuncCells (this.tabenv, total, 1);
+	T.newLine(this.tabenv, total);
+	T.updLineAllFuncCells (this.tabenv, total, 1);
 	
 	if (errs.length > 0 ) this.lastAppError = errs;
 	else this.lastAppError = "";

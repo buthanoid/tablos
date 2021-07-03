@@ -116,7 +116,7 @@ export default {
 		}
 	},
 	computed: {
-		isEdited: function () { return this.edit.target == "tablo" ; }
+		isEdited() { return this.edit.target == "tablo" ; }
 	}
 }
 </script>

@@ -180,7 +180,7 @@
 </template>
 
 <script>
-import * as TabLib from "../tablos.js";
+import * as T from "../tablos.js";
 
 export default {
 	emits: [ 
@@ -198,7 +198,7 @@ export default {
 		startEdit: function (property) {
 			// for args we need to copy it since it is a deep object
 			if (property == "args") {
-				this.editForm = this.header.args.map(TabLib.copyArg);
+				this.editForm = this.header.args.map(T.copyArg);
 			}
 			else {
 				this.editForm = this.header[property];
@@ -232,26 +232,26 @@ export default {
 				headerAlias = this.headersList.get(tabloAlias)[0].alias ;
 			}
 			this.editForm.push(
-				TabLib.newColSamelineArg(tabloAlias, headerAlias)
+				T.newColSamelineArg(tabloAlias, headerAlias)
 			);
 			this.changeEdit();
 		}
 	},
 	computed: {
-		isEdited: function () { return this.edit.target == "header"; },
-		headerType: function () { 
+		isEdited() { return this.edit.target == "header"; },
+		headerType() { 
 			switch (this.header.type) {
-				case TabLib.DATA_HEADER: return "Donnée";
-				case TabLib.FUNC_HEADER: return "Fonction";
-				default: console.log("unknown header type");
+				case T.DATA_HEADER: return "Donnée";
+				case T.FUNC_HEADER: return "Fonction";
+				default: console.log(this.header);throw(T.ERR.HEADER.TYPE.UNKNOWN) ;
 			}
 		},
-		argsStr: function () { 
-			if (this.header.type == TabLib.FUNC_HEADER) {
+		argsStr() { 
+			if (this.header.type == T.FUNC_HEADER) {
 				return this.header.args.map(function (arg) {
 					switch (arg.type) {
-						case TabLib.NULL_ARG: return "nul";
-						case TabLib.COL_SAMELINE_ARG: 
+						case T.NULL_ARG: return "nul";
+						case T.COL_SAMELINE_ARG: 
 							var str = 
 								arg.alias.tablo + 
 								"[" + arg.alias.header + "][#]" ;
@@ -264,12 +264,12 @@ export default {
 			}
 			else return null;
 		},
-		DATA_HEADER: function () { return TabLib.DATA_HEADER },
-		FUNC_HEADER: function () { return TabLib.FUNC_HEADER },
-		DATA_TYPE: function () { return TabLib.DATA_TYPE },
-		DATA_TYPE_STR: function () { return TabLib.DATA_TYPE_STR },
-		NULL_ARG: function () { return TabLib.NULL_ARG },
-		COL_SAMELINE_ARG: function () { return TabLib.COL_SAMELINE_ARG }
+		DATA_HEADER() { return T.DATA_HEADER },
+		FUNC_HEADER() { return T.FUNC_HEADER },
+		DATA_TYPE() { return T.DATA_TYPE },
+		DATA_TYPE_STR() { return T.DATA_TYPE_STR },
+		NULL_ARG() { return T.NULL_ARG },
+		COL_SAMELINE_ARG() { return T.COL_SAMELINE_ARG }
 	}
 }
 </script>

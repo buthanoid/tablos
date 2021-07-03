@@ -22,7 +22,7 @@
 				</th>
 				<td v-for="(_,numCol) in headers.length" >
 					<div 
-						v-if="isCellEdited(numLine,numCol)" >
+						v-if="isThisCellEdited(numLine,numCol)" >
 						<input
 							v-model="editForm"
 							ref="cellEditInput"
@@ -43,7 +43,7 @@
 		</tbody>
 	</table>
 	<div>
-		<p v-if="isCellEdited && !(edit.valid)" class="incorrect" >
+		<p v-if="isSomeCellEdited && !(edit.valid)" class="incorrect" >
 			<span>Valeur invalide !</span> <br />
 			<span>{{edit.msg}}</span>
 		</p>
@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import * as TabLib from "../tablos.js" ;
+import * as T from "../tablos.js" ;
 import * as U from "../util.js" ;
 
 var headerTypeToClass = ["dataheader", "funcheader" ];
@@ -83,14 +83,14 @@ export default {
 			this.$emit("selectLine", this.alias, numLine);
 		},
 		selectCellStartEdit:  function (numLine, numCol) {
-			if (this.headers[numCol].dataType == TabLib.DATA_TYPE.JSON) {
+			if (this.headers[numCol].dataType == T.DATA_TYPE.JSON) {
 				this.editForm = JSON.stringify(this.datatab[numLine][numCol]);
 			}
 			else this.editForm = this.datatab[numLine][numCol];
 			this.$emit("selectCell",
 				this.alias, this.headers[numCol].alias, numLine
 			);
-			if (this.headers[numCol].type == TabLib.DATA_HEADER) {
+			if (this.headers[numCol].type == T.DATA_HEADER) {
 				this.$emit("startEdit", "cell", null);
 			}
 		},
@@ -103,24 +103,29 @@ export default {
 		cancelEdit: function () { this.$emit("cancelEdit") },
 	},
 	computed: {
-		isSelected: function () {
+		isSelected() {
 			return (
 				U.TRG_TABLO_EXT.includes(this.selected.target) &&
 				this.selected.tablo.alias == this.alias
 			);
 		},
-		isCellEdited: function() {
+		isSomeCellEdited() {
+			return (
+				this.isSelected && // is this tablo selected
+				this.selected.target == U.TRG.CELL && 
+				this.edit.target == "cell"
+			);
+		},
+		isThisCellEdited() {
 			return function (numLine, numCol) {
 				return (
-					this.isSelected && // is this tablo selected
-					this.selected.target == U.TRG.CELL && 
-					this.edit.target == "cell" &&
+					this.isSomeCellEdited && 
 					this.selected.header.order == numCol &&
 					this.selected.line == numLine
 				);
 			}
 		},
-		headersClasses: function () {
+		headersClasses() {
 			return Array.from(this.headers).map(function (header) {
 				var classes = "header";
 				classes += " " + headerTypeToClass[header.type];
@@ -133,7 +138,7 @@ export default {
 				return classes;
 			}.bind(this));  
 		},
-		linesClasses: function () {
+		linesClasses() {
 			return Array.from(this.datatab).map(function (line, numLine) {
 				var classes = "line clickable";
 				if (this.isSelected &&

@@ -10,6 +10,7 @@ export {
 	NULL_ARG,
 	COL_SAMELINE_ARG,
 	TAB_ARG_TYPES,
+	ERR,
 	// utilities
 	parseStrToFunction,
 	aliasesToStr,
@@ -40,7 +41,7 @@ export {
 	// upd functions
 	updTabloAlias, checkUpdTabloAlias,
 	updTabloLabel, checkUpdTabloLabel,
-	updTabloDisplayNumLines,
+	updTabloDisplayNumLines, checkUpdTabloDisplayNumLines,
 	updHeaderAlias, checkUpdHeaderAlias,
 	updHeaderLabel, checkUpdHeaderLabel,
 	updHeaderType, checkUpdHeaderType,
@@ -49,7 +50,7 @@ export {
 	updHeaderArgs, checkUpdHeaderArgs,
 	updHeaderFunc, checkUpdHeaderFunc, 
 	updLineAllFuncCells,
-	updFuncHeaderAllCells,
+	updFuncHeaderAllCells, checkUpdFuncHeaderAllCells,
 	updTabloAllFuncHeadersAllCells,
 	updFuncCell,
 	updDataCell,
@@ -1190,7 +1191,7 @@ function delHeader (tabenv, tablo, header) {
 						return { type: NULL_ARG };
 					}
 					else return arg;
-				default: throw (ERR.HEADER.ARG.UNKNOWN_TYPE) ;
+				default: throw ERR.HEADER.ARG.TYPE.UNKNOWN ;
 			}
 		});
 		// updHeaderArgs delete the reactions associated to nullified args.
@@ -1227,27 +1228,30 @@ function delHeader (tabenv, tablo, header) {
 function delArgFromHeader (tabenv, tablo, header, indexArg) {
 	
 	var arg = header.args[indexArg];
-	var headerFullAlias = aliasesToStr(tablo.alias, header.alias);
 	
 	// remove the arg
 	header.args.splice(indexArg, 1);
 	
-	// delete the reaction associated to the arg
+	// delete an eventual reaction associated to the arg
 	switch (arg.type) {
 		case NULL_ARG: break;
 		case COL_SAMELINE_ARG:
-			var argAliasStr = aliasObjToStr(arg.alias);
 			// Careful ! we must not delete the reaction if
-			// another arg point to the same alias
-			var lastOne = header.args.every(function (otherArg) {
-				var otherArgAliasStr = aliasObjToStr(otherArg.alias);
-				return argAliasStr != otherArgAliasStr;
+			// there was another arg pointing to the same alias
+			var anotherSame = header.args.find(function (otherArg) {
+				return (
+					otherArg.type == COL_SAMELINE_ARG &&
+					otherArg.alias.tablo == arg.alias.tablo &&
+					otherArg.alias.header == arg.alias.header );
 			});
-			if (lastOne) {
-				delReaction(tabenv.reactMap, argAliasStr, headerFullAlias);
+			if (! anotherSame) {
+				delReaction(
+					tabenv.reactMap, 
+					aliasesToStr(arg.alias.tablo, arg.alias.header), 
+					aliasesToStr(tablo.alias, header.alias));
 			}
 			break;
-		default: console.log("unknown arg type");
+		default: throw ERR.HEADER.ARG.TYPE.UNKNOWN;
 	}
 }
 
