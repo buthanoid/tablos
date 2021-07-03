@@ -96,7 +96,7 @@ export default {
 				this.alias, this.headers[numCol].alias, numLine
 			);
 			if (this.headers[numCol].type == T.TYPE.HEADER.DATA) {
-				this.$emit("startEdit", "cell", null);
+				this.$emit("startEdit", U.TRG.CELL, null);
 			}
 		},
 		changeEdit: function () {
@@ -118,7 +118,7 @@ export default {
 			return (
 				this.isSelected && // is this tablo selected
 				this.selected.target == U.TRG.CELL && 
-				this.edit.target == "cell"
+				this.edit.target == U.TRG.CELL
 			);
 		},
 		isThisCellEdited() {

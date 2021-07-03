@@ -35,6 +35,7 @@
 				:display-num-lines="selected.tablo.displayNumLines"
 				:nb-headers="selected.tablo.headers.length"
 				:nb-lines="selected.tablo.data.length"
+				:selected="selected"
 				:edit="edit"
 				:texts="texts"
 				@del-tablo="delTablo"
@@ -53,6 +54,7 @@
 				:tablo-alias="selected.tablo.alias"
 				:header="selected.header"
 				:nb-headers="selected.tablo.headers.length"
+				:selected="selected"
 				:edit="edit"
 				:texts="texts"
 				@start-edit="startEdit"
@@ -111,8 +113,8 @@ export default {
 				cell: false
 			},
 			edit : {
-				target: null,
-				property: null,
+				target: U.TRG.NULL,
+				property: T.PROP.NULL,
 				valid: true,
 				msg: null
 			},
@@ -216,8 +218,8 @@ export default {
 		submitEditHeader: submitEditHeader,
 		submitEditCell: submitEditCell,
 		cancelEdit: function () {
-			this.edit.target = null;
-			this.edit.property = null;
+			this.edit.target = U.TRG.NULL;
+			this.edit.property = T.PROP.NULL;
 			this.edit.valid = true;
 			this.edit.msg = null;
 			this.lastAppError = "";
@@ -272,15 +274,15 @@ export default {
 function changeEditTablo (newValue) {
 	var errs;
 	switch (this.edit.property) {
-		case "alias" :
+		case T.PROP.TABLO.ALIAS :
 			errs = T.checkUpdTabloAlias(
 				this.tabenv, this.selected.tablo, newValue);
 			break;
-		case "label" :
+		case T.PROP.TABLO.LABEL :
 			errs = T.checkUpdTabloLabel(
 				this.selected.tablo, newValue);
 			break;
-		default: errs = [ T.ERR.TABLO.UNKNOWN_PROPERTY ];
+		default: errs = [ T.ERR.PROP.TABLO.UNKNOWN ];
 	}
 	this.edit.valid = (errs.length == 0);
 	this.edit.msg = errs;
@@ -289,30 +291,30 @@ function changeEditTablo (newValue) {
 function changeEditHeader (newValue) {
 	var errs ;
 	switch (this.edit.property) {
-		case "alias":
+		case T.PROP.HEADER.ALIAS:
 			errs = T.checkUpdHeaderAlias (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			break;
-		case "label":
+		case T.PROP.HEADER.LABEL:
 			errs = T.checkUpdHeaderLabel (this.selected.header, newValue);
 			break;
-		case "type":
+		case T.PROP.HEADER.TYPE:
 			errs = T.checkUpdHeaderType (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			break;
-		case "dataType":
+		case T.PROP.HEADER.DATATYPE:
 			errs = T.checkUpdHeaderDataType(
 				this.tabenv, this.selected.tablo, this.selected.header,
 				newValue);
 			break;
-		case "args":
+		case T.PROP.HEADER.ARGS:
 			errs = T.checkUpdHeaderArgs (
 				this.tabenv, this.selected.tablo, this.selected.header,
 				newValue);
 			break;
-		case "func":
+		case T.PROP.HEADER.FUNC:
 			try {
 				var func = T.parseStrToFunction(newValue);
 				errs = T.checkUpdHeaderFunc (
@@ -321,7 +323,7 @@ function changeEditHeader (newValue) {
 			}
 			catch (errors) { errs = errors }
 			break;
-		default: errs = [ T.ERR.HEADER.UNKNOWN_PROPERTY ];
+		default: errs = [ T.ERR.PROP.HEADER.UNKNOWN ];
 	}
 	this.edit.valid = (errs.length == 0);
 	this.edit.msg = errs;
@@ -335,7 +337,7 @@ function changeEditCell (newValue) {
 function submitEditTablo (newValue) {
 	var errs ;
 	switch (this.edit.property) {
-		case "alias":
+		case T.PROP.TABLO.ALIAS:
 			errs = T.checkUpdTabloAlias(
 				this.tabenv, this.selected.tablo, newValue);
 			if (errs.length == 0) {
@@ -343,20 +345,20 @@ function submitEditTablo (newValue) {
 					this.tabenv, this.selected.tablo, newValue);
 			}
 			break;
-		case "label":
+		case T.PROP.TABLO.LABEL:
 			errs = T.checkUpdTabloLabel(this.selected.tablo, newValue);
 			if (errs.length == 0) {
 				T.updTabloLabel(this.selected.tablo, newValue);
 			}
 			break;
-		case "displayNumLines":
+		case T.PROP.TABLO.DISPLAY_NUM_LINES:
 			errs = T.checkUpdTabloDisplayNumLines(
 				this.selected.tablo, newValue);
 			if (errs.length == 0) {
 				T.updTabloDisplayNumLines(this.selected.tablo, newValue);
 			}
 			break;
-		default: errs = [ T.ERR.TABLO.UNKNOWN_PROPERTY ];
+		default: errs = [ T.ERR.PROP.TABLO.UNKNOWN ];
 	}
 	this.cancelEdit();
 	this.lastAppErrors = errs;
@@ -365,7 +367,7 @@ function submitEditTablo (newValue) {
 function submitEditHeader (newValue) {
 	var errs ;
 	switch (this.edit.property) {
-		case "alias":
+		case T.PROP.HEADER.ALIAS:
 			errs = T.checkUpdHeaderAlias(
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
@@ -375,13 +377,13 @@ function submitEditHeader (newValue) {
 					newValue);
 			}
 			break;
-		case "label":
+		case T.PROP.HEADER.LABEL:
 			errs = T.checkUpdHeaderLabel(this.selected.header, newValue);
 			if (errs.length == 0) {
 				T.updHeaderLabel(this.selected.header, newValue);
 			}
 			break;
-		case "type":
+		case T.PROP.HEADER.TYPE:
 			errs = T.checkUpdHeaderType (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
@@ -391,7 +393,7 @@ function submitEditHeader (newValue) {
 					newValue);
 			}
 			break;
-		case "dataType":
+		case T.PROP.HEADER.DATATYPE:
 			errs = T.checkUpdHeaderDataType (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
@@ -401,7 +403,7 @@ function submitEditHeader (newValue) {
 					newValue );
 			}
 			break;
-		case "args":
+		case T.PROP.HEADER.ARGS:
 			errs = T.checkUpdHeaderArgs(
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
@@ -417,7 +419,7 @@ function submitEditHeader (newValue) {
 				}
 			}
 			break;
-		case "func":
+		case T.PROP.HEADER.FUNC:
 			try {
 				var func = T.parseStrToFunction(newValue);
 				errs = T.checkUpdHeaderFunc(
@@ -431,7 +433,7 @@ function submitEditHeader (newValue) {
 			}
 			catch(error) { errs = [error] }
 			break;
-		default: errs = [ T.ERR.HEADER.UNKNOW_PROPERTY ];
+		default: errs = [ T.ERR.PROP.HEADER.UNKNOWN ];
 	}
 	this.cancelEdit();
 	this.lastAppErrors = errs;

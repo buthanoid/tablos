@@ -14,7 +14,7 @@ const TEXTS = {
 	"Type": "Type",
 	"Order": "Order",
 	"DataType": "Data type",
-	"DisplayNumLines": "Display line numbers",
+	"DisplayLineNumbers": "Display line numbers",
 	"HeaderNumber": "Number of columns",
 	"LineNumber": "Number of lines",
 	"Arguments": "Arguments",

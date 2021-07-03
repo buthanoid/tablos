@@ -4,6 +4,7 @@ export {
 	// constants
 	TYPE,
 	ERR,
+	PROP,
 	// utilities
 	parseStrToFunction,
 	aliasesToStr,
@@ -126,8 +127,34 @@ const ERR = {
 					"ERR.HEADER.ARG.COL_SAME_LINE.NON_EXISTING_HEADER_ALIAS"
 			}
 		}
+	},
+	PROP: {
+		TABLO: {
+			UNKNOWN: "ERR.PROP.TABLO.UNKNOWN"
+		},
+		HEADER: {
+			UNKNOWN: "ERR.PROP.HEADER.UNKNOWN"
+		}
 	}
 };
+
+const PROP = {
+	NULL: "PROP.NULL",
+	TABLO: {
+		ALIAS: "PROP.TABLO.ALIAS",
+		LABEL: "PROP.TABLO.LABEL",
+		DISPLAY_LINE_NUMBERS: "PROP.TABLO.DISPLAY_LINE_NUMBERS",
+	},
+	HEADER: {
+		ALIAS: "PROP.HEADER.ALIAS",
+		LABEL: "PROP.HEADER.LABEL",
+		TYPE: "PROP.HEADER.TYPE",
+		ORDER: "PROP.HEADER.ORDER",
+		DATATYPE: "PROP.HEADER.DATATYPE",
+		ARGS: "PROP.HEADER.ARGS",
+		FUNC: "PROP.HEADER.FUNC"
+	}
+}
 
 // ================= UTILITIES =======================
 

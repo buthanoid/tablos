@@ -3,10 +3,10 @@
 		<caption>{{texts["Tablo"]}}</caption>
 
 		<tr> 
-			<th :class="{selected : isEdited && edit.property == 'alias'}" >
+			<th :class="{selected : isPropEdited(PROP.TABLO.ALIAS) }" >
 				<span>{{texts["Alias"]}}</span>
 			</th> 
-			<td v-if="isEdited && edit.property == 'alias'" >
+			<td v-if="isPropEdited(PROP.TABLO.ALIAS)" >
 				<input 
 					v-model="editForm"
 					ref="label"
@@ -18,17 +18,17 @@
 			</td>
 			<td v-else >
 				<span>{{alias}}</span>
-				<button @click="startEdit('alias')" >
+				<button @click="startEditAlias" >
 					<span>{{texts["modify"]}}</span>
 				</button>
 			</td> 
 		</tr>
 		
 		<tr> 
-			<th :class="{selected : isEdited && edit.property == 'label'}" >
+			<th :class="{selected : isPropEdited(PROP.TABLO.LABEL) }" >
 				<span>{{texts["Label"]}}</span>
 			</th> 
-			<td v-if="isEdited && edit.property == 'label'" >
+			<td v-if="isPropEdited(PROP.TABLO.LABEL)" >
 				<input 
 					v-model="editForm"
 					ref="label"
@@ -40,7 +40,7 @@
 			</td>
 			<td v-else >
 				<span>{{label}}</span>
-				<button @click="startEdit('label')" >
+				<button @click="startEditLabel" >
 					<span>{{texts["modify"]}}</span>
 				</button>
 			</td> 
@@ -80,7 +80,7 @@
 	</table>		
 	<div>
 		<p 
-			v-if="isEdited && edit.valid === false" 
+			v-if="isTabloEdited && edit.valid === false" 
 			class="incorrect" 
 		>
 			<span>{{texts["incorrectValue"]}}</span> <br />
@@ -92,6 +92,9 @@
 </template>
 
 <script>
+import * as T from "../tablos.js" ;
+import * as U from "../util.js" ;
+
 export default {
 	emits: [ 
 		"delTablo", "addNewHeader", "addNewLine", "toggleDisplayNumLines",
@@ -103,6 +106,7 @@ export default {
 		"displayNumLines",
 		"nbHeaders",
 		"nbLines",
+		"selected",
 		"edit",
 		"texts"
 	],
@@ -110,9 +114,13 @@ export default {
 		editForm: null	
 	}},
 	methods: {
-		startEdit: function (property) {
-			this.editForm = this.$props[property];
-			this.$emit("startEdit", "tablo", property);
+		startEditAlias: function () {
+			this.editForm = this.$props.alias;
+			this.$emit("startEdit", U.TRG.TABLO, T.PROP.TABLO.ALIAS);
+		},
+		startEditLabel: function () {
+			this.editForm = this.$props.label;
+			this.$emit("startEdit", U.TRG.TABLO, T.PROP.TABLO.LABEL);
 		},
 		changeEdit: function () { this.$emit("changeEdit", this.editForm) },
 		submitEdit: function () { this.$emit("submitEdit", this.editForm) },
@@ -125,7 +133,17 @@ export default {
 		}
 	},
 	computed: {
-		isEdited() { return this.edit.target == "tablo" ; }
+		isTabloEdited() { 
+			return (
+				this.edit.target == U.TRG.TABLO &&
+				this.selected.tablo.alias == this.alias );
+		},
+		isPropEdited() {
+			return function (prop) {
+				return this.isTabloEdited && this.edit.property == prop;
+			}
+		},
+		PROP() { return T.PROP }
 	}
 }
 </script>

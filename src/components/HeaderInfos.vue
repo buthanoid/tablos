@@ -3,10 +3,10 @@
 		<caption>{{ texts["Header"] }}</caption>
 		
 		<tr> 
-			<th :class="{selected : isEdited && edit.property == 'alias'}" >
+			<th :class="{selected : isPropEdited(PROP.HEADER.ALIAS) }" >
 				<span>{{ texts["Alias"] }}</span>
 			</th> 
-			<td v-if="isEdited && edit.property == 'alias'" >
+			<td v-if="isPropEdited(PROP.HEADER.ALIAS)" >
 				<input 
 					v-model="editForm"
 					ref="alias"
@@ -18,17 +18,17 @@
 			</td>
 			<td v-else >
 				<span>{{header.alias}}</span>
-				<button @click="startEdit('alias')" >
+				<button @click="startEditAlias" >
 					<span>{{texts["modify"]}}</span>
 				</button>
 			</td> 
 		</tr>
 		
 		<tr> 
-			<th :class="{selected : isEdited && edit.property == 'label'}" >
+			<th :class="{selected : isPropEdited(PROP.HEADER.LABEL) }" >
 				<span>{{texts["Label"]}}</span>
 			</th> 
-			<td v-if="isEdited && edit.property == 'label'" >
+			<td v-if="isPropEdited(PROP.HEADER.LABEL)" >
 				<input 
 					v-model="editForm"
 					ref="label"
@@ -40,17 +40,17 @@
 			</td>
 			<td v-else >
 				<span>{{header.label}}</span>
-				<button @click="startEdit('label')" >
+				<button @click="startEditLabel" >
 					<span>{{texts["modify"]}}</span>
 				</button>
 			</td> 
 		</tr>
 		
 		<tr> 
-			<th :class="{selected : isEdited && edit.property == 'type' }" >
+			<th :class="{selected : isPropEdited(PROP.HEADER.TYPE) }" >
 				<span>{{texts["Type"]}}</span>
 			</th> 
-			<td v-if="isEdited && edit.property == 'type'" >
+			<td v-if="isPropEdited(PROP.HEADER.TYPE)" >
 				<select 
 					v-model="editForm" 
 					ref="type" 
@@ -66,14 +66,14 @@
 			</td>
 			<td v-else >
 				<span>{{ texts[header.type] }}</span>
-				<button @click="startEdit('type')" >
+				<button @click="startEditType" >
 					<span>{{texts["modify"]}}</span>
 				</button>
 			</td>
 		</tr>
 		
 		<tr> 
-			<th :class="{selected : isEdited && edit.property == 'order' }" >
+			<th :class="{selected : isPropEdited(PROP.HEADER.ORDER) }" >
 				<span>{{texts["Order"]}}</span>
 			</th> 
 			<td>
@@ -92,8 +92,10 @@
 		</tr>
 		
 		<tr v-if="header.type == TYPE.HEADER.DATA" >
-			<th>{{texts["DataType"]}}</th>
-			<td v-if="isEdited && edit.property == 'dataType'" >
+			<th :class="{selected : isPropEdited(PROP.HEADER.ARGS) }" >
+				<span>{{texts["DataType"]}}</span>
+			</th>
+			<td v-if="isPropEdited(PROP.HEADER.DATATYPE)" >
 				<select 
 					v-model="editForm"
 					@change="changeEdit" >
@@ -108,17 +110,17 @@
 			</td>
 			<td v-else >
 				<span>{{ texts[header.dataType] }}</span>			
-				<button @click="startEdit('dataType')" >
+				<button @click="startEditDataType" >
 					<span>{{texts["modify"]}}</span>
 				</button>
 			</td>
 		</tr>
 		
 		<tr v-if="header.type == TYPE.HEADER.FUNC" > 
-			<th :class="{selected : isEdited && edit.property == 'args' }" >
+			<th :class="{selected : isPropEdited(PROP.HEADER.ARGS) }" >
 				<span>{{texts["Arguments"]}}</span>
 			</th> 
-			<td v-if="isEdited && edit.property == 'args'" >
+			<td v-if="isPropEdited(PROP.HEADER.ARGS)" >
 				<div v-for="(arg,index) in editForm" :key="index" >
 					<div v-if="arg.type == TYPE.HEADER_ARG.COL_SAME_LINE" >
 						<select 
@@ -158,15 +160,17 @@
 			</td>
 			<td v-else >
 				<span>{{argsStr}}</span>
-				<button @click="startEdit('args')" >{{texts["modify"]}}</button>
+				<button @click="startEditArgs" >
+					<span>{{texts["modify"]}}</span>
+				</button>
 			</td>
 		</tr>
 		
 		<tr v-if="header.type == TYPE.HEADER.FUNC" > 
-			<th :class="{selected : isEdited && edit.property == 'func'}" >
+			<th :class="{selected : isPropEdited(PROP.HEADER.FUNC)}" >
 				<span>{{texts["Function"]}}</span>
 			</th> 
-			<td v-if="isEdited && edit.property == 'func'" >
+			<td v-if="isPropEdited(PROP.HEADER.FUNC)" >
 				<textarea
 					v-model="editForm"
 					ref="func"
@@ -179,13 +183,15 @@
 			</td>
 			<td v-else >
 				<pre>{{header.func}}</pre>
-				<button @click="startEdit('func')" >{{texts["modify"]}}</button>
+				<button @click="startEditFunc" >
+					<span>{{texts["modify"]}}</span>
+				</button>
 			</td> 
 		</tr>
 	</table>
 	<div>
 		<p 
-			v-if="isEdited && edit.valid === false" 
+			v-if="isHeaderEdited && edit.valid === false" 
 			class="incorrect" >
 			<span>{{texts["incorrectValue"]}}</span> <br />
 			<span v-if="edit.msg" >{{edit.msg}}</span>
@@ -198,6 +204,7 @@
 "use strict";
 
 import * as T from "../tablos.js" ;
+import * as U from "../util.js" ;
 
 export default {
 	emits: [ 
@@ -206,21 +213,35 @@ export default {
 	],
 	props: [ 
 		"tablosList", "headersList", "tabloAlias", "header", 
-		"nbHeaders", "edit", "texts",
+		"nbHeaders", "selected", "edit", "texts",
 	],
 	data: function () { return {
 		editForm: null
 	}},
 	methods: {
-		startEdit: function (property) {
-			// for args we need to copy it since it is a deep object
-			if (property == "args") {
-				this.editForm = this.header.args.map(T.copyArg);
-			}
-			else {
-				this.editForm = this.header[property];
-			}
-			this.$emit("startEdit", "header", property);
+		startEditAlias: function () {
+			this.editForm = this.header.alias;
+			this.$emit("startEdit", U.TRG.HEADER, T.PROP.HEADER.ALIAS);
+		},
+		startEditLabel: function () {
+			this.editForm = this.header.label;
+			this.$emit("startEdit", U.TRG.HEADER, T.PROP.HEADER.LABEL);
+		},
+		startEditType: function () {
+			this.editForm = this.header.type;
+			this.$emit("startEdit", U.TRG.HEADER, T.PROP.HEADER.TYPE);
+		},
+		startEditDataType: function () {
+			this.editForm = this.header.dataType;
+			this.$emit("startEdit", U.TRG.HEADER, T.PROP.HEADER.DATATYPE);
+		},
+		startEditArgs: function () {
+			this.editForm = this.header.args.map(T.copyArg);
+			this.$emit("startEdit", U.TRG.HEADER, T.PROP.HEADER.ARGS);
+		},
+		startEditFunc: function () {
+			this.editForm = this.header.func;
+			this.$emit("startEdit", U.TRG.HEADER, T.PROP.HEADER.FUNC);
 		},
 		changeEdit: function () {
 			this.$emit("changeEdit", this.editForm);
@@ -255,7 +276,17 @@ export default {
 		}
 	},
 	computed: {
-		isEdited() { return this.edit.target == "header"; },
+		isHeaderEdited() { 
+			return (
+				this.edit.target == U.TRG.HEADER &&
+				this.selected.tablo.alias == this.tabloAlias &&
+				this.selected.header.alias == this.header.alias );
+		},
+		isPropEdited() {
+			return function (prop) {
+				return this.isHeaderEdited && this.edit.property == prop;
+			}
+		},
 		argsStr() { 
 			if (this.header.type == T.TYPE.HEADER.FUNC) {
 				return this.header.args.map(function (arg) {
@@ -275,7 +306,8 @@ export default {
 			}
 			else return null;
 		},
-		TYPE() { return T.TYPE }
+		TYPE() { return T.TYPE },
+		PROP() { return T.PROP }
 	}
 }
 </script>
