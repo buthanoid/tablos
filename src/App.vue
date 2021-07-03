@@ -130,7 +130,7 @@ export default {
 			
 			var header = T.newDataHeader(
 				this.tabenv, this.selected.tablo, 
-				"newheader" + i, "New Header " + i, T.DATA_TYPE.INT
+				"newheader" + i, "New Header " + i, T.TYPE.DATA.INT
 			);
 			
 			this.selectHeader(this.selected.tablo.alias, "newheader" + i);
@@ -422,19 +422,19 @@ function submitEditHeader (newValue) {
 
 function submitEditCell (newValue) {
 	switch (this.selected.header.dataType) {
-		case T.DATA_TYPE.INT:
+		case T.TYPE.DATA.INT:
 			newValue = parseInt(newValue);
 			break;
-		case T.DATA_TYPE.FLOAT:
+		case T.TYPE.DATA.FLOAT:
 			newValue = parseFloat(newValue);
 			break;
-		case T.DATA_TYPE.STRING:
+		case T.TYPE.DATA.STRING:
 			newValue = new String(newValue).valueOf();
 			break;
-		case T.DATA_TYPE.JSON:
+		case T.TYPE.DATA.JSON:
 			newValue = JSON.parse(newValue);
 			break;
-		default: this.lastAppError = T.ERR.HEADER.DATA_TYPE.UNKNOWN ;
+		default: this.lastAppError = T.ERR.HEADER.TYPE.DATA.UNKNOWN ;
 	}
 	T.updDataCell(
 		this.tabenv, this.selected.tablo, this.selected.header,
@@ -452,15 +452,15 @@ function created () {
 
 	
 	errs.concat(T.checkNewDataHeader(
-		this.tabenv, users, "name", "Name", T.DATA_TYPE.STRING));
+		this.tabenv, users, "name", "Name", T.TYPE.DATA.STRING));
 	var usersName = T.newDataHeader(
-		this.tabenv, users, "name", "Name", T.DATA_TYPE.STRING);
+		this.tabenv, users, "name", "Name", T.TYPE.DATA.STRING);
 	
 	var usersCash = T.newDataHeader(
-		this.tabenv, users, "cash", "Cash", T.DATA_TYPE.INT);
+		this.tabenv, users, "cash", "Cash", T.TYPE.DATA.INT);
 	
 	var usersDebt = T.newDataHeader(
-		this.tabenv, users, "debt", "Debt", T.DATA_TYPE.INT);
+		this.tabenv, users, "debt", "Debt", T.TYPE.DATA.INT);
 		
 	var usersComputed = T.newFuncHeader(
 		this.tabenv, users, "computed", "Computed", [ 

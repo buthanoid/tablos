@@ -51,8 +51,8 @@
 					v-model="editForm" 
 					ref="type" 
 					@change="changeEdit" >
-					<option :value="DATA_HEADER" >Donnée</option>
-					<option :value="FUNC_HEADER" >Fonction</option>
+					<option :value="TYPE.HEADER.DATA" >Donnée</option>
+					<option :value="TYPE.HEADER.FUNC" >Fonction</option>
 				</select>
 				<button @click="submitEdit" >Valider</button>
 				<button @click="cancelEdit" >Annuler</button>
@@ -82,34 +82,34 @@
 			</td>
 		</tr>
 		
-		<tr v-if="header.type == DATA_HEADER" >
+		<tr v-if="header.type == TYPE.HEADER.DATA" >
 			<th>Type de donnée</th>
 			<td v-if="isEdited && edit.property == 'dataType'" >
 				<select 
 					v-model="editForm"
 					@change="changeEdit" >
 					<option 
-						v-for="dataType in Object.values(DATA_TYPE)" 
+						v-for="dataType in Object.values(TYPE.DATA)" 
 						:value="dataType" >
-						<span>{{ DATA_TYPE_STR[dataType] }}</span>
+						<span>{{ dataType }}</span>
 					</option>
 				</select>
 				<button @click="submitEdit" >valider</button>
 				<button @click="cancelEdit" >annuler</button>
 			</td>
 			<td v-else >
-				<span>{{ DATA_TYPE_STR[header.dataType] }}</span>			
+				<span>{{ header.dataType }}</span>			
 				<button @click="startEdit('dataType')" >modifier</button>
 			</td>
 		</tr>
 		
-		<tr v-if="header.type == FUNC_HEADER" > 
+		<tr v-if="header.type == TYPE.HEADER.FUNC" > 
 			<th :class="{selected : isEdited && edit.property == 'args' }" >
 				<span>Arguments</span>
 			</th> 
 			<td v-if="isEdited && edit.property == 'args'" >
 				<div v-for="(arg,index) in editForm" :key="index" >
-					<div v-if="arg.type == COL_SAMELINE_ARG" >
+					<div v-if="arg.type == TYPE.HEADER_ARG.COL_SAME_LINE" >
 						<select 
 							v-model="arg.alias.tablo" 
 							@change="changeEdit" >
@@ -132,7 +132,7 @@
 						<span>][#] </span>
 						<button @click="removeArg(index)" >retirer</button>
 					</div>
-					<div v-if="arg.type == NULL_ARG" >
+					<div v-if="arg.type == TYPE.HEADER_ARG.NULL" >
 						<span>nul </span>
 						<button @click="removeArg(index)" >retirer</button>
 					</div>
@@ -147,7 +147,7 @@
 			</td>
 		</tr>
 		
-		<tr v-if="header.type == FUNC_HEADER" > 
+		<tr v-if="header.type == TYPE.HEADER.FUNC" > 
 			<th :class="{selected : isEdited && edit.property == 'func'}" >
 				<span>Fonction</span>
 			</th> 
@@ -241,17 +241,17 @@ export default {
 		isEdited() { return this.edit.target == "header"; },
 		headerType() { 
 			switch (this.header.type) {
-				case T.DATA_HEADER: return "Donnée";
-				case T.FUNC_HEADER: return "Fonction";
-				default: console.log(this.header);throw(T.ERR.HEADER.TYPE.UNKNOWN) ;
+				case T.TYPE.HEADER.DATA: return "Donnée";
+				case T.TYPE.HEADER.FUNC: return "Fonction";
+				default: throw(T.ERR.HEADER.TYPE.UNKNOWN) ;
 			}
 		},
 		argsStr() { 
-			if (this.header.type == T.FUNC_HEADER) {
+			if (this.header.type == T.TYPE.HEADER.FUNC) {
 				return this.header.args.map(function (arg) {
 					switch (arg.type) {
-						case T.NULL_ARG: return "nul";
-						case T.COL_SAMELINE_ARG: 
+						case T.TYPE.HEADER_ARG.NULL: return "nul";
+						case T.TYPE.HEADER_ARG.COL_SAME_LINE: 
 							var str = 
 								arg.alias.tablo + 
 								"[" + arg.alias.header + "][#]" ;
@@ -264,12 +264,7 @@ export default {
 			}
 			else return null;
 		},
-		DATA_HEADER() { return T.DATA_HEADER },
-		FUNC_HEADER() { return T.FUNC_HEADER },
-		DATA_TYPE() { return T.DATA_TYPE },
-		DATA_TYPE_STR() { return T.DATA_TYPE_STR },
-		NULL_ARG() { return T.NULL_ARG },
-		COL_SAMELINE_ARG() { return T.COL_SAMELINE_ARG }
+		TYPE() { return T.TYPE },
 	}
 }
 </script>
