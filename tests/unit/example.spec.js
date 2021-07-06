@@ -390,7 +390,7 @@ describe("newDataHeader", function () {
 	it("return value", function () { 
 		assert.equal(header.alias, headerAlias);
 		assert.equal(header.label, headerLabel);
-		assert.equal(header.type, T.DATA_HEADER);
+		assert.equal(header.type, T.TYPE.HEADER.DATA);
 	});
 	it("tablo udpated", function () {
 		assert.equal(env.tablo1.getHeaderByAlias(headerAlias), header);
@@ -417,7 +417,7 @@ describe("newColSamelineArg()", function () {
 	});
 	
 	it("return value", function () { 
-		assert.equal(arg.type, T.COL_SAMELINE_ARG);
+		assert.equal(arg.type, T.TYPE.HEADER_ARG.COL_SAME_LINE);
 		assert.equal(arg.alias.tablo, tabloAlias);
 		assert.equal(arg.alias.header, headerAlias);
 	});
@@ -448,7 +448,7 @@ describe("newFuncHeader", function () {
 	it("return value", function () { 
 		assert.equal(header2.alias, header2Alias);
 		assert.equal(header2.label, header2Label);
-		assert.equal(header2.type, T.FUNC_HEADER);
+		assert.equal(header2.type, T.TYPE.HEADER.FUNC);
 		assert.equal(header2.args.length, 1);
 		assert.equal(header2.args[0], header2Args[0]);
 	});
@@ -550,13 +550,13 @@ describe ("copyArg()", function () {
 		colSamelineArg1, colSamelineArg2;
 	
 	before(function() {
-		nullArg1 = { type: T.NULL_ARG };
+		nullArg1 = { type: T.TYPE.HEADER_ARG.NULL };
 		var tabloAlias = "tablo1";
 		var headerAlias = "header1";
 		colSamelineArg1 = T.newColSamelineArg(tabloAlias, headerAlias);
 	});
 	
-	it("copyArg() NULL et COL_SAMELINE", function() {
+	it("copyArg() NULL et COL_SAME_LINE", function() {
 		nullArg2 = T.copyArg(nullArg1);
 		colSamelineArg2 = T.copyArg(colSamelineArg1);
 	});
@@ -820,11 +820,11 @@ describe("updHeaderType() DATA to FUNC", function () {
 
 	it("updHeaderType()", function() {
 		T.updHeaderType(
-			env.tabenv, env.tablo1, env.header1, T.FUNC_HEADER);
+			env.tabenv, env.tablo1, env.header1, T.TYPE.HEADER.FUNC);
 	});
 	
 	it("header updated", function() {
-		assert.equal(env.header1.type, T.FUNC_HEADER);
+		assert.equal(env.header1.type, T.TYPE.HEADER.FUNC);
 		assert.equal(env.header1.args.length, 0);
 		assert.equal(typeof env.header1.func, "function");
 	});
@@ -844,11 +844,11 @@ describe("updHeaderType() FUNC to DATA", function () {
 
 	it("updHeaderType()", function() {
 		T.updHeaderType(
-			env.tabenv, env.tablo2, env.header2, T.DATA_HEADER);
+			env.tabenv, env.tablo2, env.header2, T.TYPE.HEADER.DATA);
 	});
 	
 	it("header updated", function() {
-		assert.equal(env.header2.type, T.DATA_HEADER);
+		assert.equal(env.header2.type, T.TYPE.HEADER.DATA);
 		assert.isUndefined(env.header2.args);
 		assert.isUndefined(env.header2.func);
 	});
@@ -1065,7 +1065,7 @@ describe("delTablo", function() {
 		);
 	});
 	it("other tablo updated", function () {
-		assert.equal(env.header2.args[0].type, T.NULL_ARG);
+		assert.equal(env.header2.args[0].type, T.TYPE.HEADER_ARG.NULL);
 		assert.equal(
 			T.getCell(env.tablo2, env.header2, 0),
 			env.header2.func(null)
@@ -1093,7 +1093,7 @@ describe("delHeader", function() {
 		);
 	});
 	it("other tablo updated", function () {
-		assert.equal(env.header2.args[0].type, T.NULL_ARG);
+		assert.equal(env.header2.args[0].type, T.TYPE.HEADER_ARG.NULL);
 		assert.equal(
 			T.getCell(env.tablo2, env.header2, 0),
 			env.header2.func(null)
