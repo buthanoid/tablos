@@ -128,6 +128,9 @@ const ERR = {
 			}
 		}
 	},
+	LINE: {
+		OUT_OF_BOUNDS: "ERR.LINE.OUT_OF_BOUNDS"
+	},
 	PROP: {
 		TABLO: {
 			UNKNOWN: "ERR.PROP.TABLO.UNKNOWN"
@@ -615,8 +618,10 @@ function checkGetCellByAliases (tabenv, tabloAlias, headerAlias, numLine) {
 	if (header === undefined) return [ ERR.HEADER.NOT_FOUND ];
 	
 	if (numLine < 0 || numLine >= tablo.data.length) {
-		return [ ERR.TABLO.LINE.OUT_OF_BOUNDS ];
+		return [ ERR.LINE.OUT_OF_BOUNDS ];
 	}
+	
+	return [];
 }
 
 // get cell value by aliases and do checks
@@ -717,6 +722,7 @@ function checkTabloDisplayNumLines (displayNumLines) {
 	if (typeof displayNumLines != "boolean") {
 		return [ ERR.TABLO.DISPLAY_NUM_LINES.NOT_BOOLEAN ];
 	}
+	else return [];
 }
 
 // check args for updTabloDisplayNumLines()
@@ -739,7 +745,7 @@ function checkUpdHeaderAlias (tabenv, tablo, header, newAlias) {
 		if (tablo.getHeaderByAlias(newAlias) != undefined) {
 			errsAlias.push(ERR.HEADER.ALIAS.EXISTING);
 		}
-		return errsAlias;
+		else return errsAlias;
 	}
 }
 
@@ -852,6 +858,7 @@ function checkHeaderOrder (tablo, order) {
 	if (order < 0 || order >= tablo.headers.length) {
 		return ERR.HEADER.ORDER.OUT_OF_BOUNDS;
 	}
+	else return [];
 }
 
 // check args for updHeaderOrder()
@@ -1040,7 +1047,16 @@ function updLineAllFuncCells (tabenv, tablo, numLine) {
 function checkUpdFuncCell (tabenv, tablo, header, numLine) {
 
 	if (numLine < 0 || numLine >= tablo.data.length) {
-		return [ ERR.TABLO.LINE.OUT_OF_BOUNDS ] ;
+		var err = {
+			type: ERR.LINE.OUT_OF_BOUNDS,
+			data: {
+				tabenv: tabenv,
+				tablo: tablo,
+				header: header,
+				numLine: numLine
+			} 
+		}
+		return [ err ] ;
 	}
 
 	try {
@@ -1091,6 +1107,8 @@ function checkUpdFuncCell (tabenv, tablo, header, numLine) {
 		});
 	}
 	catch (errors) { return errors; }
+	
+	return [];
 }
 
 function updFuncCell (tabenv, tablo, header, numLine) {
@@ -1102,11 +1120,24 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 		switch (headerArg.type) {
 			case TYPE.HEADER_ARG.NULL: break;
 			case TYPE.HEADER_ARG.COL_SAME_LINE:
-				funcArgs[index] = getCellByAliases (
+			
+				var errs = checkGetCellByAliases(
 					tabenv, 
 					headerArg.alias.tablo, headerArg.alias.header, 
 					numLine
 				);
+				
+				if (errs.length > 0) {
+					// TODO : display a warning
+					funcArgs[index] = null;
+				}
+				else {
+					funcArgs[index] = getCellByAliases (
+						tabenv, 
+						headerArg.alias.tablo, headerArg.alias.header, 
+						numLine
+					);
+				}
 				break;
 			default: console.log("unknown arg type");
 		}
@@ -1124,8 +1155,30 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
 		var reactionHeader = 
 			reactionTablo.getHeaderByAlias(reactionAlias.header);
-		updFuncCell(tabenv, reactionTablo, reactionHeader, numLine);
+		var errs = checkUpdFuncCell (
+			tabenv, reactionTablo, reactionHeader, numLine);
+		var onlyLineErrors = errs.every(function (err) { 
+			return err.type == ERR.LINE.OUT_OF_BOUNDS ;
+		});
+		if (errs.length > 0 && onlyLineErrors) { 
+			// a line error is "normal". for exemple :
+			// tablo1 has data header1.
+			// tablo2 has func header2 poiting to tablo1[#][header1].
+			// when you add a line to tablo1, it is possible that tablo2 
+			// have inferior number of tablo1.
+			// so we don't update data in tablo2.
+			// TODO maybe we should display a warning then
+		}
+		else if (errs.length > 0 && ! onlyLineErrors) {
+			// if there is other kind of errors it is serious we throw them
+			throw (errs) ;
+		}
+		else {
+			// no errors we go on
+			updFuncCell(tabenv, reactionTablo, reactionHeader, numLine);
+		}
 	});
+	
 }
 
 // check updDataCell()
@@ -1150,6 +1203,8 @@ function checkUpdDataCell (tabenv, tablo, header, numLine, newVal) {
 		});
 	}
 	catch (errors) { return errors; }
+	
+	return [];
 }
 
 function updDataCell (tabenv, tablo, header, numLine, newVal) {
