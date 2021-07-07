@@ -459,6 +459,10 @@ function submitEditCell (newValue) {
 		this.tabenv, this.selected.tablo, this.selected.header,
 		this.selected.line, newValue
 	);
+	T.updCellReactions(
+		this.tabenv, this.selected.tablo, this.selected.header,
+		this.selected.line
+	);
 	this.cancelEdit();
 }
 
@@ -498,11 +502,17 @@ function created () {
 	T.updDataCell(this.tabenv, users, usersName, 0, "yayatoto");
 	T.updDataCell(this.tabenv, users, usersCash, 0, 10);
 	T.updDataCell(this.tabenv, users, usersDebt, 0, 5);
+	T.updCellReactions(this.tabenv, users, usersName, 0);
+	T.updCellReactions(this.tabenv, users, usersCash, 0);
+	T.updCellReactions(this.tabenv, users, usersDebt, 0);
 
 	T.newLine(this.tabenv, users);
 	T.updDataCell(this.tabenv, users, usersName, 1, "magdalena");
 	T.updDataCell(this.tabenv, users, usersCash, 1, 35);
 	T.updDataCell(this.tabenv, users, usersDebt, 1, 100);
+	T.updCellReactions(this.tabenv, users, usersName, 1);
+	T.updCellReactions(this.tabenv, users, usersCash, 1);
+	T.updCellReactions(this.tabenv, users, usersDebt, 1);
 
 	var total = T.newTablo(this.tabenv, "total", "Total");
 	

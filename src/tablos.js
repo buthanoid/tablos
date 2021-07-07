@@ -15,6 +15,7 @@ export {
 	hasReactKey,
 	hasReaction,
 	getReactions,
+	getReactionsTree,
 	getReactKeysFromReaction,
 	updReactKey,
 	delReactKey,
@@ -48,6 +49,7 @@ export {
 	updTabloAllFuncHeadersAllCells,
 	updFuncCell,
 	updDataCell,
+	updCellReactions,
 	// del functions
 	delTablo,
 	delHeader,
@@ -77,7 +79,10 @@ const TYPE = {
 
 const ERR = {
 	REACT_MAP: { 
-		NOT_REACT_MAP: "ERR.REACT_MAP.NOT_REACT_MAP"
+		NOT_REACT_MAP: "ERR.REACT_MAP.NOT_REACT_MAP",
+		KEY: {
+			NOT_FOUND: "ERR.REACT_MAP.KEY.NOT_FOUND"
+		}
 	},
 	TABENV: { 
 		NOT_TABENV: "ERR.TABENV.NOT_TABENV"
@@ -215,6 +220,17 @@ function arrayMove (array, oldIndex, newIndex) {
 	}
 }
 
+function newNode (data, childs) {
+	return { data: data, childs: childs } ;
+}
+
+function treeForEachDeepFirst (node, fun) {
+	fun(node.data);
+	node.childs.forEach(function (child) {
+		treeForEachDeepFirst (child, fun);
+	});
+}
+
 // ==================== REACTS FUNCTIONS =======================
 
 // checks that arg is a reactMap 
@@ -251,9 +267,24 @@ function hasReaction (reactMap, reactKey, reaction) {
 	);
 }
 
-
 function getReactions (reactMap, reactKey) {
 	return reactMap.get(reactKey);
+}
+
+// get the complete tree of reactions with reactKey as root
+function getReactionsTree (reactMap, reactKey) {
+	if (hasReactKey(reactMap, reactKey)) {
+		var node = {
+			data: reactKey,
+			childs: new Array()
+		};
+		getReactions(reactMap, reactKey).forEach(function (childKey) {
+			var childNode = getReactionsTree (reactMap, childKey);
+			if (childNode != undefined) node.childs.push(childNode);
+		});
+		return node;
+	}
+	else return undefined;
 }
 
 // get all reactKeys that contains the reaction
@@ -492,7 +523,7 @@ function checkHeaderArgs (tabenv, args) {
 	else {
 		var errs = [];
 		args.forEach(function (arg) {
-			errs.concat(checkHeaderArg(tabenv, arg));
+			errs = errs.concat(checkHeaderArg(tabenv, arg));
 		});
 		return errs;
 	}
@@ -545,7 +576,11 @@ function newFuncHeader (tabenv, tablo, alias, label, args, func) {
 	return header;
 }
 
-// TODO: check updLineAllFuncCells
+function checkNewLine (tabenv, tablo) {
+	return checkUpdLineAllFuncCells(tabenv, tablo, tablo.data.length);
+	// TODO: filter results
+}
+
 // create a new line for a tablo
 function newLine (tabenv, tablo) {	
 	var line = new Array(tablo.headers.length);
@@ -913,7 +948,7 @@ function checkUpdHeaderDataType (tabenv, tablo, header, newDataType) {
 					break;
 				default: throw ERR.HEADER.DATA_TYPE.UNKNOWN;
 			}
-			// TODO: check updDataCell
+			// TODO: check updDataCell and updCellReactions
 		}
 		catch (error){ 
 			errs.push(ERR.HEADER.DATA_TYPE.CELL_PARSE_ERROR); 
@@ -949,6 +984,7 @@ function updHeaderDataType (tabenv, tablo, header, newDataType) {
 				res.addError("unknown data type " + newDataType);
 		}
 		updDataCell(tabenv, tablo, header, numLine, newVal);
+		updCellReactions(tabenv, tablo, header, numLine);
 	});
 }
 
@@ -991,7 +1027,10 @@ function checkUpdFuncHeaderAllCells (tabenv, tablo, header) {
 	if (header.type != TYPE.HEADER.FUNC) return [ ERR.HEADER.NOT_FUNC ];
 	var errs = [];
 	for (var i = 0 ; i < tablo.data.length ; i ++) {
-		errs.concat(checkUpdFuncCell(tabenv, tablo, header, i));
+		errs = errs.concat(
+			checkUpdFuncCell(tabenv, tablo, header, i),
+			checkUpdCellReactions(tabenv, tablo, header, i)
+		);
 	} 
 	return errs;
 }
@@ -999,6 +1038,7 @@ function checkUpdFuncHeaderAllCells (tabenv, tablo, header) {
 function updFuncHeaderAllCells (tabenv, tablo, header) {
 	for (var i = 0 ; i < tablo.data.length ; i ++) {
 		updFuncCell(tabenv, tablo, header, i);
+		updCellReactions(tabenv, tablo, header, i);
 	} 
 }
 
@@ -1007,7 +1047,8 @@ function checkUpdTabloAllFuncHeadersAllCells (tabenv, tablo) {
 	var errs = [];
 	tablo.headers.forEach(function (header) {
 		if (header.type == TYPE.HEADER.FUNC) {
-			errs.concat(checkUpdFuncHeaderAllCells(tabenv, tablo, header));
+			errs = errs.concat(
+				checkUpdFuncHeaderAllCells(tabenv, tablo, header));
 		}
 	});
 	return errs;
@@ -1029,7 +1070,10 @@ function checkUpdLineAllFuncCells (tabenv, tablo, numLine) {
 	var errs = [];
 	tablo.headers.forEach(function (header) {
 		if (header.type == TYPE.HEADER.FUNC) {
-			errs.concat(checkUpdFuncCell(tabenv, tablo, header, numLine));
+			errs = errs.concat(
+				checkUpdFuncCell(tabenv, tablo, header, numLine),
+				checkUpdCellReactions(tabenv, tablo, header, numLine)
+			);
 		}
 	});
 	return errs;
@@ -1039,7 +1083,70 @@ function updLineAllFuncCells (tabenv, tablo, numLine) {
 	tablo.headers.forEach(function (header) {
 		if (header.type == TYPE.HEADER.FUNC) {
 			updFuncCell(tabenv, tablo, header, numLine);
+			updCellReactions(tabenv, tablo, header, numLine);
 		}
+	});
+}
+
+function checkUpdCellReactions (tabenv, tablo, header, numLine) {
+	var cellFullAlias = aliasesToStr(tablo.alias, header.alias);
+	var reactionsTree = getReactionsTree(tabenv.reactMap, cellFullAlias);
+	
+	if (reactionsTree == undefined) return [ ERR.REACT_MAP.KEY.NOT_FOUND ];
+	
+	var errs = [];
+	reactionsTree.childs.forEach(function (childOfRoot) {
+		treeForEachDeepFirst(childOfRoot, function (aliasStr) {
+			var aliasObj = aliasObjFromStr(aliasStr);
+			var tablo2 = tabenv.tablos.get(aliasObj.tablo);
+			var header2 = tablo2.getHeaderByAlias(aliasObj.header);
+			errs = errs.concat(checkUpdFuncCell(
+				tabenv, tablo2, header2, numLine));
+		});
+	});
+	
+	return errs;
+}
+
+// update cells that depend on the one in argument
+function updCellReactions (tabenv, tablo, header, numLine) {
+	var cellFullAlias = aliasesToStr(tablo.alias, header.alias);
+	var reactionsTree = getReactionsTree(tabenv.reactMap, cellFullAlias);
+	
+	if (reactionsTree == undefined) throw ERR.REACT_MAP.KEY.NOT_FOUND;
+	
+	// we update every subtree of the root
+	// not the root himself because it is the argument cell 
+	reactionsTree.childs.forEach(function (childOfRoot) {
+		treeForEachDeepFirst(childOfRoot, function (aliasStr) {
+			var aliasObj = aliasObjFromStr(aliasStr);
+			var tablo2 = tabenv.tablos.get(aliasObj.tablo);
+			var header2 = tablo2.getHeaderByAlias(aliasObj.header);
+			
+			// we have to check here, because in the normal course of 
+			// the application there can be errors
+			var errs = checkUpdFuncCell (tabenv, tablo2, header2, numLine);
+			var onlyLineErrors = errs.every(function (err) { 
+				return err.type == ERR.LINE.OUT_OF_BOUNDS ;
+			});
+			if (errs.length > 0 && onlyLineErrors) { 
+				// a line error is "normal". for exemple :
+				// tablo1 has data header1.
+				// tablo2 has func header2 poiting to tablo1[#][header1].
+				// when you add a line to tablo1, it is possible that tablo2 
+				// have inferior number of tablo1.
+				// so we don't update data in tablo2.
+				// TODO maybe we should display a warning then
+			}
+			else if (errs.length > 0 && ! onlyLineErrors) {
+				// if there is other kind of errors it is serious we throw them
+				throw (errs) ;
+			}
+			else {
+				// no errors we go on
+				updFuncCell(tabenv, tablo2, header2, numLine);
+			}
+		});
 	});
 }
 
@@ -1092,19 +1199,6 @@ function checkUpdFuncCell (tabenv, tablo, header, numLine) {
 			var funcResult = header.func.apply(null, funcArgs);
 		}
 		catch (error) { throw [ ERR.HEADER.FUNCTION.APP_ERROR ] }
-		
-		// trigger the reactions of other cells
-		var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
-		var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
-		reactions.forEach(function (reaction) {
-			var reactionAlias = aliasObjFromStr(reaction);
-			var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
-			var reactionHeader = 
-				reactionTablo.getHeaderByAlias(reactionAlias.header);
-			var errs = checkUpdFuncCell(
-				tabenv, reactionTablo, reactionHeader, numLine);
-			if (errs.length > 0) throw errs;
-		});
 	}
 	catch (errors) { return errors; }
 	
@@ -1145,40 +1239,7 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 	
 	// compute the func applied to the args, for the cell
 	var funcResult = header.func.apply(null, funcArgs);
-	tablo.data[numLine][header.order] = funcResult;
-	
-	// trigger the reactions of other cells because of the update of this one
-	var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
-	var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
-	reactions.forEach(function (reaction) {
-		var reactionAlias = aliasObjFromStr(reaction);
-		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
-		var reactionHeader = 
-			reactionTablo.getHeaderByAlias(reactionAlias.header);
-		var errs = checkUpdFuncCell (
-			tabenv, reactionTablo, reactionHeader, numLine);
-		var onlyLineErrors = errs.every(function (err) { 
-			return err.type == ERR.LINE.OUT_OF_BOUNDS ;
-		});
-		if (errs.length > 0 && onlyLineErrors) { 
-			// a line error is "normal". for exemple :
-			// tablo1 has data header1.
-			// tablo2 has func header2 poiting to tablo1[#][header1].
-			// when you add a line to tablo1, it is possible that tablo2 
-			// have inferior number of tablo1.
-			// so we don't update data in tablo2.
-			// TODO maybe we should display a warning then
-		}
-		else if (errs.length > 0 && ! onlyLineErrors) {
-			// if there is other kind of errors it is serious we throw them
-			throw (errs) ;
-		}
-		else {
-			// no errors we go on
-			updFuncCell(tabenv, reactionTablo, reactionHeader, numLine);
-		}
-	});
-	
+	tablo.data[numLine][header.order] = funcResult;	
 }
 
 // check updDataCell()
@@ -1188,38 +1249,11 @@ function checkUpdDataCell (tabenv, tablo, header, numLine, newVal) {
 		return [ ERR.TABLO.LINE.OUT_OF_BOUNDS ] ;
 	}
 	
-	// trigger the reactions of other cells because of the update of this one
-	try {
-		var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
-		var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
-		reactions.forEach(function (reaction) {
-			var reactionAlias = aliasObjFromStr(reaction);
-			var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
-			var reactionHeader = 
-				reactionTablo.getHeaderByAlias(reactionAlias.header);
-			var errs = checkUpdFuncCell(
-				tabenv, reactionTablo, reactionHeader, numLine);
-			if (errs.length > 0) throw errs;
-		});
-	}
-	catch (errors) { return errors; }
-	
 	return [];
 }
 
 function updDataCell (tabenv, tablo, header, numLine, newVal) {
 	tablo.data[numLine][header.order] = newVal;
-	
-	// trigger the reactions of other cells because of the update of this one
-	var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
-	var reactions = getReactions(tabenv.reactMap, fullHeaderAlias);
-	reactions.forEach(function (reaction) {
-		var reactionAlias = aliasObjFromStr(reaction);
-		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
-		var reactionHeader = 
-			reactionTablo.getHeaderByAlias(reactionAlias.header);
-		updFuncCell(tabenv, reactionTablo, reactionHeader, numLine);
-	});
 }
 
 
