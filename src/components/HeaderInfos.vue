@@ -122,7 +122,7 @@
 			</th> 
 			<td v-if="isPropEdited(PROP.HEADER.ARGS)" >
 				<div v-for="(arg,index) in editForm" :key="index" >
-					<div v-if="arg.type == TYPE.HEADER_ARG.COL_SAME_LINE" >
+					<div v-if="arg.type == TYPE.HEADER.ARG.COL_SAME_LINE" >
 						<select 
 							v-model="arg.alias.tablo" 
 							@change="changeEdit" >
@@ -147,7 +147,7 @@
 							<span>{{texts["remove"]}}</span>
 						</button>
 					</div>
-					<div v-if="arg.type == TYPE.HEADER_ARG.NULL" >
+					<div v-if="arg.type == TYPE.HEADER.ARG.NULL" >
 						<span>nul </span>
 						<button @click="removeArg(index)" >
 							<span>{{texts["remove"]}}</span>
@@ -291,9 +291,9 @@ export default {
 			if (this.header.type == T.TYPE.HEADER.FUNC) {
 				return this.header.args.map(function (arg) {
 					switch (arg.type) {
-						case T.TYPE.HEADER_ARG.NULL: 
-							return this.texts[T.TYPE.HEADER_ARG.NULL];
-						case T.TYPE.HEADER_ARG.COL_SAME_LINE: 
+						case T.TYPE.HEADER.ARG.NULL: 
+							return this.texts[T.TYPE.HEADER.ARG.NULL];
+						case T.TYPE.HEADER.ARG.COL_SAME_LINE: 
 							var str = 
 								arg.alias.tablo + 
 								"[" + arg.alias.header + "][#]" ;

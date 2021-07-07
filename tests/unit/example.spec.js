@@ -417,7 +417,7 @@ describe("newColSamelineArg()", function () {
 	});
 	
 	it("return value", function () { 
-		assert.equal(arg.type, T.TYPE.HEADER_ARG.COL_SAME_LINE);
+		assert.equal(arg.type, T.TYPE.HEADER.ARG.COL_SAME_LINE);
 		assert.equal(arg.alias.tablo, tabloAlias);
 		assert.equal(arg.alias.header, headerAlias);
 	});
@@ -550,7 +550,7 @@ describe ("copyArg()", function () {
 		colSamelineArg1, colSamelineArg2;
 	
 	before(function() {
-		nullArg1 = { type: T.TYPE.HEADER_ARG.NULL };
+		nullArg1 = { type: T.TYPE.HEADER.ARG.NULL };
 		var tabloAlias = "tablo1";
 		var headerAlias = "header1";
 		colSamelineArg1 = T.newColSamelineArg(tabloAlias, headerAlias);
@@ -1065,7 +1065,7 @@ describe("delTablo", function() {
 		);
 	});
 	it("other tablo updated", function () {
-		assert.equal(env.header2.args[0].type, T.TYPE.HEADER_ARG.NULL);
+		assert.equal(env.header2.args[0].type, T.TYPE.HEADER.ARG.NULL);
 		assert.equal(
 			T.getCell(env.tablo2, env.header2, 0),
 			env.header2.func(null)
@@ -1093,7 +1093,7 @@ describe("delHeader", function() {
 		);
 	});
 	it("other tablo updated", function () {
-		assert.equal(env.header2.args[0].type, T.TYPE.HEADER_ARG.NULL);
+		assert.equal(env.header2.args[0].type, T.TYPE.HEADER.ARG.NULL);
 		assert.equal(
 			T.getCell(env.tablo2, env.header2, 0),
 			env.header2.func(null)
