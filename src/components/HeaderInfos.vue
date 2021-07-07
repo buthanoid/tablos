@@ -56,7 +56,7 @@
 					ref="type" 
 					@change="changeEdit" >
 					<option
-						v-for="headerType in Object.values(TYPE.HEADER)"
+						v-for="headerType in Object.values(HEADER.TYPE)"
 						:value="headerType" >
 						<span>{{ texts[headerType] }}</span>
 					</option>
@@ -91,16 +91,16 @@
 			</td>
 		</tr>
 		
-		<tr v-if="header.type == TYPE.HEADER.DATA" >
+		<tr v-if="header.type == HEADER.TYPE.DATA" >
 			<th :class="{selected : isPropEdited(PROP.HEADER.ARGS) }" >
 				<span>{{texts["DataType"]}}</span>
 			</th>
-			<td v-if="isPropEdited(PROP.HEADER.DATATYPE)" >
+			<td v-if="isPropEdited(PROP.HEADER.DATA_TYPE)" >
 				<select 
 					v-model="editForm"
 					@change="changeEdit" >
 					<option 
-						v-for="dataType in Object.values(TYPE.DATA)" 
+						v-for="dataType in Object.values(HEADER.DATA_TYPE)" 
 						:value="dataType" >
 						<span>{{ texts[dataType] }}</span>
 					</option>
@@ -116,13 +116,13 @@
 			</td>
 		</tr>
 		
-		<tr v-if="header.type == TYPE.HEADER.FUNC" > 
+		<tr v-if="header.type == HEADER.TYPE.FUNC" > 
 			<th :class="{selected : isPropEdited(PROP.HEADER.ARGS) }" >
 				<span>{{texts["Arguments"]}}</span>
 			</th> 
 			<td v-if="isPropEdited(PROP.HEADER.ARGS)" >
 				<div v-for="(arg,index) in editForm" :key="index" >
-					<div v-if="arg.type == TYPE.HEADER.ARG.COL_SAME_LINE" >
+					<div v-if="arg.type == HEADER.ARG.TYPE.COL_SAME_LINE" >
 						<select 
 							v-model="arg.alias.tablo" 
 							@change="changeEdit" >
@@ -147,8 +147,8 @@
 							<span>{{texts["remove"]}}</span>
 						</button>
 					</div>
-					<div v-if="arg.type == TYPE.HEADER.ARG.NULL" >
-						<span>nul </span>
+					<div v-if="arg.type == HEADER.ARG.TYPE.NULL" >
+						<span>{{texts["HEADER.ARG.TYPE.NULL"]}} </span>
 						<button @click="removeArg(index)" >
 							<span>{{texts["remove"]}}</span>
 						</button>
@@ -166,7 +166,7 @@
 			</td>
 		</tr>
 		
-		<tr v-if="header.type == TYPE.HEADER.FUNC" > 
+		<tr v-if="header.type == HEADER.TYPE.FUNC" > 
 			<th :class="{selected : isPropEdited(PROP.HEADER.FUNC)}" >
 				<span>{{texts["Function"]}}</span>
 			</th> 
@@ -233,7 +233,7 @@ export default {
 		},
 		startEditDataType: function () {
 			this.editForm = this.header.dataType;
-			this.$emit("startEdit", U.TRG.HEADER, T.PROP.HEADER.DATATYPE);
+			this.$emit("startEdit", U.TRG.HEADER, T.PROP.HEADER.DATA_TYPE);
 		},
 		startEditArgs: function () {
 			this.editForm = this.header.args.map(T.copyArg);
@@ -254,7 +254,7 @@ export default {
 		lowerOrder: function () { this.$emit("lowerOrder") },
 		upperOrder: function () { this.$emit("upperOrder") },
 		removeArg: function (index) {
-			if (this.edit.property == "args") {
+			if (this.edit.property == T.PROP.HEADER.ARGS) {
 				this.editForm.splice(index, 1);
 				this.changeEdit();
 			}
@@ -288,12 +288,12 @@ export default {
 			}
 		},
 		argsStr() { 
-			if (this.header.type == T.TYPE.HEADER.FUNC) {
+			if (this.header.type == T.HEADER.TYPE.FUNC) {
 				return this.header.args.map(function (arg) {
 					switch (arg.type) {
-						case T.TYPE.HEADER.ARG.NULL: 
-							return this.texts[T.TYPE.HEADER.ARG.NULL];
-						case T.TYPE.HEADER.ARG.COL_SAME_LINE: 
+						case T.HEADER.ARG.TYPE.NULL: 
+							return this.texts[T.HEADER.ARG.TYPE.NULL];
+						case T.HEADER.ARG.TYPE.COL_SAME_LINE: 
 							var str = 
 								arg.alias.tablo + 
 								"[" + arg.alias.header + "][#]" ;
@@ -302,11 +302,11 @@ export default {
 							console.log("unknown arg alias");
 							return null;
 					}
-				}).join(", ");
+				}.bind(this)).join(", ");
 			}
 			else return null;
 		},
-		TYPE() { return T.TYPE },
+		HEADER() { return T.HEADER },
 		PROP() { return T.PROP }
 	}
 }

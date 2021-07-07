@@ -88,14 +88,14 @@ export default {
 			this.$emit("selectLine", this.alias, numLine);
 		},
 		selectCellStartEdit:  function (numLine, numCol) {
-			if (this.headers[numCol].dataType == T.TYPE.DATA.JSON) {
+			if (this.headers[numCol].dataType == T.HEADER.DATA_TYPE.JSON) {
 				this.editForm = JSON.stringify(this.datatab[numLine][numCol]);
 			}
 			else this.editForm = this.datatab[numLine][numCol];
 			this.$emit("selectCell",
 				this.alias, this.headers[numCol].alias, numLine
 			);
-			if (this.headers[numCol].type == T.TYPE.HEADER.DATA) {
+			if (this.headers[numCol].type == T.HEADER.TYPE.DATA) {
 				this.$emit("startEdit", U.TRG.CELL, null);
 			}
 		},

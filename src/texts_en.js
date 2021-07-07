@@ -37,13 +37,13 @@ const TEXTS = {
 	"incorrectValue": "Incorrect value !",
 	"LastError": "Last error",
 
-	"TYPE.HEADER.DATA": "Data",
-	"TYPE.HEADER.FUNC": "Function",
+	"HEADER.TYPE.DATA": "Data",
+	"HEADER.TYPE.FUNC": "Function",
 
-	"TYPE.DATA.INT": "Integer",
-	"TYPE.DATA.FLOAT": "Decimal",
-	"TYPE.DATA.STRING": "Text",
-	"TYPE.DATA.JSON": "JSON",
+	"HEADER.DATA_TYPE.INT": "Integer",
+	"HEADER.DATA_TYPE.FLOAT": "Decimal",
+	"HEADER.DATA_TYPE.STRING": "Text",
+	"HEADER.DATA_TYPE.JSON": "JSON",
 	
-	"TYPE.HEADER_ARG.NULL": "null"
+	"HEADER.ARG.TYPE.NULL": "null"
 };

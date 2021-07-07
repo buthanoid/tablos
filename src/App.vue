@@ -142,7 +142,7 @@ export default {
 			
 			var header = T.newDataHeader(
 				this.tabenv, this.selected.tablo, 
-				"newheader" + i, "New Header " + i, T.TYPE.DATA.INT
+				"newheader" + i, "New Header " + i, T.HEADER.DATA_TYPE.INT
 			);
 			
 			this.selectHeader(this.selected.tablo.alias, "newheader" + i);
@@ -304,7 +304,7 @@ function changeEditHeader (newValue) {
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
 			break;
-		case T.PROP.HEADER.DATATYPE:
+		case T.PROP.HEADER.DATA_TYPE:
 			errs = T.checkUpdHeaderDataType(
 				this.tabenv, this.selected.tablo, this.selected.header,
 				newValue);
@@ -393,7 +393,7 @@ function submitEditHeader (newValue) {
 					newValue);
 			}
 			break;
-		case T.PROP.HEADER.DATATYPE:
+		case T.PROP.HEADER.DATA_TYPE:
 			errs = T.checkUpdHeaderDataType (
 				this.tabenv, this.selected.tablo, this.selected.header, 
 				newValue);
@@ -441,19 +441,19 @@ function submitEditHeader (newValue) {
 
 function submitEditCell (newValue) {
 	switch (this.selected.header.dataType) {
-		case T.TYPE.DATA.INT:
+		case T.HEADER.DATA_TYPE.INT:
 			newValue = parseInt(newValue);
 			break;
-		case T.TYPE.DATA.FLOAT:
+		case T.HEADER.DATA_TYPE.FLOAT:
 			newValue = parseFloat(newValue);
 			break;
-		case T.TYPE.DATA.STRING:
+		case T.HEADER.DATA_TYPE.STRING:
 			newValue = new String(newValue).valueOf();
 			break;
-		case T.TYPE.DATA.JSON:
+		case T.HEADER.DATA_TYPE.JSON:
 			newValue = JSON.parse(newValue);
 			break;
-		default: this.lastAppError = T.ERR.HEADER.TYPE.DATA.UNKNOWN ;
+		default: this.lastAppError = T.ERR.HEADER.DATA_TYPE.UNKNOWN ;
 	}
 	T.updDataCell(
 		this.tabenv, this.selected.tablo, this.selected.header,
@@ -475,15 +475,15 @@ function created () {
 
 	
 	errs.concat(T.checkNewDataHeader(
-		this.tabenv, users, "name", "Name", T.TYPE.DATA.STRING));
+		this.tabenv, users, "name", "Name", T.HEADER.DATA_TYPE.STRING));
 	var usersName = T.newDataHeader(
-		this.tabenv, users, "name", "Name", T.TYPE.DATA.STRING);
+		this.tabenv, users, "name", "Name", T.HEADER.DATA_TYPE.STRING);
 	
 	var usersCash = T.newDataHeader(
-		this.tabenv, users, "cash", "Cash", T.TYPE.DATA.INT);
+		this.tabenv, users, "cash", "Cash", T.HEADER.DATA_TYPE.INT);
 	
 	var usersDebt = T.newDataHeader(
-		this.tabenv, users, "debt", "Debt", T.TYPE.DATA.INT);
+		this.tabenv, users, "debt", "Debt", T.HEADER.DATA_TYPE.INT);
 		
 	var usersComputed = T.newFuncHeader(
 		this.tabenv, users, "computed", "Computed", [ 
