@@ -1,7 +1,7 @@
 # tablos
-Training project for VueJS. Tables with reactive columns.
+Training project for VueJS. Tables with reactive columns. Unfinished yet.
 
-The interface is in french language, code source in english language.
+![Screenshot of the application](screenshot.png)
 
 ## Install
 
@@ -23,3 +23,10 @@ NPM can download the dependencies of the project with the following command :
 Run this command and browse at the url given
 
 `npm run serve`
+
+## Test
+
+Run this command to run unit tests (they are uncomplete yet)
+
+`npm run test:unit`
+
