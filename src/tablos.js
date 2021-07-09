@@ -584,8 +584,8 @@ function newFuncHeader (tabenv, tablo, alias, label, args, func) {
 }
 
 function checkNewLine (tabenv, tablo) {
-	return checkUpdLineAllFuncCells(tabenv, tablo, tablo.data.length);
-	// TODO: filter results
+	// we cannot really check something
+	return [] ;
 }
 
 // create a new line for a tablo
@@ -1072,7 +1072,11 @@ function updTabloAllFuncHeadersAllCells (tabenv, tablo) {
 // check args for updLineAllFuncCells()
 function checkUpdLineAllFuncCells (tabenv, tablo, numLine) {
 	if (numLine < 0 || numLine >= tablo.data.length) {
-		return [ ERR.LINE.OUT_OF_BOUNDS ] ;
+		var err = {
+			type: ERR.LINE.OUT_OF_BOUNDS,
+			data: { tabloAlias: tablo.alias, numLine: numLine }
+		};
+		return [ err ] ;
 	}
 	var errs = [];
 	tablo.headers.forEach(function (header) {

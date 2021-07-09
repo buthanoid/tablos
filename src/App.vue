@@ -71,7 +71,7 @@
 			</line-infos>
 		</div>
 	</div>
-	<p v-if="lastAppError" class="incorrect" >
+	<p v-if="lastAppError == true" class="incorrect" >
 		<span>{{texts["LastError"]}} :</span> <br />
 		<span>{{lastAppError}}</span>
 	</p>
