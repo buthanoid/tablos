@@ -293,10 +293,7 @@ function selectTablo (tabloAlias) {
 }
 
 function selectHeader (tabloAlias, headerAlias) {
-	if (
-		this.selected.tablo && 
-		this.selectTablo(tabloAlias)
-	) {
+	if (this.selectTablo(tabloAlias)) {
 		var header = this.selected.tablo.getHeaderByAlias(headerAlias);
 		if (header) {
 			this.selected.target = U.TRG.HEADER;
