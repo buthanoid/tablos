@@ -27,7 +27,7 @@ export {
 	newDataHeader, checkNewDataHeader,
 	newColSamelineArg,
 	newFuncHeader,
-	newLine,
+	newLine, checkNewLine,
 	newHeaderArg,
 	copyArg,
 	// get functions
@@ -40,7 +40,7 @@ export {
 	updHeaderAlias, checkUpdHeaderAlias,
 	updHeaderLabel, checkUpdHeaderLabel,
 	updHeaderType, checkUpdHeaderType,
-	updHeaderOrder,
+	updHeaderOrder, checkUpdHeaderOrder,
 	updHeaderDataType, checkUpdHeaderDataType,
 	updHeaderArgs, checkUpdHeaderArgs,
 	updHeaderFunc, checkUpdHeaderFunc, 
@@ -93,7 +93,8 @@ const ERR = {
 		ALIAS: {
 			BAD_CONTENT: "ERR.TABLO.ALIAS.BAD_CONTENT",
 			EMPTY: "ERR.TABLO.ALIAS.EMPTY",
-			EXISTING: "ERR.TABLO.ALIAS.EXISTING"
+			EXISTING: "ERR.TABLO.ALIAS.EXISTING",
+			NOT_FOUND: "ERR.TABLO.ALIAS.NOT_FOUND"
 		},
 		LABEL: {
 			BAD_CONTENT: "ERR.TABLO.LABEL.BAD_CONTENT",
@@ -104,7 +105,8 @@ const ERR = {
 		ALIAS: {
 			EMPTY: "ERR.HEADER.ALIAS.EMPTY",
 			BAD_CONTENT: "ERR.HEADER.ALIAS.BAD_CONTENT",
-			EXISTING: "ERR.HEADER.ALIAS.EXISTING"
+			EXISTING: "ERR.HEADER.ALIAS.EXISTING",
+			NOT_FOUND: "ERR.HEADER.ALIAS.NOT_FOUND"
 		},
 		LABEL: {
 			BAD_CONTENT: "ERR.HEADER.LABEL.BAD_CONTENT",

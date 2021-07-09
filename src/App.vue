@@ -101,136 +101,47 @@ import * as TEXTS_FR from "./texts_fr.js";
 
 export default {
 	components: { TabloComp, TabloInfos, HeaderInfos, LineInfos },
- 	data: function ()	{
-		return { 
-			lang: "en",
-			tabenv: T.newTabenv(),
-			selected: { 
-				target: U.TRG.NULL,
-				tablo: null,
-				header: null,
-				line: null,
-				cell: false
-			},
-			edit : {
-				target: U.TRG.NULL,
-				property: T.PROP.NULL,
-				valid: true,
-				msg: null
-			},
-			lastAppError: ""
-		}
-	},
+ 	data: function () { return { 
+		lang: "en",
+		tabenv: T.newTabenv(),
+		selected: { 
+			target: U.TRG.NULL,
+			tablo: null,
+			header: null,
+			line: null,
+			cell: false
+		},
+		edit : {
+			target: U.TRG.NULL,
+			property: T.PROP.NULL,
+			valid: true,
+			msg: null
+		},
+		lastAppError: ""
+	}},
 	created: created,
 	methods: {
-		newTablo: function () {
-			var i = 0;
-			while (this.tabenv.tablos.has("newtablo" + i)) i++;
-			
-			var tablo = T.newTablo(
-				this.tabenv, "newtablo" + i, "New Tablo " + i);
-				
-			this.selectTablo("newtablo" + i);
-		},
-		delTablo: function () {
-			T.delTablo(this.tabenv, this.selected.tablo);
-			this.selectNothing();
-		},
-		newHeader: function () {
-			var i = 0 ;
-			while (this.selected.tablo.getHeaderByAlias("newheader" + i)) i++;
-			
-			var header = T.newDataHeader(
-				this.tabenv, this.selected.tablo, 
-				"newheader" + i, "New Header " + i, T.HEADER.DATA_TYPE.INT
-			);
-			
-			this.selectHeader(this.selected.tablo.alias, "newheader" + i);
-		},
-		newLine: function () {
-			T.newLine(this.tabenv, this.selected.tablo);
-		},
-		toggleDisplayNumLines: function () {
-			T.updTabloDisplayNumLines(
-				this.selected.tablo, ! this.selected.tablo.displayNumLines
-			);
-		},
-		lowerOrder: function () {
-			T.updHeaderOrder(
-				this.tabenv, this.selected.tablo, this.selected.header, 
-				this.selected.header.order - 1
-			);
-		},
-		upperOrder: function () {
-			T.updHeaderOrder(
-				this.tabenv, this.selected.tablo, this.selected.header, 
-				this.selected.header.order + 1
-			);
-		},
-		selectNothing: function () {
-			this.selected.target = U.TRG.NULL;
-			this.selected.tablo = null ; 
-			this.selected.header = null ;
-			this.selected.line = null ;
-			this.selected.cell = false;
-		},
-		selectTablo: function (tabloAlias) {
-			this.selectNothing();
-			this.selected.target = U.TRG.TABLO;
-			this.selected.tablo = this.tabenv.tablos.get(tabloAlias);
-			this.cancelEdit();
-			this.lastAppError = "";
-		},
-		selectHeader: function (tabloAlias, headerAlias) {
-			this.selectTablo(tabloAlias);
-			this.selected.target = U.TRG.HEADER;
-			this.selected.header = 
-				this.selected.tablo.getHeaderByAlias(headerAlias);
-			this.cancelEdit();
-			this.lastAppError = "";
-		},
-		selectLine: function (tabloAlias, numLine) {
-			this.selectTablo(tabloAlias);
-			this.selected.target = U.TRG.LINE;
-			this.selected.line = numLine ;
-			this.cancelEdit();
-			this.lastAppError = "";
-		},
-		selectCell: function (tabloAlias, headerAlias, numLine) {
-			this.selectHeader(tabloAlias, headerAlias);
-			this.selected.target = U.TRG.CELL;
-			this.selected.line = numLine ;
-			this.selected.cell = true;
-			this.cancelEdit();
-			this.lastAppError = "";
-		},
-		startEdit: function (target, property) {
-			this.edit.target = target;
-			this.edit.property = property;
-			this.edit.valid = true;
-			this.edit.msg = "";
-			this.lastAppError = "";
-		},
+		newTablo: newTablo,
+		delTablo: delTablo,
+		newHeader: newHeader,
+		newLine: newLine,
+		toggleDisplayNumLines: toggleDisplayNumLines,
+		lowerOrder: lowerOrder,
+		upperOrder: upperOrder,
+		selectNothing: selectNothing,
+		selectTablo: selectTablo,
+		selectHeader: selectHeader,
+		selectLine: selectLine,
+		selectCell: selectCell,
+		startEdit: startEdit,
 		changeEditTablo: changeEditTablo,
 		changeEditHeader: changeEditHeader,
 		changeEditCell: changeEditCell,
 		submitEditTablo: submitEditTablo,
 		submitEditHeader: submitEditHeader,
 		submitEditCell: submitEditCell,
-		cancelEdit: function () {
-			this.edit.target = U.TRG.NULL;
-			this.edit.property = T.PROP.NULL;
-			this.edit.valid = true;
-			this.edit.msg = null;
-			this.lastAppError = "";
-		},
-		deleteHeader: function () {
-			T.delHeader(
-				this.tabenv, this.selected.tablo, this.selected.header
-			);
-			this.selectTablo(this.selected.tablo.alias);
-			this.cancelEdit();
-		}
+		cancelEdit: cancelEdit,
+		deleteHeader: deleteHeader
 	},
 	computed: {
 		texts() {
@@ -270,6 +181,186 @@ export default {
 		}
 	}
 };
+
+function newTablo () {
+	var i = 0;
+	while (this.tabenv.tablos.has("newtablo" + i)) i++;
+	
+	var errs =  T.checkNewTablo(this.tabenv, "", "New Tablo " + i);
+	
+	if (errs.length == 0) {
+		var tablo = T.newTablo(this.tabenv, "newtablo" + i, "New Tablo " + i);	
+		this.selectTablo("newtablo" + i);
+	}
+	
+	this.lastAppError = errs;
+}
+
+function delTablo () {
+	T.delTablo(this.tabenv, this.selected.tablo);
+	this.selectNothing();
+}
+
+function newHeader () {
+	var i = 0 ;
+	while (this.selected.tablo.getHeaderByAlias("newheader" + i)) i++;
+	
+	var errs = T.checkNewDataHeader(
+		this.tabenv, this.selected.tablo, 
+		"newheader" + i, "New Header " + i, T.HEADER.DATA_TYPE.INT
+	);
+	
+	if (errs.length == 0) {
+		var header = T.newDataHeader(
+			this.tabenv, this.selected.tablo, 
+			"newheader" + i, "New Header " + i, T.HEADER.DATA_TYPE.INT
+		);	
+		this.selectHeader(this.selected.tablo.alias, "newheader" + i);
+	}
+	
+	this.lastAppError = errs;
+}
+
+function newLine () {
+	var errs = T.checkNewLine(this.tabenv, this.selected.tablo);
+	if (errs.length == 0) T.newLine(this.tabenv, this.selected.tablo);
+	this.lastAppError = errs;
+}
+
+function toggleDisplayNumLines () {
+	var errs = T.checkUpdTabloDisplayNumLines(
+		this.selected.tablo, ! this.selected.tablo.displayNumLines
+	);
+	if (errs.length == 0) {
+		T.updTabloDisplayNumLines(
+			this.selected.tablo, ! this.selected.tablo.displayNumLines
+		);
+	}
+	this.lastAppError = errs;
+}
+
+function lowerOrder () {
+	var errs = T.checkUpdHeaderOrder(
+		this.tabenv, this.selected.tablo, this.selected.header, 
+		this.selected.header.order - 1
+	);
+	if (errs.length == 0) {
+		T.updHeaderOrder(
+			this.tabenv, this.selected.tablo, this.selected.header, 
+			this.selected.header.order - 1
+		);
+	}
+	this.lastAppError = errs;
+}
+
+function upperOrder () {
+	var errs = 	T.checkUpdHeaderOrder(
+		this.tabenv, this.selected.tablo, this.selected.header, 
+		this.selected.header.order + 1
+	);
+	if (errs.length == 0) {
+		T.updHeaderOrder(
+			this.tabenv, this.selected.tablo, this.selected.header, 
+			this.selected.header.order + 1
+		);
+	}
+	this.lastAppError = errs;
+}
+
+function selectNothing () {
+	this.selected.target = U.TRG.NULL;
+	this.selected.tablo = null ; 
+	this.selected.header = null ;
+	this.selected.line = null ;
+	this.selected.cell = false;
+	this.lastAppError = "";
+	return true;
+}
+
+function selectTablo (tabloAlias) {
+	if (this.tabenv.tablos.has(tabloAlias)) {
+		this.selectNothing();
+		this.selected.target = U.TRG.TABLO;
+		this.selected.tablo = this.tabenv.tablos.get(tabloAlias);
+		this.cancelEdit();
+		this.lastAppError = "";
+		return true;
+	}
+	else {
+		this.lastAppError = T.ERR.TABLO.ALIAS.NOT_FOUND;
+		return false;
+	}
+}
+
+function selectHeader (tabloAlias, headerAlias) {
+	if (
+		this.selected.tablo && 
+		this.selectTablo(tabloAlias)
+	) {
+		var header = this.selected.tablo.getHeaderByAlias(headerAlias);
+		if (header) {
+			this.selected.target = U.TRG.HEADER;
+			this.selected.header = header;
+			this.cancelEdit();
+			this.lastAppError = "";
+			return true;
+		}
+		else {
+			this.lastAppError = T.HEADER.ALIAS.NOT_FOUND ;
+			return false;
+		}
+	}
+	else return false;
+}
+
+function selectLine (tabloAlias, numLine) {
+	if (this.selectTablo(tabloAlias)) {
+		if (
+			numLine >= 0 &&
+			numLine < this.selected.tablo.data.length 
+		) {
+			this.selected.target = U.TRG.LINE;
+			this.selected.line = numLine ;
+			this.cancelEdit();
+			this.lastAppError = "";
+			return true
+		}
+		else {
+			this.lastAppError = T.ERR.LINE.OUT_OF_BOUNDS ;
+			return false;
+		}
+	}
+	else return false;
+}
+
+function selectCell (tabloAlias, headerAlias, numLine) {
+	if (this.selectHeader(tabloAlias, headerAlias)) {
+		if (
+			numLine >= 0 &&
+			numLine < this.selected.tablo.data.length 
+		) {
+			this.selected.target = U.TRG.CELL;
+			this.selected.line = numLine ;
+			this.selected.cell = true;
+			this.cancelEdit();
+			this.lastAppError = "";
+			return true;
+		}
+		else {
+			this.lastAppError = T.ERR.LINE.OUT_OF_BOUNDS ;
+			return false;
+		}
+	}
+	else return false;
+}
+
+function startEdit (target, property) {
+	this.edit.target = target;
+	this.edit.property = property;
+	this.edit.valid = true;
+	this.edit.msg = "";
+	this.lastAppError = "";
+}
 
 function changeEditTablo (newValue) {
 	var errs;
@@ -463,6 +554,22 @@ function submitEditCell (newValue) {
 		this.tabenv, this.selected.tablo, this.selected.header,
 		this.selected.line
 	);
+	this.cancelEdit();
+}
+
+function cancelEdit () {
+	this.edit.target = U.TRG.NULL;
+	this.edit.property = T.PROP.NULL;
+	this.edit.valid = true;
+	this.edit.msg = null;
+	this.lastAppError = "";
+}
+
+function deleteHeader () {
+	T.delHeader(
+		this.tabenv, this.selected.tablo, this.selected.header
+	);
+	this.selectTablo(this.selected.tablo.alias);
 	this.cancelEdit();
 }
 
