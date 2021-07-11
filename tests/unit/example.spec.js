@@ -393,7 +393,7 @@ describe("newDataHeader", function () {
 		assert.equal(header.type, T.HEADER.TYPE.DATA);
 	});
 	it("tablo udpated", function () {
-		assert.equal(env.tablo1.getHeaderByAlias(headerAlias), header);
+		assert.equal(T.getHeader(env.tablo1, headerAlias), header);
 	});
 	it("reactMap udpated", function () {
 		assert.isTrue(T.hasReactKey(env.tabenv.reactMap, headerFullAlias));
@@ -453,7 +453,7 @@ describe("newFuncHeader", function () {
 		assert.equal(header2.args[0], header2Args[0]);
 	});
 	it("tablo udpated", function () {
-		assert.equal(env.tablo1.getHeaderByAlias(header2Alias), header2);
+		assert.equal(T.getHeader(env.tablo1, header2Alias), header2);
 		assert.equal(
 			T.getCell(env.tablo1, header2, 0),
 			header2Func(T.getCell(env.tablo1, env.header1, 0))

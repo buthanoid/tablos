@@ -203,7 +203,7 @@ function delTablo () {
 
 function newHeader () {
 	var i = 0 ;
-	while (this.selected.tablo.getHeaderByAlias("newheader" + i)) i++;
+	while (T.getHeader(this.selected.tablo, "newheader" + i)) i++;
 	
 	var errs = T.checkNewDataHeader(
 		this.tabenv, this.selected.tablo, 
@@ -294,7 +294,7 @@ function selectTablo (tabloAlias) {
 
 function selectHeader (tabloAlias, headerAlias) {
 	if (this.selectTablo(tabloAlias)) {
-		var header = this.selected.tablo.getHeaderByAlias(headerAlias);
+		var header = T.getHeader(this.selected.tablo, headerAlias);
 		if (header) {
 			this.selected.target = U.TRG.HEADER;
 			this.selected.header = header;

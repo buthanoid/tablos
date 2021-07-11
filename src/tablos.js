@@ -31,6 +31,7 @@ export {
 	newHeaderArg,
 	copyArg,
 	// get functions
+	getHeader,
 	getCell,
 	getCellByAliases,
 	// upd functions
@@ -388,19 +389,12 @@ function checkNewTablo (tabenv, alias, label) {
 // create a new tablo and add it to tabenv
 function newTablo (tabenv, alias, label) {
 
-		
 	var tablo = {
 		alias: alias,
 		label: label,
 		headers: [],
 		data:[],
 		displayNumLines: true,
-		
-		getHeaderByAlias: function (targetHeaderAlias) {
-			return this.headers.find(function (header) {
-				return header.alias == targetHeaderAlias;
-			});
-		}
 	};
 	
 	tabenv.tablos.set(alias, tablo);
@@ -435,7 +429,7 @@ function checkHeaderType (type) {
 // tabenv and tablo are not checked
 function checkNewHeader (tabenv, tablo, alias, label, type) {
 	var errsAlias = checkHeaderAlias(alias);
-	if (tablo.getHeaderByAlias(alias) != undefined) {
+	if (getHeader(tablo, alias) != undefined) {
 		errsAlias.push(ERR.HEADER.ALIAS.EXISTING);
 	}
 	var errsLabel = checkHeaderLabel(label);
@@ -488,7 +482,7 @@ function checkNewColSamelineArg (tabenv, tabloAlias, headerAlias) {
 	if (tablo == undefined) {
 		return [ ERR.HEADER.ARG.TABLO_ALIAS.NON_EXISTING ];
 	}
-	var header = tablo.getHeaderByAlias(headerAlias);
+	var header = getHeader(tablo, headerAlias);
 	if (header == undefined) {
 		return [ ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING ];
 	}
@@ -645,6 +639,12 @@ function copyArg (arg) {
 
 // ==================== GET FUNCTIONS =======================
 
+function getHeader (tablo, targetHeaderAlias) {
+	return tablo.headers.find(function (header) {
+		return header.alias == targetHeaderAlias;
+	});
+}
+
 // get cell without checks 
 function getCell (tablo, header, numLine) {
 	return tablo.data[numLine][header.order];
@@ -656,7 +656,7 @@ function checkGetCellByAliases (tabenv, tabloAlias, headerAlias, numLine) {
 	var tablo = tabenv.tablos.get(tabloAlias);
 	if (tablo === undefined) return [ ERR.TABLO.NOT_FOUND ];
 	
-	var header = tablo.getHeaderByAlias(headerAlias);
+	var header = getHeader(tablo, headerAlias);
 	if (header === undefined) return [ ERR.HEADER.NOT_FOUND ];
 	
 	if (numLine < 0 || numLine >= tablo.data.length) {
@@ -669,7 +669,7 @@ function checkGetCellByAliases (tabenv, tabloAlias, headerAlias, numLine) {
 // get cell value by aliases and do checks
 function getCellByAliases (tabenv, tabloAlias, headerAlias, numLine) {
 	var tablo = tabenv.tablos.get(tabloAlias);
-	var header = tablo.getHeaderByAlias(headerAlias);
+	var header = getHeader(tablo, headerAlias);
 	return getCell(tablo, header, numLine);
 }
 
@@ -713,7 +713,7 @@ function updTabloAlias (tabenv, tablo, newAlias) {
 		reactions.forEach(function (reactionAliasStr) {
 			var reactionAlias = aliasObjFromStr(reactionAliasStr);
 			var tablo2 = tabenv.tablos.get(reactionAlias.tablo);
-			var header2 = tablo2.getHeaderByAlias(reactionAlias.header);
+			var header2 = getHeader(tablo2, reactionAlias.header);
 			header2.args.forEach(function (arg, index) {
 				if (arg.alias.tablo == oldAlias) arg.alias.tablo = newAlias;
 			});
@@ -784,7 +784,7 @@ function checkUpdHeaderAlias (tabenv, tablo, header, newAlias) {
 	if (header.alias == newAlias) return [];
 	else {
 		var errsAlias = checkHeaderAlias(newAlias);
-		if (tablo.getHeaderByAlias(newAlias) != undefined) {
+		if (getHeader(tablo, newAlias) != undefined) {
 			errsAlias.push(ERR.HEADER.ALIAS.EXISTING);
 		}
 		else return errsAlias;
@@ -812,7 +812,7 @@ function updHeaderAlias (tabenv, tablo, header, newAlias) {
 	reactions.forEach(function (reaction) {
 		var reactionAlias = aliasObjFromStr(reaction);
 		var tablo2 = tabenv.tablos.get(reactionAlias.tablo);
-		var header2 = tablo2.getHeaderByAlias(reactionAlias.header);
+		var header2 = getHeader(tablo2, reactionAlias.header);
 		header2.args.forEach(function (arg, index) {
 			if (arg.alias.tablo == tablo.alias &&
 				arg.alias.header == oldAlias
@@ -1110,7 +1110,7 @@ function checkUpdCellReactions (tabenv, tablo, header, numLine) {
 		treeForEachDeepFirst(childOfRoot, function (aliasStr) {
 			var aliasObj = aliasObjFromStr(aliasStr);
 			var tablo2 = tabenv.tablos.get(aliasObj.tablo);
-			var header2 = tablo2.getHeaderByAlias(aliasObj.header);
+			var header2 = getHeader(tablo2, aliasObj.header);
 			errs = errs.concat(checkUpdFuncCell(
 				tabenv, tablo2, header2, numLine));
 		});
@@ -1132,7 +1132,7 @@ function updCellReactions (tabenv, tablo, header, numLine) {
 		treeForEachDeepFirst(childOfRoot, function (aliasStr) {
 			var aliasObj = aliasObjFromStr(aliasStr);
 			var tablo2 = tabenv.tablos.get(aliasObj.tablo);
-			var header2 = tablo2.getHeaderByAlias(aliasObj.header);
+			var header2 = getHeader(tablo2, aliasObj.header);
 			
 			// we have to check here, because in the normal course of 
 			// the application there can be errors
@@ -1297,7 +1297,7 @@ function delHeader (tabenv, tablo, header) {
 		var reactionAlias = aliasObjFromStr(reaction);
 		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
 		var reactionHeader = 
-			reactionTablo.getHeaderByAlias(reactionAlias.header);
+			getHeader(reactionTablo, reactionAlias.header);
 		var reactionArgs = reactionHeader.args.map(function (arg) {
 			switch (arg.type) {
 				case HEADER.ARG.TYPE.NULL: return arg;
