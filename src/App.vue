@@ -287,7 +287,8 @@ function selectTablo (tabloAlias) {
 		return true;
 	}
 	else {
-		this.lastAppError = T.ERR.TABLO.ALIAS.NOT_FOUND;
+		this.lastAppError = T.newErr(T.ERR.TABLO.ALIAS.NOT_FOUND, {
+			tabloAlias: tabloAlias });
 		return false;
 	}
 }
@@ -303,7 +304,8 @@ function selectHeader (tabloAlias, headerAlias) {
 			return true;
 		}
 		else {
-			this.lastAppError = T.HEADER.ALIAS.NOT_FOUND ;
+			this.lastAppError = T.newErr(T.HEADER.ALIAS.NOT_FOUND, {
+				tabloAlias: tabloAlias, headerAlias: headerAlias });
 			return false;
 		}
 	}
@@ -323,7 +325,9 @@ function selectLine (tabloAlias, numLine) {
 			return true
 		}
 		else {
-			this.lastAppError = T.ERR.LINE.OUT_OF_BOUNDS ;
+			this.lastAppError = T.newErr(T.ERR.LINE.OUT_OF_BOUNDS, {
+				tabloAlias: tabloAlias, numLine: numLine
+			});
 			return false;
 		}
 	}
@@ -344,7 +348,10 @@ function selectCell (tabloAlias, headerAlias, numLine) {
 			return true;
 		}
 		else {
-			this.lastAppError = T.ERR.LINE.OUT_OF_BOUNDS ;
+			this.lastAppError = T.newErr(T.ERR.LINE.OUT_OF_BOUNDS, {
+				tabloAlias: tabloAlias, headerAlias: headerAlias,
+				numLine: numLine
+			});
 			return false;
 		}
 	}
@@ -370,7 +377,9 @@ function changeEditTablo (newValue) {
 			errs = T.checkUpdTabloLabel(
 				this.selected.tablo, newValue);
 			break;
-		default: errs = [ T.ERR.PROP.TABLO.UNKNOWN ];
+		default: errs = [ T.newErr(T.ERR.PROP.TABLO.UNKNOWN, {
+			property: this.edit.property
+		}) ];
 	}
 	this.edit.valid = (errs.length == 0);
 	this.edit.msg = errs;
@@ -411,7 +420,9 @@ function changeEditHeader (newValue) {
 			}
 			catch (errors) { errs = errors }
 			break;
-		default: errs = [ T.ERR.PROP.HEADER.UNKNOWN ];
+		default: errs = [ newErr(T.ERR.PROP.HEADER.UNKNOWN, {
+			property: this.edit.property
+		}) ];
 	}
 	this.edit.valid = (errs.length == 0);
 	this.edit.msg = errs;
@@ -446,7 +457,9 @@ function submitEditTablo (newValue) {
 				T.updTabloDisplayNumLines(this.selected.tablo, newValue);
 			}
 			break;
-		default: errs = [ T.ERR.PROP.TABLO.UNKNOWN ];
+		default: errs = [ T.newErr(T.ERR.PROP.TABLO.UNKNOWN, {
+			property: this.edit.property
+		}) ];
 	}
 	this.cancelEdit();
 	this.lastAppErrors = errs;
@@ -521,7 +534,9 @@ function submitEditHeader (newValue) {
 			}
 			catch(error) { errs = [error] }
 			break;
-		default: errs = [ T.ERR.PROP.HEADER.UNKNOWN ];
+		default: errs = [ T.newErr(T.ERR.PROP.HEADER.UNKNOWN, {
+			property: this.edit.property
+		}) ];
 	}
 	this.cancelEdit();
 	this.lastAppErrors = errs;
@@ -541,7 +556,8 @@ function submitEditCell (newValue) {
 		case T.HEADER.DATA_TYPE.JSON:
 			newValue = JSON.parse(newValue);
 			break;
-		default: this.lastAppError = T.ERR.HEADER.DATA_TYPE.UNKNOWN ;
+		default: this.lastAppError = T.newErr(T.ERR.HEADER.DATA_TYPE.UNKNOWN, {
+			dataType: this.selected.header.dataType }) ;
 	}
 	T.updDataCell(
 		this.tabenv, this.selected.tablo, this.selected.header,
