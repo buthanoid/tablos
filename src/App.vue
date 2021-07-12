@@ -429,8 +429,16 @@ function changeEditHeader (newValue) {
 }
 
 function changeEditCell (newValue) {
-	this.edit.valid = true;
-	this.edit.msg = "";
+	var errs = T.checkUpdDataCellFromStr(
+		this.selected.tablo, this.selected.header,
+		this.selected.line, newValue
+	);
+	/* TODO T.checkUpdCellReactions(
+		this.tabenv, this.selected.tablo, this.selected.header,
+		this.selected.line
+	); */
+	this.edit.valid = (errs.length == 0);
+	this.edit.msg = errs;
 }
 
 function submitEditTablo (newValue) {
@@ -543,31 +551,22 @@ function submitEditHeader (newValue) {
 }
 
 function submitEditCell (newValue) {
-	switch (this.selected.header.dataType) {
-		case T.HEADER.DATA_TYPE.INT:
-			newValue = parseInt(newValue);
-			break;
-		case T.HEADER.DATA_TYPE.FLOAT:
-			newValue = parseFloat(newValue);
-			break;
-		case T.HEADER.DATA_TYPE.STRING:
-			newValue = new String(newValue).valueOf();
-			break;
-		case T.HEADER.DATA_TYPE.JSON:
-			newValue = JSON.parse(newValue);
-			break;
-		default: this.lastAppError = T.newErr(T.ERR.HEADER.DATA_TYPE.UNKNOWN, {
-			dataType: this.selected.header.dataType }) ;
-	}
-	T.updDataCell(
-		this.tabenv, this.selected.tablo, this.selected.header,
+	var errs = T.checkUpdDataCellFromStr(
+		this.selected.tablo, this.selected.header,
 		this.selected.line, newValue
 	);
-	T.updCellReactions(
-		this.tabenv, this.selected.tablo, this.selected.header,
-		this.selected.line
-	);
+	if (errs.length == 0) {
+		T.updDataCellFromStr(
+			this.selected.tablo, this.selected.header,
+			this.selected.line, newValue
+		);
+		T.updCellReactions(
+			this.tabenv, this.selected.tablo, this.selected.header,
+			this.selected.line
+		);
+	}
 	this.cancelEdit();
+	this.lastAppErrors = errs;
 }
 
 function cancelEdit () {
@@ -619,17 +618,17 @@ function created () {
 	);
 	
 	T.newLine(this.tabenv, users); 
-	T.updDataCell(this.tabenv, users, usersName, 0, "yayatoto");
-	T.updDataCell(this.tabenv, users, usersCash, 0, 10);
-	T.updDataCell(this.tabenv, users, usersDebt, 0, 5);
+	T.updDataCell(users, usersName, 0, "yayatoto");
+	T.updDataCell(users, usersCash, 0, 10);
+	T.updDataCell(users, usersDebt, 0, 5);
 	T.updCellReactions(this.tabenv, users, usersName, 0);
 	T.updCellReactions(this.tabenv, users, usersCash, 0);
 	T.updCellReactions(this.tabenv, users, usersDebt, 0);
 
 	T.newLine(this.tabenv, users);
-	T.updDataCell(this.tabenv, users, usersName, 1, "magdalena");
-	T.updDataCell(this.tabenv, users, usersCash, 1, 35);
-	T.updDataCell(this.tabenv, users, usersDebt, 1, 100);
+	T.updDataCell(users, usersName, 1, "magdalena");
+	T.updDataCell(users, usersCash, 1, 35);
+	T.updDataCell(users, usersDebt, 1, 100);
 	T.updCellReactions(this.tabenv, users, usersName, 1);
 	T.updCellReactions(this.tabenv, users, usersCash, 1);
 	T.updCellReactions(this.tabenv, users, usersDebt, 1);

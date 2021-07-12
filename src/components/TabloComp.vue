@@ -91,7 +91,7 @@ export default {
 			if (this.headers[numCol].dataType == T.HEADER.DATA_TYPE.JSON) {
 				this.editForm = JSON.stringify(this.datatab[numLine][numCol]);
 			}
-			else this.editForm = this.datatab[numLine][numCol];
+			else this.editForm = String(this.datatab[numLine][numCol]);
 			this.$emit("selectCell",
 				this.alias, this.headers[numCol].alias, numLine
 			);

@@ -50,7 +50,8 @@ export {
 	updFuncHeaderAllCells, checkUpdFuncHeaderAllCells,
 	updTabloAllFuncHeadersAllCells,
 	updFuncCell,
-	updDataCell,
+	updDataCell, checkUpdDataCell,
+	updDataCellFromStr, checkUpdDataCellFromStr,
 	updCellReactions,
 	// del functions
 	delTablo,
@@ -144,6 +145,17 @@ const ERR = {
 	},
 	LINE: {
 		OUT_OF_BOUNDS: "ERR.LINE.OUT_OF_BOUNDS"
+	},
+	CELL: {
+		BAD_CONTENT: "ERR.CELL.BAD_CONTENT",
+		INT: {
+			NOT_A_NUMBER: "ERR.CELL.INT.NOT_A_NUMBER",
+			INFINITE: "ERR.CELL.INT.INFINITE"
+		},
+		FLOAT: {
+			NOT_A_NUMBER: "ERR.CELL.FLOAT.NOT_A_NUMBER",
+			INFINITE: "ERR.CELL.FLOAT.INFINITE"
+		}
 	},
 	PROP: {
 		TABLO: {
@@ -252,6 +264,24 @@ function treeForEachDeepFirst (node, fun) {
 function newErr (type, data) {
 	return { type: type, data: data };
 }
+
+// certainly imperfect : 
+// loops on recursive references, and surely accepts ill-JSON objects
+function isJSON (x) { switch (typeof x) {
+	case "string":
+	case "number":
+	case "boolean":  return true ;
+	case "object" :
+		if (x === null) return true;
+		else if (Array.isArray(x)) {
+			return x.every(isJSON) ;
+		}
+		else if (Object.getPrototypeOf(x) == Object.prototype) {	
+			return Object.values(x).every(isJSON) ;
+		}
+		else return false ;
+	default: return false ;
+}}
 
 // ==================== REACTS FUNCTIONS =======================
 
@@ -524,6 +554,9 @@ function checkNewDataHeader (tabenv, tablo, alias, label, dataType) {
 function newDataHeader (tabenv, tablo, alias, label, dataType) {
 	var header = newHeader(tabenv, tablo, alias, label, HEADER.TYPE.DATA);
 	header.dataType = dataType;
+	tablo.data.forEach(function (line) {
+		line[header.order] = 0;
+	});
 	return header;
 } 
 
@@ -1083,7 +1116,7 @@ function updHeaderDataType (tabenv, tablo, header, newDataType) {
 				throw newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, { 
 					dataType: newDataType });
 		}
-		updDataCell(tabenv, tablo, header, numLine, newVal);
+		updDataCell(tablo, header, numLine, newVal);
 		updCellReactions(tabenv, tablo, header, numLine);
 	});
 }
@@ -1366,7 +1399,7 @@ function updFuncCell (tabenv, tablo, header, numLine) {
 }
 
 // check updDataCell()
-function checkUpdDataCell (tabenv, tablo, header, numLine, newVal) {
+function checkUpdDataCell (tablo, header, numLine, newVal) {
 	
 	if (numLine < 0 || numLine >= tablo.data.length) {
 		var err = newErr(ERR.LINE.OUT_OF_BOUNDS, {
@@ -1376,13 +1409,135 @@ function checkUpdDataCell (tabenv, tablo, header, numLine, newVal) {
 		return [ err ] ;
 	}
 	
-	return [];
+	var errs = [] ;
+	switch (header.dataType) {
+		case HEADER.DATA_TYPE.INT:	 
+			if (
+				typeof newVal != "number" ||
+				parseInt(newVal) != newVal
+			) {
+				errs.push(newErr(ERR.CELL.BAD_CONTENT, { 
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: newVal }));
+			}
+			break;
+		case HEADER.DATA_TYPE.FLOAT:
+			if (
+				typeof newVal != "number" ||
+				parseFloat(newVal) != newVal
+			) {
+				errs.push(newErr(ERR.CELL.BAD_CONTENT, { 
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: newVal }));
+			}
+			break;
+		case HEADER.DATA_TYPE.STRING:
+			if (typeof newVal != "string") {
+				errs.push(newErr(ERR.CELL.BAD_CONTENT, { 
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: newVal }));
+			}
+			break;
+		case HEADER.DATA_TYPE.JSON:
+			if (! isJSON(newVal)) {
+				errs.push(newErr(ERR.CELL.BAD_CONTENT, { 
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: newVal }));
+			}
+			break;
+		default: errs.push(newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
+			dataType: header.dataType })) ;
+	}
+	
+	return errs;
 }
 
-function updDataCell (tabenv, tablo, header, numLine, newVal) {
+function updDataCell (tablo, header, numLine, newVal) {
 	tablo.data[numLine][header.order] = newVal;
 }
 
+function checkUpdDataCellFromStr (tablo, header, numLine, strVal) {
+	var errs = [];
+
+	var parsedVal ;
+	switch (header.dataType) {
+		case HEADER.DATA_TYPE.INT:
+			parsedVal = parseInt(strVal, 10);
+			if (Number.isNaN(parsedVal)) {
+				errs.push(newErr(ERR.CELL.INT.NOT_A_NUMBER, {
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: strVal }));
+			}
+			else if (! Number.isFinite(parsedVal)) {
+				errs.push(newErr(ERR.CELL.INT.INFINITE, {
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: strVal }));
+			}
+			break;
+		case HEADER.DATA_TYPE.FLOAT:
+			parsedVal = parseFloat(strVal, 10);
+			if (Number.isNaN(parsedVal)) {
+				errs.push(newErr(ERR.CELL.FLOAT.NOT_A_NUMBER, {
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: strVal }));
+			}
+			else if (! Number.isFinite(parsedVal)) {
+				errs.push(newErr(ERR.CELL.FLOAT.INFINITE, {
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: strVal }));
+			}
+			break;
+		case HEADER.DATA_TYPE.STRING:
+			parsedVal = strVal;
+			break;
+		case HEADER.DATA_TYPE.JSON:
+			try {
+				parsedVal = JSON.parse(strVal);
+			}
+			catch (error) {
+				errs.push(newErr(ERR.CELL.BAD_CONTENT, { 
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: strVal }));
+			}
+			break;
+		default: this.lastAppError = newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
+			dataType: this.selected.header.dataType }) ;
+	}
+	
+	if (errs.length == 0) {
+		errs = checkUpdDataCell (tablo, header, numLine, parsedVal);
+	}
+	
+	return errs;
+}
+
+function updDataCellFromStr (tablo, header, numLine, strVal) {
+	var parsedVal ;
+	switch (header.dataType) {
+		case HEADER.DATA_TYPE.INT:
+			parsedVal = parseInt(strVal, 10);
+			break;
+		case HEADER.DATA_TYPE.FLOAT:
+			parsedVal = parseFloat(strVal, 10);
+			break;
+		case HEADER.DATA_TYPE.STRING:
+			parsedVal = String(strVal);
+			break;
+		case HEADER.DATA_TYPE.JSON:
+			try {
+				parsedVal = JSON.parse(strVal);
+			}
+			catch (error) {
+				throw newErr(ERR.CELL.BAD_CONTENT, { 
+					tabloAlias: tablo.alias, headerAlias: header.alias,
+					numLine: numLine, cellContent: strVal });
+			}
+			break;
+		default: this.lastAppError = newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
+			dataType: this.selected.header.dataType }) ;
+	}
+	updDataCell(tablo, header, numLine, parsedVal);
+}
 
 // ==================== DEL FUNCTIONS =======================
 
