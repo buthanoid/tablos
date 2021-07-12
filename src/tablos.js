@@ -1078,22 +1078,21 @@ function checkUpdHeaderDataType (tabenv, tablo, header, newDataType) {
 					parseFloat(oldVal);
 					break;
 				case HEADER.DATA_TYPE.STRING:
-					new String(oldVal).valueOf();
+					String(oldVal);
 					break;
 				case HEADER.DATA_TYPE.JSON:
 					JSON.parse(oldVal);
 					break;
-				default: throw newErr(
-					ERR.HEADER.DATA_TYPE.UNKNOWN, { dataType: newDataType });
+				default: errs.push(newErr(
+					ERR.HEADER.DATA_TYPE.UNKNOWN, { dataType: newDataType }));
 			}
 			// TODO: check updDataCell and updCellReactions
 		}
 		catch (error){ 
-			var err = newErr(ERR.HEADER.DATA_TYPE.CELL_PARSE_ERROR, {
+			errs.push(newErr(ERR.HEADER.DATA_TYPE.CELL_PARSE_ERROR, {
 				tabloAlias: tablo.alias, headerAlias: header.alias,
 				numLine: numLine 
-			});
-			errs.push(err); 
+			}));
 		}
 	});
 	
@@ -1102,7 +1101,9 @@ function checkUpdHeaderDataType (tabenv, tablo, header, newDataType) {
 
 function updHeaderDataType (tabenv, tablo, header, newDataType) {
 	
-	if (header.dataType == newDataType) return;
+	var oldDataType = header.dataType;
+	
+	if (oldDataType == newDataType) return;
 	
 	header.dataType = newDataType;
 	
@@ -1112,21 +1113,42 @@ function updHeaderDataType (tabenv, tablo, header, newDataType) {
 		switch (newDataType) {
 			case HEADER.DATA_TYPE.INT:
 				newVal = parseInt(oldVal);
+				if (Number.isNaN(newVal) || ! Number.isFinite(newVal)) {
+					updCellToDefault (tablo, header, numLine);
+				}
+				else updDataCell(tablo, header, numLine, newVal);
 				break;
 			case HEADER.DATA_TYPE.FLOAT:
 				newVal = parseFloat(oldVal);
+				if (Number.isNaN(newVal) || ! Number.isFinite(newVal)) {
+					updCellToDefault (tablo, header, numLine);
+				}
+				else updDataCell(tablo, header, numLine, newVal);
 				break;
 			case HEADER.DATA_TYPE.STRING:
-				newVal = new String(oldVal).valueOf();
+				if (oldDataType == HEADER.DATA_TYPE.JSON) {
+					try { 
+						newVal = JSON.stringify(oldVal);
+						updDataCell(tablo, header, numLine, newVal);
+					}
+					catch(error) { updCellToDefault (tablo, header, numLine) }
+				}
+				else {
+					newVal = String(oldVal);
+					updDataCell(tablo, header, numLine, newVal);
+				}
 				break;
 			case HEADER.DATA_TYPE.JSON:
-				newVal = JSON.parse(oldVal);
+				try { 
+					newVal = JSON.parse(oldVal); 
+					updDataCell(tablo, header, numLine, newVal);
+				}
+				catch (error) { updCellToDefault (tablo, header, numLine) }
 				break;
 			default:
 				throw newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, { 
 					dataType: newDataType });
 		}
-		updDataCell(tablo, header, numLine, newVal);
 		updCellReactions(tabenv, tablo, header, numLine);
 	});
 }
