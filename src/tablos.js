@@ -554,9 +554,12 @@ function checkNewDataHeader (tabenv, tablo, alias, label, dataType) {
 function newDataHeader (tabenv, tablo, alias, label, dataType) {
 	var header = newHeader(tabenv, tablo, alias, label, HEADER.TYPE.DATA);
 	header.dataType = dataType;
-	tablo.data.forEach(function (line) {
-		line[header.order] = 0;
-	});
+	for (var i = 0 ; i < tablo.data.length; i ++) { 
+		updCellToDefault (tablo, header, i)
+	}
+	for (var i = 0 ; i < tablo.data.length; i ++) {
+		updCellReactions (tabenv, tablo, header, i)
+	}
 	return header;
 } 
 
@@ -684,6 +687,13 @@ function newLine (tabenv, tablo) {
 	var line = new Array(tablo.headers.length);
 	line.fill(null);
 	tablo.data.push(line);
+	for (var i = 0 ; i < tablo.headers.length ; i ++) {
+		updCellToDefault (tablo, tablo.headers[i], tablo.data.length - 1);
+	}
+	for (var i = 0 ; i < tablo.headers.length ; i ++) {
+		updCellReactions (
+			tabenv, tablo, tablo.headers[i], tablo.data.length - 1);
+	}
 	updLineAllFuncCells(tabenv, tablo, tablo.data.length - 1);
 }
 
@@ -1500,8 +1510,8 @@ function checkUpdDataCellFromStr (tablo, header, numLine, strVal) {
 					numLine: numLine, cellContent: strVal }));
 			}
 			break;
-		default: this.lastAppError = newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
-			dataType: this.selected.header.dataType }) ;
+		default: errs.push(newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
+			dataType: header.dataType })) ;
 	}
 	
 	if (errs.length == 0) {
@@ -1533,10 +1543,37 @@ function updDataCellFromStr (tablo, header, numLine, strVal) {
 					numLine: numLine, cellContent: strVal });
 			}
 			break;
-		default: this.lastAppError = newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
-			dataType: this.selected.header.dataType }) ;
+		default: errs.push(newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
+			dataType: header.dataType })) ;
 	}
 	updDataCell(tablo, header, numLine, parsedVal);
+}
+
+function updCellToDefault (tablo, header, numLine) {
+	switch (header.type) {
+		case HEADER.TYPE.DATA:
+			switch (header.dataType) {
+				case HEADER.DATA_TYPE.INT:
+					updDataCell(tablo, header, numLine, 0);
+					break;
+				case HEADER.DATA_TYPE.FLOAT:
+					updDataCell(tablo, header, numLine, 0);
+					break;
+				case HEADER.DATA_TYPE.STRING:
+					updDataCell(tablo, header, numLine, "");
+					break;
+				case HEADER.DATA_TYPE.JSON:
+					updDataCell(tablo, header, numLine, {});
+					break;
+				default: 
+					errs.push(newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
+						dataType: header.dataType }));
+			}
+			break;
+		case HEADER.TYPE.FUNC: break;
+		default: errs.push(newErr(ERR.HEADER.TYPE.UNKNOWN, {
+			type: header.type })) ;
+	}
 }
 
 // ==================== DEL FUNCTIONS =======================
