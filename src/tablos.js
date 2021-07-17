@@ -87,7 +87,8 @@ const ERR = {
 		BAD_CONTENT: "ERR.REACT_MAP.BAD_CONTENT",
 		KEY: {
 			NOT_FOUND: "ERR.REACT_MAP.KEY.NOT_FOUND"
-		}
+		},
+		LOOP: "ERR.REACT_MAP.LOOP"
 	},
 	TABENV: { 
 		BAD_CONTENT: "ERR.TABENV.BAD_CONTENT"
@@ -302,6 +303,45 @@ function newReactMap () { return new Map() }
 
 function newReactKey (reactMap, reactKey) { 
 	reactMap.set(reactKey, new Set());
+}
+
+// in particular checks the absence of recursive reactions (no loops allowed)
+// Careful : will throw error if reaction is not also a key in reactMap !
+// When you use reactMap you should never add a reaction that is 
+// not already a reactKey.
+function checkNewReaction (reactMap, reactKey, reaction) {
+	var errs = [];
+		
+	function checkLoop (visitedNodes, nextReactKey) {
+		if (hasReactKey(reactMap, nextReactKey)) {
+			if (visitedNodes.has(nextReactKey)) {
+				var sequence = Array.from(visitedNodes.values());
+				sequence.push(nextReactKey);
+				errs.push(newErr(ERR.REACT_MAP.LOOP, { sequence: sequence }));
+			}
+			else {
+				var nextReactions = getReactions(reactMap, nextReactKey);
+				nextReactions.forEach(function (nextReaction) {
+					// we explore branches 
+					// so we need a different set for each branch
+					var newVisitedNodes = new Set(visitedNodes);
+					newVisitedNodes.add(nextReactKey);
+					checkLoop (newVisitedNodes, nextReaction);					
+				});
+			}
+		}
+		else {
+			errs.push(newErr(ERR.REACT_MAP.KEY.NOT_FOUND, { 
+				key: nextReactKey }));
+		}
+	}
+	
+	if (hasReactKey(reactMap, reactKey)) {
+		checkLoop(new Set([reactKey]), reaction);
+	}
+	else errs.push(newErr(ERR.REACT_MAP.KEY.NOT_FOUND, { key: reactKey }));
+	
+	return errs;
 }
 
 // a reaction is an element of the set of a reactKey
@@ -564,22 +604,33 @@ function newDataHeader (tabenv, tablo, alias, label, dataType) {
 } 
 
 // check args for newColSamelineArg()
-function checkNewColSamelineArg (tabenv, tabloAlias, headerAlias) {
+// Careful ! needs tabenv as last arg
+function checkNewColSamelineArg (tabloAlias, headerAlias, tabenv) {
+	var errs = [];
+	
 	var tablo = tabenv.tablos.get(tabloAlias);
 	if (tablo == undefined) {
-		var err = newErr(ERR.HEADER.ARG.TABLO_ALIAS.NON_EXISTING, {
+		errs.push(newErr(ERR.HEADER.ARG.TABLO_ALIAS.NON_EXISTING, {
 			tabloAlias: tabloAlias
-		});
-		return [ err ];
+		}));
+		return errs;
 	}
+
 	var header = getHeader(tablo, headerAlias);
 	if (header == undefined) {
-		var err = newErr(ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING, {
+		errs.push(newErr(ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING, {
 			tabloAlias: tabloAlias, headerAlias: headerAlias
-		});
-		return [ err ];
+		}));
+		return errs ;
 	}
-	else return [];
+
+	var argFullAlias = aliasesToStr(tabloAlias, headerAlias);
+	if (! hasReactKey(tabenv.reactMap, argFullAlias)) {
+		errs.push(newErr(ERR.REACT_MAP.KEY.UNKNOWN, { key: argFullAlias }));
+		return errs;
+	}
+	
+	return errs;
 }
 
 // create a new arg with type HEADER.ARG.TYPE.COL_SAME_LINE
@@ -602,7 +653,7 @@ function checkHeaderArg (tabenv, arg) { switch (arg.type) {
 			arg.alias.hasOwnProperty("header")
 		){
 			return checkNewColSamelineArg(
-				tabenv, arg.alias.tablo, arg.alias.header);
+				arg.alias.tablo, arg.alias.header, tabenv);
 		}
 		else {
 			var err = newErr(ERR.HEADER.ARG.BAD_CONTENT, { arg: arg });
@@ -644,6 +695,14 @@ function checkNewFuncHeader (tabenv, tablo, alias, label, args, func) {
 	var errsNewHeader = checkNewHeader(
 		tabenv, tablo, alias, label, HEADER.TYPE.FUNC);
 	var errsArgs = checkHeaderArgs (tabenv, args);
+	if (errsArgs.length == 0) {
+		var fullHeaderAlias = aliasesToStr(tablo.alias, alias); 
+		args.forEach(function (arg) {
+			var argAlias = aliasObjToStr(arg.alias);
+			errsArgs = errsArgs.concat(checkNewReaction(
+				tabenv.reactMap, argAlias, fullHeaderAlias));
+		});
+	}
 	var errsFunc = checkHeaderFunc (func) ;
 	// TODO: check updFuncHeaderAllCells
 	return errsNewHeader.concat(errsArgs, errsFunc);
@@ -700,12 +759,25 @@ function newLine (tabenv, tablo) {
 // check args of newHeaderArg()
 // tabenv and tablo and header are not checked
 function checkNewHeaderArg (tabenv, tablo, header, newArg) {
+	var errs = [];
 	if (header.type != HEADER.TYPE.FUNC) {
-		var err = newErr(ERR.HEADER.TYPE.NOT_FUNC, { headerType: header.type });
-		return [ err ];
+		errs.push(newErr(ERR.HEADER.TYPE.NOT_FUNC, { 
+			headerType: header.type }));
 	}
-	else return checkHeaderArg (tabenv, arg);
+	errs = errs.concat(checkHeaderArg (tabenv, newArg));
 	// TODO: check updFuncHeaderAllCells
+	switch (newArg.type) {
+		case HEADER.ARG.TYPE.NULL: break;
+		case HEADER.ARG.TYPE.COL_SAME_LINE: 
+			var argAliasStr = aliasObjToStr(newArg.alias);
+			var fullHeaderAlias = aliasesToStr(tablo.alias, header.alias);
+			errs = errs.concat(checkNewReaction(
+				tabenv.reactMap, argAliasStr, fullHeaderAlias));
+			break;
+		default: errs.push(newErr(
+			ERR.HEADER.ARG.UNKNOWN_TYPE, { type: newArg.type }));
+	}
+	return errs;
 }
 
 // add a new arg to a header 
@@ -1156,14 +1228,19 @@ function updHeaderDataType (tabenv, tablo, header, newDataType) {
 // check args for updHeaderArgs()
 // tabenv, tablo, and header are not checked
 function checkUpdHeaderArgs (tabenv, tablo, header, newArgs) {
+	var errs = [];
+	
 	if (header.type != HEADER.TYPE.FUNC) {
-		var err = newErr(ERR.HEADER.TYPE.NOT_FUNC, { 
-			tabloAlias: tablo.alias, headerAlias: header.alias });
-		return [ err ];
+		errs.push(newErr(ERR.HEADER.TYPE.NOT_FUNC, { 
+			tabloAlias: tablo.alias, headerAlias: header.alias }));
 	}
-	var errsArgs = checkHeaderArgs (tabenv, newArgs);
+	
 	// TODO check delAllArgsFromHeader
-	return errsArgs
+	newArgs.forEach(function (newArg) {
+		errs = errs.concat(checkNewHeaderArg (tabenv, tablo, header, newArg));
+	});
+	
+	return errs;
 }
 
 function updHeaderArgs (tabenv, tablo, header, newArgs) {
@@ -1588,13 +1665,13 @@ function updCellToDefault (tablo, header, numLine) {
 					updDataCell(tablo, header, numLine, {});
 					break;
 				default: 
-					errs.push(newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
-						dataType: header.dataType }));
+					throw newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
+						dataType: header.dataType });
 			}
 			break;
 		case HEADER.TYPE.FUNC: break;
-		default: errs.push(newErr(ERR.HEADER.TYPE.UNKNOWN, {
-			type: header.type })) ;
+		default: throw newErr(ERR.HEADER.TYPE.UNKNOWN, {
+			type: header.type }) ;
 	}
 }
 

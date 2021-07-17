@@ -25,9 +25,10 @@ function makenv1Tablo1Data1Line () {
 	var header1Label = "Header 1";
 	env.header1FullAlias = T.aliasesToStr(env.tablo1.alias, header1Alias);
 	env.header1 = T.newDataHeader(
-		env.tabenv, env.tablo1, header1Alias, header1Label);
+		env.tabenv, env.tablo1, header1Alias, header1Label, 
+		T.HEADER.DATA_TYPE.INT);
 	T.newLine(env.tabenv, env.tablo1);
-	T.updDataCell(env.tabenv, env.tablo1, env.header1, 0, 33);
+	T.updDataCell(env.tablo1, env.header1, 0, 33);
 		
 	return env;
 }
@@ -62,9 +63,10 @@ function makenv1Tablo2Data1Line () {
 	var header2Label = "Header 2";
 	env.header2FullAlias = T.aliasesToStr(env.tablo1.alias, header2Alias);
 	env.header2 = T.newDataHeader(
-		env.tabenv, env.tablo1, header2Alias, header2Label
+		env.tabenv, env.tablo1, header2Alias, header2Label,
+		T.HEADER.DATA_TYPE.INT
 	);
-	T.updDataCell(env.tabenv, env.tablo1, env.header2, 0, 1000);
+	T.updDataCell(env.tablo1, env.header2, 0, 1000);
 	return env;
 }
 
@@ -374,17 +376,19 @@ describe("newTablo() basique", function () {
 
 describe("newDataHeader", function () {
 
-	var env, header, headerAlias, headerLabel, headerFullAlias;
+	var env, header, headerAlias, headerLabel, headerDataType, headerFullAlias;
 		
 	before(function () {
 		env = makenv1Tablo();
 		headerAlias = "header1";
 		headerLabel = "Header 1";
+		headerDataType = T.HEADER.DATA_TYPE.INT;
 		headerFullAlias = T.aliasesToStr(env.tablo1.alias, headerAlias);
 	});
 
 	it("newDataHeader()", function () {
-		header = T.newDataHeader(env.tabenv, env.tablo1, headerAlias, headerLabel);
+		header = T.newDataHeader(
+			env.tabenv, env.tablo1, headerAlias, headerLabel, headerDataType);
 	});
 	
 	it("return value", function () { 
@@ -493,7 +497,8 @@ describe("newLine()", function () {
 	it("tablo updated", function () {
 		// the number of lines is two because one line existed in env
 		assert.equal(env.tablo1.data.length, 2);
-		assert.equal(T.getCell(env.tablo1, env.header1, 1), null);
+		// 0 is the default value for INT cells
+		assert.equal(T.getCell(env.tablo1, env.header1, 1), 0);
 		assert.equal(
 			T.getCell(env.tablo2, env.header2, 1), 
 			env.header2.func(T.getCell(env.tablo1, env.header1, 1)));
@@ -799,7 +804,8 @@ describe("updHeaderLabel()", function () {
 		var tablo1 = T.newTablo(tabenv, "tablo1", "Tablo 1");
 		var oldLabel = "Old Label";
 		newLabel = "New Label";
-		header1 = T.newDataHeader(tabenv, tablo1, "header1", oldLabel);
+		header1 = T.newDataHeader(
+			tabenv, tablo1, "header1", oldLabel, T.HEADER.DATA_TYPE.INT);
 	});
 
 	it("updHeaderLabel()", function() {
@@ -1036,7 +1042,7 @@ describe("updDataCell()", function() {
 	});
 	
 	it("updDataCell()", function() {
-		T.updDataCell(env.tabenv, env.tablo1, env.header1, 0, 1000);
+		T.updDataCell(env.tablo1, env.header1, 0, 1000);
 	});
 	
 	it("tablo data updated", function () {
