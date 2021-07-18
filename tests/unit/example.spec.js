@@ -446,6 +446,38 @@ describe ("isJSON", function () {
 
 // ==================== REACTS FUNCTIONS =======================
 
+describe ("checkIsReactMap", function () {
+	var res, reactMap ;
+	
+	before(function() {
+		reactMap = T.newReactMap();
+	});
+	
+	it("checkIsReactMap()", function() {
+		res = T.checkIsReactMap(reactMap);
+	});
+	
+	it("result value", function() {
+		assert.isEmpty(res);
+	});
+});
+
+describe ("checkIsReactMap BAD_CONTENT", function () {
+	var errs, reactMap ;
+	
+	before(function() {
+		reactMap = new Set();
+	});
+	
+	it("checkIsReactMap()", function() {
+		errs = T.checkIsReactMap(reactMap);
+	});
+	
+	it("result value", function() {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.BAD_CONTENT);
+	});
+});
+
 describe ("newReactMap", function () {
 	var reactMap ;
 	
@@ -477,6 +509,165 @@ describe ("newReactKey", function () {
 	});
 });
 
+describe ("checkNewReaction", function () {
+	var reactMap, key1, key2, key3, errs;
+	
+	before(function() {
+		key1 = "key1";
+		key2 = "key2";
+		key3 = "key3";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, key1);
+		T.newReactKey(reactMap, key2);
+		T.newReactKey(reactMap, key3);
+		T.newReaction(reactMap, key1, key2);
+	});
+	
+	it("checkNewReaction()", function() {
+		errs = T.checkNewReaction(reactMap, key2, key3);
+	});
+	
+	it("reactMap updated", function() {
+		assert.isEmpty(errs);
+	});
+});
+
+describe ("checkNewReaction several childs", function () {
+	var reactMap, key1, key2, key3, key4, errs;
+	
+	before(function() {
+		key1 = "key1";
+		key2 = "key2";
+		key3 = "key3";
+		key4 = "key4";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, key1);
+		T.newReactKey(reactMap, key2);
+		T.newReactKey(reactMap, key3);
+		T.newReactKey(reactMap, key4);
+		T.newReaction(reactMap, key1, key2);
+		T.newReaction(reactMap, key2, key3);
+		T.newReaction(reactMap, key1, key3);
+	});
+	
+	it("checkNewReaction()", function() {
+		errs = T.checkNewReaction(reactMap, key3, key4);
+	});
+	
+	it("reactMap updated", function() {
+		assert.isEmpty(errs);
+	});
+});
+
+describe ("checkNewReaction loop of length 1", function () {
+	var reactMap, key1, errs;
+	
+	before(function() {
+		key1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, key1);
+	});
+	
+	it("checkNewReaction()", function() {
+		errs = T.checkNewReaction(reactMap, key1, key1);
+	});
+	
+	it("reactMap updated", function() {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.LOOP);
+		assert.isTrue(errs[0].data.sequence.every(function(elt, index) {
+			return elt == [key1,key1][index] ;
+		}));
+	});
+});
+
+describe ("checkNewReaction loop of length 2", function () {
+	var reactMap, key1, key2, key3, errs;
+	
+	before(function() {
+		key1 = "key1";
+		key2 = "key2";
+		key3 = "key3";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, key1);
+		T.newReactKey(reactMap, key2);
+		T.newReactKey(reactMap, key3);
+		T.newReaction(reactMap, key1, key2);
+		T.newReaction(reactMap, key2, key3);
+	});
+	
+	it("checkNewReaction()", function() {
+		errs = T.checkNewReaction(reactMap, key3, key1);
+	});
+	
+	it("reactMap updated", function() {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.LOOP);
+		assert.isTrue(errs[0].data.sequence.every(function(elt, index) {
+			return elt == [key3,key1,key2,key3][index] ;
+		}));
+	});
+});
+
+describe ("checkNewReaction loop of length 3", function () {
+	var reactMap, key1, key2, errs;
+	
+	before(function() {
+		key1 = "key1";
+		key2 = "key2";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, key1);
+		T.newReactKey(reactMap, key2);
+		T.newReaction(reactMap, key1, key2);
+	});
+	
+	it("checkNewReaction()", function() {
+		errs = T.checkNewReaction(reactMap, key2, key1);
+	});
+	
+	it("reactMap updated", function() {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.LOOP);
+		assert.isTrue(errs[0].data.sequence.every(function(elt, index) {
+			return elt == [key2,key1,key2][index] ;
+		}));
+	});
+});
+
+describe ("checkNewReaction KEY.NOT_FOUND", function () {
+	var reactMap, key1, key2, errs;
+	
+	before(function() {
+		key1 = "key1";
+		key2 = "key2";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, key1);
+	});
+	
+	it("checkNewReaction()", function() {
+		errs = T.checkNewReaction(reactMap, key1, key2);
+	});
+	
+	it("reactMap updated", function() {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+		assert.equal(errs[0].data.key, key2);
+	});
+});
+
+describe ("checkNewReaction KEY.NOT_FOUND (2)", function () {
+	var reactMap, key1, errs;
+	
+	before(function() {
+		key1 = "key1";
+		reactMap = T.newReactMap();
+	});
+	
+	it("checkNewReaction()", function() {
+		errs = T.checkNewReaction(reactMap, key1, key1);
+	});
+	
+	it("reactMap updated", function() {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+		assert.equal(errs[0].data.key, key1);
+	});
+});
 
 describe ("newReaction", function () {
 	var reactMap, reactKey1, reaction1;
@@ -535,6 +726,23 @@ describe ("hasReactKey", function () {
 	});
 });
 
+describe ("hasReactKey false", function () {
+	var reactMap, reactKey1, result;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+	});
+	
+	it("hasReactKey()", function() {
+		result = T.hasReactKey(reactMap, reactKey1);
+	});
+	
+	it("result value", function() {
+		assert.isFalse(result);
+	});
+});
+
 describe ("hasReaction", function () {
 	var reactMap, reactKey1, reaction1, result;
 	
@@ -552,6 +760,43 @@ describe ("hasReaction", function () {
 	
 	it("result value", function() {
 		assert.isTrue(result);
+	});
+});
+
+describe ("hasReaction false", function () {
+	var reactMap, reactKey1, reaction1, result;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+	});
+	
+	it("hasReaction()", function() {
+		result = T.hasReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("result value", function() {
+		assert.isFalse(result);
+	});
+});
+
+describe ("hasReaction false", function () {
+	var reactMap, reactKey1, reaction1, result;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		reaction1 = "reaction1";
+	});
+	
+	it("hasReaction()", function() {
+		result = T.hasReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("result value", function() {
+		assert.isFalse(result);
 	});
 });
 
@@ -577,16 +822,51 @@ describe ("getReactions", function () {
 	});
 });
 
+describe ("getReactionsTree", function () {
+	var reactMap, key1, key2, key3, key4, tree;
+	
+	before(function() {
+		key1 = "key1";
+		key2 = "key2";
+		key3 = "key3";
+		key4 = "key4";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, key1);
+		T.newReactKey(reactMap, key2);
+		T.newReactKey(reactMap, key3);
+		T.newReactKey(reactMap, key4);
+		T.newReaction(reactMap, key1, key2);
+		T.newReaction(reactMap, key1, key3);
+		T.newReaction(reactMap, key2, key3);
+		T.newReaction(reactMap, key3, key4);
+	});
+	
+	it("getReactionsTree()", function() {
+		tree = T.getReactionsTree(reactMap, key1);
+	});
+	
+	it("result value", function() {
+		assert.equal(tree.data, key1);
+		assert.equal(tree.childs[0].data, key2);
+		assert.equal(tree.childs[1].data, key3);
+		assert.equal(tree.childs[0].childs[0].data, key3);
+		assert.equal(tree.childs[1].childs[0].data, key4);
+		assert.equal(tree.childs[0].childs[0].childs[0].data, key4);
+	});
+});
 
 describe ("getReactKeysFromReaction", function () {
-	var reactMap, reactKey1, reaction1, keys;
+	var reactMap, reactKey1, reactKey2, reaction1, keys;
 	
 	before(function() {
 		reactKey1 = "key1";
+		reactKey2 = "key2";
 		reactMap = T.newReactMap();
 		T.newReactKey(reactMap, reactKey1);
+		T.newReactKey(reactMap, reactKey2);
 		reaction1 = "reaction1";
 		T.newReaction(reactMap, reactKey1, reaction1);
+		T.newReaction(reactMap, reactKey2, reaction1);
 	});
 	
 	it("getReactKeysFromReaction()", function() {
@@ -594,8 +874,9 @@ describe ("getReactKeysFromReaction", function () {
 	});
 	
 	it("result value", function() {
-		assert.equal(1, keys.size);
+		assert.equal(2, keys.size);
 		assert.isTrue(keys.has(reactKey1));
+		assert.isTrue(keys.has(reactKey2));
 	});
 });
 
@@ -691,6 +972,8 @@ describe ("delReactionFromAllKeys", function () {
 		);
 	});
 });
+
+// ==================== NEW FUNCTIONS =======================
 
 describe("newTablo() basique", function () {
 

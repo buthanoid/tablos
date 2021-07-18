@@ -17,8 +17,10 @@ export {
 	newErr,
 	isJSON,
 	// reactMap functions
-	newReactMap,
+	checkIsReactMap,
+	newReactMap, 
 	newReactKey,
+	checkNewReaction,
 	newReaction,
 	hasReactKey,
 	hasReaction,
