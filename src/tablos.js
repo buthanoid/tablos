@@ -7,8 +7,15 @@ export {
 	PROP,
 	// utilities
 	parseStrToFunction,
+	aliasObjToStr,
 	aliasesToStr,
+	aliasObjFromStr,
+	aliasesToObj,
+	arrayMove,
+	newNode,
+	treeForEachDeepFirst,
 	newErr,
+	isJSON,
 	// reactMap functions
 	newReactMap,
 	newReactKey,
@@ -125,7 +132,6 @@ const ERR = {
 		},
 		FUNCTION: {
 			BAD_CONTENT: "ERR.HEADER.FUNCTION.BAD_CONTENT",
-			PARSE_ERROR: "ERR.HEADER.FUNCTION.PARSE_ERROR",
 			APP_ERROR: "ERR.HEADER.FUNCTION.APP_ERROR"
 		},
 		ARGS: {
@@ -165,7 +171,8 @@ const ERR = {
 		HEADER: {
 			UNKNOWN: "ERR.PROP.HEADER.UNKNOWN"
 		}
-	}
+	},
+	FUNCTION_PARSE_ERROR: "ERR.FUNCTION_PARSE_ERROR"
 };
 
 const PROP = {
@@ -196,7 +203,7 @@ function parseStrToFunction (strFunc) {
 		) ();
 	}
 	catch (error) { 
-		var err = newErr(ERR.HEADER.FUNCTION.PARSE_ERROR, {
+		var err = newErr(ERR.FUNCTION_PARSE_ERROR, {
 			func: strFunc, jsError: error });
 		throw err;
 	}

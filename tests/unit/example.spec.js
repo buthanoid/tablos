@@ -105,6 +105,347 @@ function makenv2Tablo2Data2Func1Line () {
 	return env;
 }
 
+
+// ================= UTILITIES =======================
+
+describe ("parseStrToFunction", function () {
+
+	var strFunc, parsedFunc ;
+	
+	before(function() {
+		strFunc = "function (x, y) { var z = 3 ; return x + y + z ; }";
+	});
+
+	it("parseStrToFunction()", function () {
+		parsedFunc = T.parseStrToFunction(strFunc);
+	});
+
+	it("result value", function () {
+		assert.equal(typeof parsedFunc, "function");
+		assert.equal(parsedFunc(10, 100), 113);
+	});
+});
+
+describe ("parseStrToFunction PARSE_ERROR", function () {
+
+	var strFunc, err ;
+	
+	before(function() {
+		strFunc = "function (x, y) { var z = 3 return x + y + z ; }";
+	});
+
+	it("parseStrToFunction()", function () {
+		try { T.parseStrToFunction(strFunc) }
+		catch (e) { err = e }
+	});
+
+	it("error thrown", function () {
+		assert.equal(err.type, T.ERR.FUNCTION_PARSE_ERROR);
+	});
+
+});
+
+describe ("parseStrToFunction BAD_CONTENT", function () {
+
+	var strFunc, err ;
+	
+	before(function() {
+		strFunc = "33";
+	});
+
+	it("parseStrToFunction()", function () {
+		try { T.parseStrToFunction(strFunc) }
+		catch (e) { err = e }
+	});
+
+	it("error thrown", function () {
+		assert.equal(err.type, T.ERR.HEADER.FUNCTION.BAD_CONTENT);
+	});
+
+});
+
+describe ("aliasObjToStr", function () {
+
+	var obj, str ;
+	
+	before(function() {
+		obj = { tablo: "tablo1", header: "header1" };
+	});
+
+	it("aliasObjToStr()", function () {
+		str = T.aliasObjToStr(obj);
+	});
+
+	it("error thrown", function () {
+		assert.equal(str, "tablo1.header1");
+	});
+
+});
+
+describe ("aliasesToStr", function () {
+
+	var tabloAlias, headerAlias, str ;
+	
+	before(function() {
+		tabloAlias = "tablo1";
+		headerAlias = "header1";
+	});
+
+	it("aliasesToStr()", function () {
+		str = T.aliasesToStr(tabloAlias, headerAlias);
+	});
+
+	it("error thrown", function () {
+		assert.equal(str, "tablo1.header1");
+	});
+});
+
+describe ("aliasObjFromStr", function () {
+
+	var obj, str ;
+	
+	before(function() {
+		str = "tablo1.header1";
+	});
+
+	it("aliasObjFromStr()", function () {
+		obj = T.aliasObjFromStr(str);
+	});
+
+	it("error thrown", function () {
+		assert.equal(obj.tablo, "tablo1");
+		assert.equal(obj.header, "header1");
+	});
+});
+
+describe ("aliasesToObj", function () {
+
+	var tabloAlias, headerAlias, obj ;
+	
+	before(function() {
+		tabloAlias = "tablo1";
+		headerAlias = "header1";
+	});
+
+	it("aliasesToObj()", function () {
+		obj = T.aliasesToObj(tabloAlias, headerAlias);
+	});
+
+	it("error thrown", function () {
+		assert.equal(obj.tablo, "tablo1");
+		assert.equal(obj.header, "header1");
+	});
+});
+
+describe ("arrayMove to right", function () {
+
+	var array ;
+	
+	before(function() {
+		array = [ 'A', 'B', 'C', 'D', 'E' ];
+	});
+
+	it("arrayMove()", function () {
+		T.arrayMove(array, 1, 3);
+	});
+
+	it("array updated", function () {
+		assert.isTrue(array.every(function (elt, index) {
+			return elt == [ 'A', 'C', 'D', 'B', 'E' ][index] ;
+		}));
+	});
+});
+
+describe ("arrayMove to left", function () {
+
+	var array ;
+	
+	before(function() {
+		array = [ 'A', 'B', 'C', 'D', 'E' ];
+	});
+
+	it("arrayMove()", function () {
+		T.arrayMove(array, 3, 1);
+	});
+
+	it("array updated", function () {
+		assert.isTrue(array.every(function (elt, index) {
+			return elt == [ 'A', 'D', 'B', 'C', 'E' ][index] ;
+		}));
+	});
+});
+
+describe ("arrayMove to right extreme", function () {
+
+	var array ;
+	
+	before(function() {
+		array = [ 'A', 'B', 'C', 'D', 'E' ];
+	});
+
+	it("arrayMove()", function () {
+		T.arrayMove(array, 0, 4);
+	});
+
+	it("array updated", function () {
+		assert.isTrue(array.every(function (elt, index) {
+			return elt == [ 'B', 'C', 'D', 'E', 'A' ][index] ;
+		}));
+	});
+});
+
+describe ("arrayMove to left extreme", function () {
+
+	var array ;
+	
+	before(function() {
+		array = [ 'A', 'B', 'C', 'D', 'E' ];
+	});
+
+	it("arrayMove()", function () {
+		T.arrayMove(array, 4, 0);
+	});
+
+	it("array updated", function () {
+		assert.isTrue(array.every(function (elt, index) {
+			return elt == [ 'E', 'A', 'B', 'C', 'D' ][index] ;
+		}));
+	});
+});
+
+describe ("arrayMove same place", function () {
+
+	var array ;
+	
+	before(function() {
+		array = [ 'A', 'B', 'C', 'D', 'E' ];
+	});
+
+	it("arrayMove()", function () {
+		T.arrayMove(array, 2, 2);
+	});
+
+	it("array updated", function () {
+		assert.isTrue(array.every(function (elt, index) {
+			return elt == [ 'A', 'B', 'C', 'D', 'E' ][index] ;
+		}));
+	});
+});
+
+describe ("newNode", function () {
+
+	var node, data, childs ;
+	
+	before(function() {
+		data = "data";
+		childs = [];
+	});
+
+	it("newNode()", function () {
+		node = T.newNode(data, childs);
+	});
+
+	it("return value", function () {
+		assert.equal(node.data, data);
+		assert.equal(node.childs, childs);
+	});
+});
+
+describe ("treeForEachDeepFirst", function () {
+
+	var dataList, dataTree ;
+	
+	before(function() {
+		dataList = [];
+		dataTree = 
+			T.newNode('A', [
+				T.newNode('B', [
+					T.newNode('C', []),
+					T.newNode('D', [])
+				]),
+				T.newNode('E', [])
+			]);
+	});
+
+	it("treeForEachDeepFirst()", function () {
+		T.treeForEachDeepFirst(dataTree, function (data) {
+			dataList.push(data);
+		});
+	});
+
+	it("dataList", function () {
+		assert.isTrue(dataList.every(function (elt, index) {
+			return elt == ['A','B','C','D','E'][index] ;
+		}));
+	});
+});
+
+describe ("newErr", function () {
+
+	var err, type, data;
+	
+	before(function() {
+		type = "type";
+		data = "data";
+	});
+
+	it("newErr()", function () {
+		err = T.newErr(type, data);
+	});
+
+	it("return value", function () {
+		assert.equal(err.type, type);
+		assert.equal(err.data, data);
+	});
+});
+
+describe ("isJSON", function () {
+
+	var res1, res2, res3, res4, res5, res6, res7, res8, res9, res10,
+		json1, json2, json3, json4, json5, json6, json7, json8, json9, json10;
+	
+	before(function() {
+		json1 = "toto" ;
+		json2 = 33 ;
+		json3 = true;
+		json4 = null ;
+		json5 = [ "toto", 33 ];
+		json6 = [ "toto", undefined, 33 ];
+		json7 = { x: "toto", y: 33 };
+		json8 = { x: "toto", y: undefined, z: 33 };
+		json9 = new Set();
+		json10 = undefined;
+	});
+
+	it("isJSON()", function () {
+		res1 = T.isJSON(json1);
+		res2 = T.isJSON(json2);
+		res3 = T.isJSON(json3);
+		res4 = T.isJSON(json4);
+		res5 = T.isJSON(json5);
+		res6 = T.isJSON(json6);
+		res7 = T.isJSON(json7);
+		res8 = T.isJSON(json8);
+		res9 = T.isJSON(json9);
+		res10 = T.isJSON(json10);
+	});
+
+	it("return value", function () {
+		assert.isTrue(res1);
+		assert.isTrue(res2);
+		assert.isTrue(res3);
+		assert.isTrue(res4);
+		assert.isTrue(res5);
+		assert.isFalse(res6);
+		assert.isTrue(res7);
+		assert.isFalse(res8);
+		assert.isFalse(res9);
+		assert.isFalse(res10);
+	});
+});
+
+// ==================== REACTS FUNCTIONS =======================
+
 describe ("newReactMap", function () {
 	var reactMap ;
 	
