@@ -472,7 +472,7 @@ function submitEditTablo (newValue) {
 		}) ];
 	}
 	this.cancelEdit();
-	this.lastAppErrors = errs;
+	this.lastAppError = errs;
 }
 
 function submitEditHeader (newValue) {
@@ -549,7 +549,7 @@ function submitEditHeader (newValue) {
 		}) ];
 	}
 	this.cancelEdit();
-	this.lastAppErrors = errs;
+	this.lastAppError = errs;
 }
 
 function submitEditCell (newValue) {
@@ -568,7 +568,7 @@ function submitEditCell (newValue) {
 		);
 	}
 	this.cancelEdit();
-	this.lastAppErrors = errs;
+	this.lastAppError = errs;
 }
 
 function cancelEdit () {
