@@ -61,6 +61,7 @@ export {
 	// get functions
 	getHeader,
 	getCell,
+	checkGetCellByAliases,
 	getCellByAliases,
 	// upd functions
 	updTabloAlias, checkUpdTabloAlias,

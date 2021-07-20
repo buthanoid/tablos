@@ -2027,6 +2027,42 @@ describe ("copyArg()", function () {
 
 // ==================== GET FUNCTIONS =======================
 
+describe("getHeader", function() {
+	var tablo, header, alias, env;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tablo = env.tablo1 ;
+		alias = env.header1.alias;
+	});
+	
+	it("getHeader()", function() {
+		header = T.getHeader(tablo, alias);
+	});
+	
+	it("return value", function () {
+		assert.equal(header, env.header1);
+	});
+});
+
+describe("getHeader fail undefined", function() {
+	var tablo, header, alias, env;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tablo = env.tablo1 ;
+		alias = null;
+	});
+	
+	it("getHeader()", function() {
+		header = T.getHeader(tablo, alias);
+	});
+	
+	it("return value", function () {
+		assert.isUndefined(header);
+	});
+});
+
 describe("getCell()", function() {
 	var cellVal, env;
 	
@@ -2042,6 +2078,87 @@ describe("getCell()", function() {
 		assert.equal(cellVal, 33);
 	});
 });
+
+describe("checkGetCellByAliases", function() {
+	var tabloAlias, headerAlias, numLine, errs, env;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tabloAlias = env.tablo1.alias ;
+		headerAlias = env.header1.alias;
+		numLine = 0;
+	});
+	
+	it("checkGetCellByAliases()", function() {
+		errs = T.checkGetCellByAliases(
+			env.tabenv, tabloAlias, headerAlias, numLine);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkGetCellByAliases fail TABLO.NOT_FOUND", function() {
+	var tabloAlias, headerAlias, numLine, errs, env;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tabloAlias = null ;
+		headerAlias = env.header1.alias;
+		numLine = 0;
+	});
+	
+	it("checkGetCellByAliases()", function() {
+		errs = T.checkGetCellByAliases(
+			env.tabenv, tabloAlias, headerAlias, numLine);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.TABLO.NOT_FOUND);
+	});
+});
+
+describe("checkGetCellByAliases fail HEADER.NOT_FOUND", function() {
+	var tabloAlias, headerAlias, numLine, errs, env;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tabloAlias = env.tablo1.alias ;
+		headerAlias = null;
+		numLine = 0;
+	});
+	
+	it("checkGetCellByAliases()", function() {
+		errs = T.checkGetCellByAliases(
+			env.tabenv, tabloAlias, headerAlias, numLine);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.NOT_FOUND);
+	});
+});
+
+describe("checkGetCellByAliases fail OUT_OF_BOUNDS", function() {
+	var tabloAlias, headerAlias, numLine, errs, env;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tabloAlias = env.tablo1.alias ;
+		headerAlias = env.header1.alias;
+		numLine = 1;
+	});
+	
+	it("checkGetCellByAliases()", function() {
+		errs = T.checkGetCellByAliases(
+			env.tabenv, tabloAlias, headerAlias, numLine);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.LINE.OUT_OF_BOUNDS);
+	});
+});
+
 
 describe("getCellByAliases()", function() {
 	var env, cell;
@@ -2059,6 +2176,8 @@ describe("getCellByAliases()", function() {
 		assert.equal(cell, 33);
 	});
 });
+
+// ==================== UPD FUNCTIONS =======================
 
 describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo1 alias", 
 	function () {
