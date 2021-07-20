@@ -177,7 +177,7 @@ describe ("aliasObjToStr", function () {
 	});
 
 	it("error thrown", function () {
-		assert.equal(str, "tablo1.header1");
+		assert.equal(str, T.aliasesToStr("tablo1", "header1"));
 	});
 
 });
@@ -196,7 +196,7 @@ describe ("aliasesToStr", function () {
 	});
 
 	it("error thrown", function () {
-		assert.equal(str, "tablo1.header1");
+		assert.equal(str, T.aliasesToStr("tablo1", "header1"));
 	});
 });
 
@@ -205,7 +205,7 @@ describe ("aliasObjFromStr", function () {
 	var obj, str ;
 	
 	before(function() {
-		str = "tablo1.header1";
+		str = T.aliasesToStr("tablo1", "header1");
 	});
 
 	it("aliasObjFromStr()", function () {

@@ -132,7 +132,7 @@
 								<span>{{tablo.label}}</span>
 							</option>
 						</select>
-						<span>[</span>
+						<span>[#][</span>
 						<select 
 							v-model="arg.alias.header" 
 							@change="changeEdit" >
@@ -142,7 +142,7 @@
 								<span>{{header.label}}</span>
 							</option>
 						</select>
-						<span>][#] </span>
+						<span>] </span>
 						<button @click="removeArg(index)" >
 							<span>{{texts["remove"]}}</span>
 						</button>
@@ -296,7 +296,7 @@ export default {
 						case T.HEADER.ARG.TYPE.COL_SAME_LINE: 
 							var str = 
 								arg.alias.tablo + 
-								"[" + arg.alias.header + "][#]" ;
+								"[#][" + arg.alias.header + "]" ;
 							return str;
 						default:
 							console.log("unknown arg alias");

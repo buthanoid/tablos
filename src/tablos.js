@@ -237,17 +237,20 @@ function parseStrToFunction (strFunc) {
 }
 
 // convert alias object, to alias string
-function aliasObjToStr (alias) { return alias.tablo + "." + alias.header }
+function aliasObjToStr (alias) { 
+	return alias.tablo + "[#][" + alias.header + "]" ;
+}
 
 // convert two alias str parts, to one complete alias str
 function aliasesToStr (tabloAlias, headerAlias) {
-	return tabloAlias + "." + headerAlias ;
+	return tabloAlias + "[#][" + headerAlias + "]";
 }
 
 // convert alias str, to alias object
 function aliasObjFromStr (str) { 
-	var tab = str.split(".");
-	return { tablo: tab[0], header: tab[1] }
+	const regex = /^(\w+)\[#\]\[(\w+)\]$/;
+	var tab = str.match(regex);
+	return { tablo: tab[1], header: tab[2] }
 }
 
 // convert two alias str parts, to one alias object
