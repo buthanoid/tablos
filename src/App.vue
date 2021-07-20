@@ -71,7 +71,7 @@
 			</line-infos>
 		</div>
 	</div>
-	<p v-if="lastAppError == true" class="incorrect" >
+	<p v-if="lastAppError.length > 0" class="incorrect" >
 		<span>{{texts["LastError"]}} :</span> <br />
 		<span>{{lastAppError}}</span>
 	</p>
@@ -85,6 +85,8 @@
 	SelectedLine {{selected.line}}
 	<hr />
 	Edit {{edit}}
+	<hr />
+	LastAppError {{lastAppError}}
 </template>
 
 <script>
@@ -117,7 +119,7 @@ export default {
 			valid: true,
 			msg: null
 		},
-		lastAppError: ""
+		lastAppError: []
 	}},
 	created: created,
 	methods: {
@@ -273,7 +275,7 @@ function selectNothing () {
 	this.selected.header = null ;
 	this.selected.line = null ;
 	this.selected.cell = false;
-	this.lastAppError = "";
+	this.lastAppError = [];
 	return true;
 }
 
@@ -283,7 +285,7 @@ function selectTablo (tabloAlias) {
 		this.selected.target = U.TRG.TABLO;
 		this.selected.tablo = this.tabenv.tablos.get(tabloAlias);
 		this.cancelEdit();
-		this.lastAppError = "";
+		this.lastAppError = [];
 		return true;
 	}
 	else {
@@ -300,7 +302,7 @@ function selectHeader (tabloAlias, headerAlias) {
 			this.selected.target = U.TRG.HEADER;
 			this.selected.header = header;
 			this.cancelEdit();
-			this.lastAppError = "";
+			this.lastAppError = [];
 			return true;
 		}
 		else {
@@ -321,7 +323,7 @@ function selectLine (tabloAlias, numLine) {
 			this.selected.target = U.TRG.LINE;
 			this.selected.line = numLine ;
 			this.cancelEdit();
-			this.lastAppError = "";
+			this.lastAppError = [];
 			return true
 		}
 		else {
@@ -344,7 +346,7 @@ function selectCell (tabloAlias, headerAlias, numLine) {
 			this.selected.line = numLine ;
 			this.selected.cell = true;
 			this.cancelEdit();
-			this.lastAppError = "";
+			this.lastAppError = [];
 			return true;
 		}
 		else {
@@ -363,7 +365,7 @@ function startEdit (target, property) {
 	this.edit.property = property;
 	this.edit.valid = true;
 	this.edit.msg = "";
-	this.lastAppError = "";
+	this.lastAppError = [];
 }
 
 function changeEditTablo (newValue) {
@@ -574,7 +576,7 @@ function cancelEdit () {
 	this.edit.property = T.PROP.NULL;
 	this.edit.valid = true;
 	this.edit.msg = null;
-	this.lastAppError = "";
+	this.lastAppError = [];
 }
 
 function deleteHeader () {
@@ -659,6 +661,6 @@ function created () {
 	T.updLineAllFuncCells (this.tabenv, total, 1);
 	
 	if (errs.length > 0 ) this.lastAppError = errs;
-	else this.lastAppError = "";
+	else this.lastAppError = [];
 }
 </script>
