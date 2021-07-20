@@ -188,7 +188,7 @@ function newTablo () {
 	var i = 0;
 	while (this.tabenv.tablos.has("newtablo" + i)) i++;
 	
-	var errs =  T.checkNewTablo(this.tabenv, "", "New Tablo " + i);
+	var errs =  T.checkNewTablo(this.tabenv, "newtablo" + i, "New Tablo " + i);
 	
 	if (errs.length == 0) {
 		var tablo = T.newTablo(this.tabenv, "newtablo" + i, "New Tablo " + i);	
