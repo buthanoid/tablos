@@ -58,7 +58,11 @@
 import * as T from "../tablos.js" ;
 import * as U from "../util.js" ;
 
-var headerTypeToClass = ["dataheader", "funcheader" ];
+function headerTypeToClass (headerType) { switch (headerType) {
+	case T.HEADER.TYPE.DATA: return "dataheader" ;
+	case T.HEADER.TYPE.FUNC: return "funcheader" ;
+	default: throw T.ERR.HEADER.TYPE.UNKNOWN ;
+}}
 
 export default {
 	emits: [ 
@@ -133,7 +137,7 @@ export default {
 		headersClasses() {
 			return Array.from(this.headers).map(function (header) {
 				var classes = "header";
-				classes += " " + headerTypeToClass[header.type];
+				classes += " " + headerTypeToClass(header.type);
 				if (this.isSelected &&
 					U.TRG_HEADER_EXT.includes(this.selected.target) &&
 					this.selected.header.alias == header.alias
