@@ -975,7 +975,173 @@ describe ("delReactionFromAllKeys", function () {
 
 // ==================== NEW FUNCTIONS =======================
 
-describe("newTablo() basique", function () {
+describe("checkIsTabenv", function () {
+	var tabenv, errs;
+
+	before(function() {
+		tabenv = T.newTabenv ();
+	});
+	
+	it("checkIsTabenv()", function () {
+		errs = T.checkIsTabenv(tabenv);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkIsTabenv BAD_CONTENT", function () {
+	var tabenv, errs;
+
+	before(function() {
+		tabenv = new Set();
+	});
+	
+	it("checkIsTabenv()", function () {
+		errs = T.checkIsTabenv(tabenv);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.TABENV.BAD_CONTENT);
+	});
+});
+
+describe("newTabenv", function () {
+	var tabenv;
+
+	before(function() {});
+	
+	it("newTabenv()", function () {
+		tabenv = T.newTabenv();
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(tabenv.tablos);
+		assert.isEmpty(tabenv.reactMap);
+	});
+});
+
+describe("checkTabloAlias", function () {
+	var alias1, alias2, alias3, errs1, errs2, errs3;
+
+	before(function() {
+		alias1 = "alias1";
+		alias2 = 33;
+		alias3 = "";
+	});
+	
+	it("checkTabloAlias()", function () {
+		errs1 = T.checkTabloAlias(alias1);
+		errs2 = T.checkTabloAlias(alias2);
+		errs3 = T.checkTabloAlias(alias3);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.TABLO.ALIAS.BAD_CONTENT);
+		assert.equal(errs3[0].type, T.ERR.TABLO.ALIAS.EMPTY);
+	});
+});
+
+describe("checkTabloLabel", function () {
+	var label1, label2, label3, errs1, errs2, errs3;
+
+	before(function() {
+		label1 = "label1";
+		label2 = 33;
+		label3 = "";
+	});
+	
+	it("checkTabloLabel()", function () {
+		errs1 = T.checkTabloLabel(label1);
+		errs2 = T.checkTabloLabel(label2);
+		errs3 = T.checkTabloLabel(label3);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.TABLO.LABEL.BAD_CONTENT);
+		assert.equal(errs3[0].type, T.ERR.TABLO.LABEL.EMPTY);
+	});
+});
+
+describe("checkNewTablo", function () {
+	var tabenv, alias, label, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		alias = "alias1";
+		label = "label1";
+	});
+	
+	it("checkNewTablo()", function () {
+		errs = T.checkNewTablo(tabenv, alias, label);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkNewTablo fail alias", function () {
+	var tabenv, alias, label, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		alias = "";
+		label = "label1";
+	});
+	
+	it("checkNewTablo()", function () {
+		errs = T.checkNewTablo(tabenv, alias, label);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.TABLO.ALIAS.EMPTY);
+	});
+});
+
+describe("checkNewTablo fail label", function () {
+	var tabenv, alias, label, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		alias = "alias1";
+		label = "";
+	});
+	
+	it("checkNewTablo()", function () {
+		errs = T.checkNewTablo(tabenv, alias, label);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.TABLO.LABEL.EMPTY);
+	});
+});
+
+describe("checkNewTablo existing alias", function () {
+	var tabenv, alias1, label1, alias2, label2, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		alias1 = "alias1";
+		alias2 = "alias1";
+		label1 = "label1";
+		label2 = "label2";
+		T.newTablo(tabenv, alias1, label1);
+	});
+	
+	it("checkNewTablo()", function () {
+		errs = T.checkNewTablo(tabenv, alias2, label2);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.TABLO.ALIAS.EXISTING);
+	});
+});
+
+describe("newTablo", function () {
 
 	var tabenv, tablo, tabloAlias, tabloLabel;
 
@@ -995,6 +1161,219 @@ describe("newTablo() basique", function () {
 	});
 	it("tabenv udpated", function () {
 		assert.equal(tabenv.tablos.get(tabloAlias), tablo)
+	});
+});
+
+describe("checkHeaderAlias", function () {
+	var alias1, alias2, alias3, errs1, errs2, errs3;
+
+	before(function() {
+		alias1 = "alias1";
+		alias2 = 33;
+		alias3 = "";
+	});
+	
+	it("checkHeaderAlias()", function () {
+		errs1 = T.checkHeaderAlias(alias1);
+		errs2 = T.checkHeaderAlias(alias2);
+		errs3 = T.checkHeaderAlias(alias3);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.HEADER.ALIAS.BAD_CONTENT);
+		assert.equal(errs3[0].type, T.ERR.HEADER.ALIAS.EMPTY);
+	});
+});
+
+describe("checkHeaderLabel", function () {
+	var label1, label2, label3, errs1, errs2, errs3;
+
+	before(function() {
+		label1 = "label1";
+		label2 = 33;
+		label3 = "";
+	});
+	
+	it("checkHeaderLabel()", function () {
+		errs1 = T.checkHeaderLabel(label1);
+		errs2 = T.checkHeaderLabel(label2);
+		errs3 = T.checkHeaderLabel(label3);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.HEADER.LABEL.BAD_CONTENT);
+		assert.equal(errs3[0].type, T.ERR.HEADER.LABEL.EMPTY);
+	});
+});
+
+describe("checkHeaderType", function () {
+	var type1, type2, errs1, errs2;
+
+	before(function() {
+		type1 = T.HEADER.TYPE.DATA;
+		type2 = null;
+	});
+	
+	it("checkHeaderType()", function () {
+		errs1 = T.checkHeaderType(type1);
+		errs2 = T.checkHeaderType(type2);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.HEADER.TYPE.UNKNOWN);
+	});
+});
+
+describe("checkNewHeader", function () {
+	var tabenv, tablo, alias, label, type, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1");
+		alias = "header1";
+		label = "Header 1";
+		type = T.HEADER.TYPE.DATA;
+	});
+	
+	it("checkNewHeader()", function () {
+		errs = T.checkNewHeader(tabenv, tablo, alias, label, type);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkNewHeader fail alias", function () {
+	var tabenv, tablo, alias, label, type, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1");
+		alias = "";
+		label = "Header 1";
+		type = T.HEADER.TYPE.DATA;
+	});
+	
+	it("checkNewHeader()", function () {
+		errs = T.checkNewHeader(tabenv, tablo, alias, label, type);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.HEADER.ALIAS.EMPTY);
+	});
+});
+
+describe("checkNewHeader fail label", function () {
+	var tabenv, tablo, alias, label, type, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1");
+		alias = "header1";
+		label = "";
+		type = T.HEADER.TYPE.DATA;
+	});
+	
+	it("checkNewHeader()", function () {
+		errs = T.checkNewHeader(tabenv, tablo, alias, label, type);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.HEADER.LABEL.EMPTY);
+	});
+});
+
+describe("checkNewHeader fail type", function () {
+	var tabenv, tablo, alias, label, type, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1");
+		alias = "header1";
+		label = "Header 1";
+		type = null;
+	});
+	
+	it("checkNewHeader()", function () {
+		errs = T.checkNewHeader(tabenv, tablo, alias, label, type);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.UNKNOWN);
+	});
+});
+
+describe("checkNewHeader fail existing alias", function () {
+	var tabenv, tablo, alias, label, type, errs;
+
+	before(function() {
+		tabenv = T.newTabenv();
+		tablo = T.newTablo(tabenv, "tablo1", "Tablo 1");
+		T.newHeader(tabenv, tablo, alias, label, type);
+		alias = "header1";
+		label = "Header 1";
+		type = T.HEADER.TYPE.DATA;
+		T.newHeader(tabenv, tablo, alias, label, type);
+	});
+	
+	it("checkNewHeader()", function () {
+		errs = T.checkNewHeader(tabenv, tablo, alias, label, type);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.HEADER.ALIAS.EXISTING);
+	});
+});
+
+describe("newHeader", function () {
+	var env, alias, label, type, header, fullAlias ;
+	
+	before(function () {
+		env = makenv1Tablo();
+		alias = "header1";
+		label = "Header 1";
+		type = T.HEADER.TYPE.DATA;
+		fullAlias = T.aliasesToStr(env.tablo1.alias, alias);
+	});
+	
+	it("newHeader()", function () {
+		header = T.newHeader(env.tabenv, env.tablo1, alias, label, type);
+	});
+	
+	it("return value", function () {
+		assert.equal(header.alias, alias);
+		assert.equal(header.label, label);
+		assert.equal(header.type, type);
+		assert.equal(header.order, 0);
+	});
+	it("tablos updated", function () {
+		assert.equal(env.tablo1.headers[0], header);
+	});
+	it("reactMap updated", function () {
+		assert.isTrue(T.hasReactKey(env.tabenv.reactMap, fullAlias));
+	});
+});
+
+describe("checkHeaderDataType", function () {
+	var dataType1, dataType2, errs1, errs2 ;
+	
+	before(function () {
+		dataType1 = T.HEADER.DATA_TYPE.INT ;
+		dataType2 = null;
+	});
+	
+	it("checkHeaderDataType()", function () {
+		errs1 = T.checkHeaderDataType(dataType1);
+		errs2 = T.checkHeaderDataType(dataType2);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.HEADER.DATA_TYPE.UNKNOWN);
 	});
 });
 
@@ -1031,6 +1410,76 @@ describe("newDataHeader", function () {
 	});
 });
 
+describe("checkNewColSamelineArg", function () {
+	var env, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+	});
+	
+	it("checkNewColSamelineArg()", function () {
+		errs = T.checkNewColSamelineArg(
+			env.tablo1.alias, env.header1.alias, env.tabenv);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkNewColSamelineArg fail tablo alias", function () {
+	var env, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+	});
+	
+	it("checkNewColSamelineArg()", function () {
+		errs = T.checkNewColSamelineArg(
+			null, env.header1.alias, env.tabenv);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TABLO_ALIAS.NON_EXISTING);
+	});
+});
+
+describe("checkNewColSamelineArg fail header alias", function () {
+	var env, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+	});
+	
+	it("checkNewColSamelineArg()", function () {
+		errs = T.checkNewColSamelineArg(
+			env.tablo1.alias, null, env.tabenv);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING);
+	});
+});
+
+describe("checkNewColSamelineArg fail reactMap", function () {
+	var env, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		T.delReactKey(env.tabenv.reactMap, env.header1FullAlias);
+	});
+	
+	it("checkNewColSamelineArg()", function () {
+		errs = T.checkNewColSamelineArg(
+			env.tablo1.alias, env.header1.alias, env.tabenv);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+	});
+});
+
+
 describe("newColSamelineArg()", function () {
 	
 	var tabloAlias, headerAlias, arg;
@@ -1048,6 +1497,281 @@ describe("newColSamelineArg()", function () {
 		assert.equal(arg.type, T.HEADER.ARG.TYPE.COL_SAME_LINE);
 		assert.equal(arg.alias.tablo, tabloAlias);
 		assert.equal(arg.alias.header, headerAlias);
+	});
+});
+
+describe("checkHeaderArg null arg", function () {
+	var env, arg, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		arg = { type: T.HEADER.ARG.TYPE.NULL };
+	});
+	
+	it("checkHeaderArg()", function () {
+		errs = T.checkHeaderArg(env.tabenv, arg);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkHeaderArg colSameLine arg", function () {
+	var env, arg, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		arg = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
+	});
+	
+	it("checkHeaderArg()", function () {
+		errs = T.checkHeaderArg(env.tabenv, arg);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkHeaderArg colSameLine fail BAD_CONTENT", function () {
+	var env, arg, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		arg = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
+		delete arg.alias.tablo ;
+	});
+	
+	it("checkHeaderArg()", function () {
+		errs = T.checkHeaderArg(env.tabenv, arg);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.BAD_CONTENT);
+	});
+});
+
+describe("checkHeaderArg colSameLine fail NON_EXISTING", function () {
+	var env, arg, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		arg = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
+		arg.alias.tablo = null ;
+	});
+	
+	it("checkHeaderArg()", function () {
+		errs = T.checkHeaderArg(env.tabenv, arg);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TABLO_ALIAS.NON_EXISTING);
+	});
+});
+
+describe("checkHeaderArg fail UNKNOWN", function () {
+	var env, arg, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		arg = { type: null };
+	});
+	
+	it("checkHeaderArg()", function () {
+		errs = T.checkHeaderArg(env.tabenv, arg);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TYPE.UNKNOWN);
+	});
+});
+
+describe("checkHeaderArgs", function () {
+	var env, arg1, arg2, args, errs ;
+	
+	before(function () {
+		env = makenv1Tablo2Data1Line();
+		arg1 = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
+		arg2 = T.newColSamelineArg(env.tablo1.alias, env.header2.alias);
+		args = [ arg1, arg2 ];
+	});
+	
+	it("checkHeaderArgs()", function () {
+		errs = T.checkHeaderArgs(env.tabenv, args);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkHeaderArgs fail BAD_CONTENT", function () {
+	var env, arg1, arg2, args, errs ;
+	
+	before(function () {
+		env = makenv1Tablo2Data1Line();
+		arg1 = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
+		arg2 = T.newColSamelineArg(env.tablo1.alias, env.header2.alias);
+		args = new Set([ arg1, arg2 ]);
+	});
+	
+	it("checkHeaderArgs()", function () {
+		errs = T.checkHeaderArgs(env.tabenv, args);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARGS.BAD_CONTENT);
+	});
+});
+
+describe("checkHeaderArgs fail both args", function () {
+	var env, arg1, arg2, args, errs ;
+	
+	before(function () {
+		env = makenv1Tablo2Data1Line();
+		arg1 = T.newColSamelineArg(null, env.header1.alias);
+		arg2 = T.newColSamelineArg(env.tablo1.alias, null);
+		args = [ arg1, arg2 ];
+	});
+	
+	it("checkHeaderArgs()", function () {
+		errs = T.checkHeaderArgs(env.tabenv, args);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TABLO_ALIAS.NON_EXISTING);
+		assert.equal(errs[1].type, T.ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING);
+	});
+});
+
+describe("checkHeaderFunc", function () {
+	var func1, func2, errs1, errs2 ;
+	
+	before(function () {
+		func1 = function (x) { return x + 3 };
+		func2 = 33;
+	});
+	
+	it("checkHeaderFunc()", function () {
+		errs1 = T.checkHeaderFunc(func1);
+		errs2 = T.checkHeaderFunc(func2);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.HEADER.FUNCTION.BAD_CONTENT);
+	});
+});
+
+describe("checkNewFuncHeader", function () {
+	var env, tablo, alias, label, args, func, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tablo = env.tablo1;
+		alias = "header2";
+		label = "Header 2";
+		args = [ T.newColSamelineArg(env.tablo1.alias, env.header1.alias) ];
+		func = function (x) { return x + 3 }
+	});
+	
+	it("checkNewFuncHeader()", function () {;
+		errs = T.checkNewFuncHeader(
+			env.tabenv, tablo, alias, label, args, func);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkNewFuncHeader fail checkNewHeader", function () {
+	var env, tablo, alias, label, args, func, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tablo = env.tablo1;
+		alias = null;
+		label = "Header 2";
+		args = [ T.newColSamelineArg(env.tablo1.alias, env.header1.alias) ];
+		func = function (x) { return x + 3 };
+	});
+	
+	it("checkNewFuncHeader()", function () {;
+		errs = T.checkNewFuncHeader(
+			env.tabenv, tablo, alias, label, args, func);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ALIAS.BAD_CONTENT);
+	});
+});
+
+describe("checkNewFuncHeader fail checkHeaderArgs", function () {
+	var env, tablo, alias, label, args, func, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tablo = env.tablo1;
+		alias = "header2";
+		label = "Header 2";
+		args = [ T.newColSamelineArg(env.tablo1.alias, null) ];
+		func = function (x) { return x + 3 };
+	});
+	
+	it("checkNewFuncHeader()", function () {;
+		errs = T.checkNewFuncHeader(
+			env.tabenv, tablo, alias, label, args, func);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING);
+	});
+});
+
+describe("checkNewFuncHeader fail checkNewReaction", function () {
+	var env, tablo, alias, label, args, func, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tablo = env.tablo1;
+		alias = "header2";
+		label = "Header 2";
+		args = [ T.newColSamelineArg(env.tablo1.alias, env.header1.alias) ];
+		func = function (x) { return x + 3 };
+		T.delReactKey(env.tabenv.reactMap, env.header1FullAlias);
+	});
+	
+	it("checkNewFuncHeader()", function () {;
+		errs = T.checkNewFuncHeader(
+			env.tabenv, tablo, alias, label, args, func);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+	});
+});
+
+describe("checkNewFuncHeader fail checkHeaderFunc", function () {
+	var env, tablo, alias, label, args, func, errs ;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		tablo = env.tablo1;
+		alias = "header2";
+		label = "Header 2";
+		args = [ T.newColSamelineArg(env.tablo1.alias, env.header1.alias) ];
+		func = null;
+	});
+	
+	it("checkNewFuncHeader()", function () {;
+		errs = T.checkNewFuncHeader(
+			env.tabenv, tablo, alias, label, args, func);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.FUNCTION.BAD_CONTENT);
 	});
 });
 
@@ -1105,6 +1829,10 @@ describe("newFuncHeader", function () {
 	});
 });
 
+describe("checkNewLine", function() {
+	
+});
+
 describe("newLine()", function () {
 
 	var env;
@@ -1126,6 +1854,102 @@ describe("newLine()", function () {
 		assert.equal(
 			T.getCell(env.tablo2, env.header2, 1), 
 			env.header2.func(T.getCell(env.tablo1, env.header1, 1)));
+	});
+});
+
+describe("checkNewHeaderArg", function () {
+	var env, tablo, header, arg, errs;
+	
+	before(function () {
+		env = makenv2Tablo1Func1Line();
+		tablo = env.tablo2;
+		header = env.header2;
+		arg = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
+	});
+	
+	it("checkNewHeaderArg()", function () {;
+		errs = T.checkNewHeaderArg(env.tabenv, tablo, header, arg);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkNewHeaderArg fail NOT_FUNC", function () {
+	var env, tablo, header, arg, errs;
+	
+	before(function () {
+		env = makenv2Tablo1Func1Line();
+		tablo = env.tablo1;
+		header = env.header1;
+		arg = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
+	});
+	
+	it("checkNewHeaderArg()", function () {;
+		errs = T.checkNewHeaderArg(env.tabenv, tablo, header, arg);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_FUNC);
+	});
+});
+
+describe("checkNewHeaderArg fail checkHeaderArg", function () {
+	var env, tablo, header, arg, errs;
+	
+	before(function () {
+		env = makenv2Tablo1Func1Line();
+		tablo = env.tablo2;
+		header = env.header2;
+		arg = T.newColSamelineArg(env.tablo1.alias, null);
+	});
+	
+	it("checkNewHeaderArg()", function () {;
+		errs = T.checkNewHeaderArg(env.tabenv, tablo, header, arg);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING);
+	});
+});
+
+describe("checkNewHeaderArg fail checkNewReaction", function () {
+	var env, tablo, header, arg, errs;
+	
+	before(function () {
+		env = makenv2Tablo1Func1Line();
+		tablo = env.tablo2;
+		header = env.header2;
+		arg = T.newColSamelineArg(env.tablo2.alias, env.header2.alias);
+	});
+	
+	it("checkNewHeaderArg()", function () {;
+		errs = T.checkNewHeaderArg(env.tabenv, tablo, header, arg);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.LOOP);
+	});
+});
+
+describe("checkNewHeaderArg fail UNKNOWN", function () {
+	var env, tablo, header, arg, errs;
+	
+	before(function () {
+		env = makenv2Tablo1Func1Line();
+		tablo = env.tablo2;
+		header = env.header2;
+		arg = T.newColSamelineArg(env.tablo1.alias, env.header1.alias);
+		arg.type = null;
+	});
+	
+	it("checkNewHeaderArg()", function () {;
+		errs = T.checkNewHeaderArg(env.tabenv, tablo, header, arg);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TYPE.UNKNOWN);
 	});
 });
 
@@ -1200,6 +2024,8 @@ describe ("copyArg()", function () {
 			colSamelineArg1.alias.header, colSamelineArg2.alias.header);
 	});
 });
+
+// ==================== GET FUNCTIONS =======================
 
 describe("getCell()", function() {
 	var cellVal, env;
