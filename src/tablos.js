@@ -64,13 +64,22 @@ export {
 	checkGetCellByAliases,
 	getCellByAliases,
 	// upd functions
-	updTabloAlias, checkUpdTabloAlias,
-	updTabloLabel, checkUpdTabloLabel,
-	updTabloDisplayNumLines, checkUpdTabloDisplayNumLines,
-	updHeaderAlias, checkUpdHeaderAlias,
-	updHeaderLabel, checkUpdHeaderLabel,
-	updHeaderType, checkUpdHeaderType,
-	updHeaderOrder, checkUpdHeaderOrder,
+	checkUpdTabloAlias,
+	updTabloAlias, 
+	checkUpdTabloLabel,
+	updTabloLabel, 
+	checkTabloDisplayNumLines,
+ 	checkUpdTabloDisplayNumLines,	
+	updTabloDisplayNumLines,
+	checkUpdHeaderAlias,
+	updHeaderAlias, 
+	checkUpdHeaderLabel,
+	updHeaderLabel, 
+	checkUpdHeaderType,
+	updHeaderType, 
+	checkHeaderOrder,
+	checkUpdHeaderOrder,
+	updHeaderOrder, 
 	updHeaderDataType, checkUpdHeaderDataType,
 	updHeaderArgs, checkUpdHeaderArgs,
 	updHeaderFunc, checkUpdHeaderFunc, 
@@ -131,6 +140,9 @@ const ERR = {
 		LABEL: {
 			BAD_CONTENT: "ERR.TABLO.LABEL.BAD_CONTENT",
 			EMPTY: "ERR.TABLO.LABEL.EMPTY"
+		},
+		DISPLAY_NUM_LINES: {
+			BAD_CONTENT: "ERR.TABLO.DISPLAY_NUM_LINES.BAD_CONTENT"
 		}
 	},
 	HEADER: {
@@ -146,7 +158,11 @@ const ERR = {
 		},
 		TYPE: {
 			UNKNOWN: "ERR.HEADER.TYPE.UNKNOWN",
+			NOT_DATA: "ERR.HEADER.TYPE.NOT_DATA",
 			NOT_FUNC: "ERR.HEADER.TYPE.NOT_FUNC"
+		},
+		ORDER: {
+			OUT_OF_BOUNDS: "ERR.HEADER.ORDER.OUT_OF_BOUNDS"
 		},
 		DATA_TYPE: {
 			UNKNOWN: "ERR.HEADER.DATA_TYPE.UNKNOWN"
@@ -1002,7 +1018,7 @@ function updTabloLabel (tablo, label) {
 
 function checkTabloDisplayNumLines (displayNumLines) {
 	if (typeof displayNumLines != "boolean") {
-		var err = newErr(ERR.TABLO.DISPLAY_NUM_LINES.NOT_BOOLEAN, {
+		var err = newErr(ERR.TABLO.DISPLAY_NUM_LINES.BAD_CONTENT, {
 			displayNumLines: displayNumLines });
 		return [ err ];
 	}
@@ -1023,16 +1039,16 @@ function updTabloDisplayNumLines (tablo, displayNumLines) {
 // check args for updHeaderAlias()
 // tabenv, tablo and header are not checked
 function checkUpdHeaderAlias (tabenv, tablo, header, newAlias) {
-	if (header.alias == newAlias) return [];
-	else {
-		var errsAlias = checkHeaderAlias(newAlias);
+	var errs = []
+	if (header.alias != newAlias) {
+		errs = errs.concat(checkHeaderAlias(newAlias));
 		if (getHeader(tablo, newAlias) != undefined) {
 			var err = newErr(ERR.HEADER.ALIAS.EXISTING, { 
 				tabloAlias: tablo.alias, headerAlias: newAlias });
-			errsAlias.push(err);
+			errs.push(err);
 		}
-		else return errsAlias;
 	}
+	return errs;
 }
 
 function updHeaderAlias (tabenv, tablo, header, newAlias) {
@@ -1180,37 +1196,25 @@ function updHeaderOrder (tabenv, tablo, header, newOrder) {
 // check args for updHeaderDataType()
 // tabenv, tablo, and header are not checked
 function checkUpdHeaderDataType (tabenv, tablo, header, newDataType) {
-	var errsDataType = checkHeaderDataType(newDataType);
-	if (errsDataType.length > 0) return errsDataType;
-	
 	var errs = [];
 	
+	if (header.type != HEADER.TYPE.DATA) {
+		errs.push(newErr(ERR.HEADER.TYPE.NOT_DATA, { type: header.type }));
+		return errs;
+	}
+	
+	errs = errs.concat(checkHeaderDataType(newDataType));
+	if (errs.length > 0) return errs;
+	
 	tablo.data.forEach(function (line, numLine) {
-		try { 
-			var oldVal = getCell(tablo, header, numLine);
-			switch (newDataType) {
-				case HEADER.DATA_TYPE.INT:
-					parseInt(oldVal);
-					break;
-				case HEADER.DATA_TYPE.FLOAT:
-					parseFloat(oldVal);
-					break;
-				case HEADER.DATA_TYPE.STRING:
-					String(oldVal);
-					break;
-				case HEADER.DATA_TYPE.JSON:
-					JSON.parse(oldVal);
-					break;
-				default: errs.push(newErr(
-					ERR.HEADER.DATA_TYPE.UNKNOWN, { dataType: newDataType }));
-			}
-			// TODO: check updDataCell and updCellReactions
-		}
-		catch (error){ 
-			errs.push(newErr(ERR.HEADER.DATA_TYPE.CELL_PARSE_ERROR, {
-				tabloAlias: tablo.alias, headerAlias: header.alias,
-				numLine: numLine 
-			}));
+		var oldVal = getCell(tablo, header, numLine);
+		switch (newDataType) {
+			case HEADER.DATA_TYPE.INT: break;
+			case HEADER.DATA_TYPE.FLOAT: break;
+			case HEADER.DATA_TYPE.STRING: break;
+			case HEADER.DATA_TYPE.JSON:	break;
+			default: errs.push(newErr(
+				ERR.HEADER.DATA_TYPE.UNKNOWN, { dataType: newDataType }));
 		}
 	});
 	
@@ -1244,24 +1248,43 @@ function updHeaderDataType (tabenv, tablo, header, newDataType) {
 				else updDataCell(tablo, header, numLine, newVal);
 				break;
 			case HEADER.DATA_TYPE.STRING:
-				if (oldDataType == HEADER.DATA_TYPE.JSON) {
-					try { 
-						newVal = JSON.stringify(oldVal);
+				switch (oldDataType) {
+					case HEADER.DATA_TYPE.INT:
+					case HEADER.DATA_TYPE.FLOAT: 
+						newVal = String(oldVal);
 						updDataCell(tablo, header, numLine, newVal);
-					}
-					catch(error) { updCellToDefault (tablo, header, numLine) }
-				}
-				else {
-					newVal = String(oldVal);
-					updDataCell(tablo, header, numLine, newVal);
+						break;
+					case HEADER.DATA_TYPE.JSON:
+						if (typeof oldVal == "string") {
+							// nothing to do we keep the string
+						}
+						else {
+							newVal = JSON.stringify(oldVal);
+							updDataCell(tablo, header, numLine, newVal);
+						}
+						break;
+					default:
+						throw newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, { 
+							dataType: newDataType });
 				}
 				break;
 			case HEADER.DATA_TYPE.JSON:
-				try { 
-					newVal = JSON.parse(oldVal); 
-					updDataCell(tablo, header, numLine, newVal);
+				switch (oldDataType) {
+					case HEADER.DATA_TYPE.INT:
+					case HEADER.DATA_TYPE.FLOAT: break;
+					case HEADER.DATA_TYPE.STRING:
+						// we try if the string can be parsed to JSON
+						try {
+							newVal = JSON.parse(oldVal); 
+							updDataCell(tablo, header, numLine, newVal);
+						}
+						// if not we just keep the string as a JSON string
+						catch (error) { /* nothing to do */ }
+						break;
+					default:
+						throw newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, { 
+							dataType: newDataType });
 				}
-				catch (error) { updCellToDefault (tablo, header, numLine) }
 				break;
 			default:
 				throw newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, { 

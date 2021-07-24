@@ -2179,6 +2179,57 @@ describe("getCellByAliases()", function() {
 
 // ==================== UPD FUNCTIONS =======================
 
+describe("checkUpdTabloAlias", function() {
+	var env, newAlias, errs;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		newAlias = "newtablo1" ;
+	});
+	
+	it("checkUpdTabloAlias()", function() {
+		errs = T.checkUpdTabloAlias(env.tabenv, env.tablo1, newAlias);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdTabloAlias same alias", function() {
+	var env, newAlias, errs;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		newAlias = env.tablo1.alias;
+	});
+	
+	it("checkUpdTabloAlias()", function() {
+		errs = T.checkUpdTabloAlias(env.tabenv, env.tablo1, newAlias);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdTabloAlias fail ALIAS.EXISTING", function() {
+	var env, newAlias, errs;
+	
+	before(function () {
+		env = makenv2Tablo1Func1Line();
+		newAlias = env.tablo2.alias ;
+	});
+	
+	it("checkUpdTabloAlias()", function() {
+		errs = T.checkUpdTabloAlias(env.tabenv, env.tablo1, newAlias);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.TABLO.ALIAS.EXISTING);
+	});
+});
+
 describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo1 alias", 
 	function () {
 	
@@ -2254,6 +2305,10 @@ describe("updTabloAlias() tablo2 pointing to tablo1. we change tablo2 alias",
 	}
 );
 
+describe("checkUpdTabloLabel", function() {
+	// tests already done in checkTabloLabel
+});
+
 describe("updTabloLabel()", function () {
 
 	var tablo, newLabel;
@@ -2273,6 +2328,72 @@ describe("updTabloLabel()", function () {
 	});
 });
 
+describe("checkTabloDisplayNumLines", function() {
+	var displayNumLines, errs;
+	
+	before(function () {
+		displayNumLines = false ;
+	});
+	
+	it("checkTabloDisplayNumLines()", function() {
+		errs = T.checkTabloDisplayNumLines(displayNumLines);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkTabloDisplayNumLines fail BAD_CONTENT", function() {
+	var displayNumLines, errs;
+	
+	before(function () {
+		displayNumLines = 33 ;
+	});
+	
+	it("checkTabloDisplayNumLines()", function() {
+		errs = T.checkTabloDisplayNumLines(displayNumLines);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.TABLO.DISPLAY_NUM_LINES.BAD_CONTENT);
+	});
+});
+
+describe("checkUpdTabloDisplayNumLines", function() {
+	var env, displayNumLines, errs;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		displayNumLines = false ;
+	});
+	
+	it("checkUpdTabloDisplayNumLines()", function() {
+		errs = T.checkUpdTabloDisplayNumLines(env.tablo1, displayNumLines);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdTabloDisplayNumLines fail BAD_CONTENT", function() {
+	var env, displayNumLines, errs;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		displayNumLines = 33 ;
+	});
+	
+	it("checkTabloDisplayNumLines()", function() {
+		errs = T.checkUpdTabloDisplayNumLines(env.tablo1, displayNumLines);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.TABLO.DISPLAY_NUM_LINES.BAD_CONTENT);
+	});
+});
+
 describe("updTabloDisplayNumLines()", function () {
 
 	var tablo;
@@ -2288,6 +2409,60 @@ describe("updTabloDisplayNumLines()", function () {
 	
 	it("tablo updated", function () {
 		assert.isFalse(tablo.displayNumLines);
+	});
+});
+
+describe("checkUpdHeaderAlias", function() {
+	var env, newAlias, errs;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		newAlias = "newheader1" ;
+	});
+	
+	it("checkUpdHeaderAlias()", function() {
+		errs = T.checkUpdHeaderAlias(
+			env.tabenv, env.tablo1, env.header1, newAlias);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdHeaderAlias same alias", function() {
+	var env, newAlias, errs;
+	
+	before(function () {
+		env = makenv1Tablo1Data1Line();
+		newAlias = env.header1.alias ;
+	});
+	
+	it("checkUpdHeaderAlias()", function() {
+		errs = T.checkUpdHeaderAlias(
+			env.tabenv, env.tablo1, env.header1, newAlias);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdHeaderAlias fail EXISTING", function() {
+	var env, newAlias, errs;
+	
+	before(function () {
+		env = makenv1Tablo2Data1Line();
+		newAlias = env.header2.alias ;
+	});
+	
+	it("checkUpdHeaderAlias()", function() {
+		errs = T.checkUpdHeaderAlias(
+			env.tabenv, env.tablo1, env.header1, newAlias);
+	});
+	
+	it("return value", function () {console.log(errs);
+		assert.equal(errs[0].type, T.ERR.HEADER.ALIAS.EXISTING);
 	});
 });
 
@@ -2365,6 +2540,29 @@ describe(
 		});
 });
 
+describe("checkUpdHeaderLabel", function () {
+	var env, label1, label2, label3, errs1, errs2, errs3;
+
+	before(function() {
+		env = makenv1Tablo1Data1Line();
+		label1 = "label1";
+		label2 = 33;
+		label3 = "";
+	});
+	
+	it("checkUpdHeaderLabel()", function () {
+		errs1 = T.checkUpdHeaderLabel(env.header1, label1);
+		errs2 = T.checkUpdHeaderLabel(env.header1, label2);
+		errs3 = T.checkUpdHeaderLabel(env.header1, label3);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.HEADER.LABEL.BAD_CONTENT);
+		assert.equal(errs3[0].type, T.ERR.HEADER.LABEL.EMPTY);
+	});
+});
+
 describe("updHeaderLabel()", function () {
 	var header1, newLabel;
 
@@ -2383,6 +2581,28 @@ describe("updHeaderLabel()", function () {
 	
 	it("header updated", function() {
 		assert.equal(header1.label, newLabel);
+	});
+});
+
+describe("checkUpdHeaderType", function () {
+	var env, type1, type2, errs1, errs2;
+
+	before(function() {
+		env = makenv1Tablo1Data1Line();
+		type1 = T.HEADER.TYPE.DATA;
+		type2 = null;
+	});
+	
+	it("checkUpdHeaderType()", function () {
+		errs1 = T.checkUpdHeaderType(
+			env.tabenv, env.tablo1, env.header1, type1);
+		errs2 = T.checkUpdHeaderType(
+			env.tabenv, env.tablo1, env.header1, type2);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs1);
+		assert.equal(errs2[0].type, T.ERR.HEADER.TYPE.UNKNOWN);
 	});
 });
 
@@ -2408,8 +2628,6 @@ describe("updHeaderType() DATA to FUNC", function () {
 	});
 });
 
-
-
 describe("updHeaderType() FUNC to DATA", function () {
 	var env;
 
@@ -2429,6 +2647,76 @@ describe("updHeaderType() FUNC to DATA", function () {
 	});
 	it("tablo data keeped", function() {
 		assert.equal(T.getCell(env.tablo2, env.header2, 0), 34);
+	});
+});
+
+describe("checkHeaderOrder", function () {
+	var env, newOrder, errs;
+
+	before(function() {
+		env = makenv1Tablo2Data1Line();
+		newOrder = 1;
+	});
+	
+	it("checkHeaderOrder()", function () {
+		errs = T.checkHeaderOrder(env.tablo1, newOrder);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkHeaderOrder fail OUT OF BOUNDS", function () {
+	var env, newOrder, errs;
+
+	before(function() {
+		env = makenv1Tablo2Data1Line();
+		newOrder = 2;
+	});
+	
+	it("checkHeaderOrder()", function () {
+		errs = T.checkHeaderOrder(env.tablo1, newOrder);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.HEADER.ORDER.OUT_OF_BOUNDS);
+	});
+});
+
+describe("checkUpdHeaderOrder", function () {
+	var env, newOrder, errs;
+
+	before(function() {
+		env = makenv1Tablo2Data1Line();
+		newOrder = 1;
+	});
+	
+	it("checkUpdHeaderOrder()", function () {
+		errs = T.checkUpdHeaderOrder(
+			env.tabenv, env.tablo1, env.header1, newOrder);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdHeaderOrder fail OUT OF BOUNDS", function () {
+	var env, newOrder, errs;
+
+	before(function() {
+		env = makenv1Tablo2Data1Line();
+		newOrder = 2;
+	});
+	
+	it("checkUpdHeaderOrder()", function () {
+		errs = T.checkUpdHeaderOrder(
+			env.tabenv, env.tablo1, env.header1, newOrder);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.HEADER.ORDER.OUT_OF_BOUNDS);
 	});
 });
 
@@ -2452,6 +2740,356 @@ describe("updHeaderOrder()", function() {
 		assert.equal(env.tablo1.headers[1], env.header1);
 		assert.equal(env.tablo1.data[0][0], 1000);
 		assert.equal(env.tablo1.data[0][1], 33);
+	});
+});
+
+describe("checkUpdHeaderDataType", function () {
+	var env, newDataType, errs;
+
+	before(function() {
+		env = makenv1Tablo1Data1Line();
+		newDataType = T.HEADER.DATA_TYPE.FLOAT;
+	});
+	
+	it("checkUpdHeaderDataType()", function () {
+		errs = T.checkUpdHeaderDataType(
+			env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("return value", function () {	
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdHeaderDataType fail NOT_DATA", function () {
+	var env, newDataType, errs;
+
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		newDataType = T.HEADER.DATA_TYPE.FLOAT;
+	});
+	
+	it("checkUpdHeaderDataType()", function () {
+		errs = T.checkUpdHeaderDataType(
+			env.tabenv, env.tablo2, env.header2, newDataType);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_DATA);
+	});
+});
+
+describe("checkUpdHeaderDataType fail DATA_TYPE UNKNOWN", function () {
+	var env, newDataType, errs;
+
+	before(function() {
+		env = makenv1Tablo1Data1Line();
+		newDataType = null;
+	});
+	
+	it("checkUpdHeaderDataType()", function () {
+		errs = T.checkUpdHeaderDataType(
+			env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("return value", function () {	
+		assert.equal(errs[0].type, T.ERR.HEADER.DATA_TYPE.UNKNOWN);
+	});
+});
+
+describe("updHeaderDataType INT to FLOAT", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		newDataType = T.HEADER.DATA_TYPE.FLOAT;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), prevCellVal);
+	});
+});
+
+describe("updHeaderDataType INT to STRING", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		newDataType = T.HEADER.DATA_TYPE.FLOAT;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(String(prevCellVal), prevCellVal);
+	});
+});
+
+describe("updHeaderDataType INT to JSON", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		newDataType = T.HEADER.DATA_TYPE.FLOAT;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), prevCellVal);
+	});
+});
+
+describe("updHeaderDataType FLOAT to INT", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.FLOAT);
+		T.updDataCell(env.tablo1, env.header1, 0, 33.33);
+		newDataType = T.HEADER.DATA_TYPE.INT;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			Math.floor(prevCellVal));
+	});
+});
+
+describe("updHeaderDataType FLOAT to STRING", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.FLOAT);
+		T.updDataCell(env.tablo1, env.header1, 0, 33.33);
+		newDataType = T.HEADER.DATA_TYPE.STRING;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			String(prevCellVal));
+	});
+});
+
+describe("updHeaderDataType FLOAT to JSON", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.FLOAT);
+		T.updDataCell(env.tablo1, env.header1, 0, 33.33);
+		newDataType = T.HEADER.DATA_TYPE.JSON;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			prevCellVal);
+	});
+});
+
+describe("updHeaderDataType STRING to INT", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.STRING);
+		T.updDataCell(env.tablo1, env.header1, 0, "33");
+		newDataType = T.HEADER.DATA_TYPE.INT;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			parseInt(prevCellVal));
+	});
+});
+
+describe("updHeaderDataType STRING to FLOAT", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.STRING);
+		T.updDataCell(env.tablo1, env.header1, 0, "33.33");
+		newDataType = T.HEADER.DATA_TYPE.FLOAT;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			parseFloat(prevCellVal));
+	});
+});
+
+describe("updHeaderDataType STRING to JSON", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.STRING);
+		T.updDataCell(env.tablo1, env.header1, 0, "{ \"x\": 33 }");
+		newDataType = T.HEADER.DATA_TYPE.JSON;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0).x, 
+			JSON.parse(prevCellVal).x);
+	});
+});
+
+describe("updHeaderDataType STRING string to JSON string", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.STRING);
+		T.updDataCell(env.tablo1, env.header1, 0, "aaa");
+		newDataType = T.HEADER.DATA_TYPE.JSON;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			prevCellVal);
+	});
+});
+
+describe("updHeaderDataType JSON to INT", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.JSON);
+		T.updDataCell(env.tablo1, env.header1, 0, 33);
+		newDataType = T.HEADER.DATA_TYPE.INT;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			prevCellVal);
+	});
+});
+
+describe("updHeaderDataType JSON to FLOAT", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.JSON);
+		T.updDataCell(env.tablo1, env.header1, 0, 33.33);
+		newDataType = T.HEADER.DATA_TYPE.FLOAT;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			prevCellVal);
+	});
+});
+
+describe("updHeaderDataType JSON string to STRING", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.JSON);
+		T.updDataCell(env.tablo1, env.header1, 0, "aaa");
+		newDataType = T.HEADER.DATA_TYPE.STRING;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			prevCellVal);
+	});
+});
+
+describe("updHeaderDataType JSON object to STRING", function() {
+	var env, newDataType, prevCellVal;
+	
+	before(function(){
+		env = makenv1Tablo1Data1Line();
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, 
+			T.HEADER.DATA_TYPE.JSON);
+		T.updDataCell(env.tablo1, env.header1, 0, {"x":33});
+		newDataType = T.HEADER.DATA_TYPE.STRING;
+		prevCellVal = T.getCell(env.tablo1, env.header1, 0);
+	});
+	
+	it("updHeaderDataType()", function() {
+		T.updHeaderDataType(env.tabenv, env.tablo1, env.header1, newDataType);
+	});
+	
+	it("data updated", function() {
+		assert.equal(T.getCell(env.tablo1, env.header1, 0), 
+			JSON.stringify(prevCellVal));
 	});
 });
 
