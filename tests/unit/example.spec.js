@@ -3093,6 +3093,60 @@ describe("updHeaderDataType JSON object to STRING", function() {
 	});
 });
 
+describe("checkUpdHeaderArgs", function() {
+	var env, newArg, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data1Func1Line();
+		newArg = T.newColSamelineArg(env.tablo1.alias, env.header2.alias);
+	});
+	
+	it("checkUpdHeaderArgs()", function() {
+		errs = T.checkUpdHeaderArgs(
+			env.tabenv, env.tablo2, env.header3, [newArg]);
+	});
+	
+	it("return value", function() {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdHeaderArgs fail NOT_FUNC", function() {
+	var env, newArg, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data1Func1Line();
+		newArg = T.newColSamelineArg(env.tablo1.alias, env.header2.alias);
+	});
+	
+	it("checkUpdHeaderArgs()", function() {
+		errs = T.checkUpdHeaderArgs(
+			env.tabenv, env.tablo1, env.header1, [newArg]);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_FUNC);
+	});
+});
+
+describe("checkUpdHeaderArgs fail checkNewHeaderArg", function() {
+	var env, newArg, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data1Func1Line();
+		newArg = T.newColSamelineArg(env.tablo1.alias, null);
+	});
+	
+	it("checkUpdHeaderArgs()", function() {
+		errs = T.checkUpdHeaderArgs(
+			env.tabenv, env.tablo2, env.header3, [newArg]);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING);
+	});
+});
+
 describe("updHeaderArgs()", function() {
 	var env, newArg;
 	
@@ -3128,6 +3182,42 @@ describe("updHeaderArgs()", function() {
 	});
 });
 
+describe("checkUpdHeaderFunc", function() {
+	var env, newFunc, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data1Func1Line();
+		newFunc = function(data) { return data + 1000 };
+	});
+	
+	it("checkUpdHeaderFunc()", function() {
+		errs = T.checkUpdHeaderFunc(
+			env.tabenv, env.tablo2, env.header3, newFunc);
+	});
+	
+	it("return value", function() {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdHeaderFunc fail checkHeaderFunc", function() {
+	var env, newFunc, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data1Func1Line();
+		newFunc = null;
+	});
+	
+	it("checkUpdHeaderFunc()", function() {
+		errs = T.checkUpdHeaderFunc(
+			env.tabenv, env.tablo2, env.header3, newFunc);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.HEADER.FUNCTION.BAD_CONTENT);
+	});
+});
+
 describe("updHeaderFunc()", function() {
 	var env, newFunc;
 	
@@ -3151,6 +3241,76 @@ describe("updHeaderFunc()", function() {
 	});
 });
 
+describe("checkUpdFuncHeaderAllCells", function() {
+	var env, newFunc, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkUpdFuncHeaderAllCells()", function() {
+		errs = T.checkUpdFuncHeaderAllCells(
+			env.tabenv, env.tablo2, env.header2);
+	});
+	
+	it("return value", function() {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdFuncHeaderAllCells fail NOT_FUNC", function() {
+	var env, newFunc, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkUpdFuncHeaderAllCells()", function() {
+		errs = T.checkUpdFuncHeaderAllCells(
+			env.tabenv, env.tablo1, env.header1);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_FUNC);
+	});
+});
+
+describe("checkUpdFuncHeaderAllCells fail checkUpdFuncCell", function() {
+	var env, newFunc, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		T.newLine(env.tabenv, env.tablo2);
+	});
+	
+	it("checkUpdFuncHeaderAllCells()", function() {
+		errs = T.checkUpdFuncHeaderAllCells(
+			env.tabenv, env.tablo2, env.header2);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.LINE.OUT_OF_BOUNDS);
+	});
+});
+
+describe("checkUpdFuncHeaderAllCells fail checkUpdFuncCell", function() {
+	var env, newFunc, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		T.delReactKey(env.tabenv.reactMap, env.header2FullAlias);
+	});
+	
+	it("checkUpdFuncHeaderAllCells()", function() {
+		errs = T.checkUpdFuncHeaderAllCells(
+			env.tabenv, env.tablo2, env.header2);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+	});
+});
+
 describe("updFuncHeaderAllCells()", function() {
 	var env;
 	
@@ -3170,6 +3330,42 @@ describe("updFuncHeaderAllCells()", function() {
 		);
 	});
 });
+
+describe("checkUpdTabloAllFuncHeadersAllCells", function() {
+	var env, newFunc, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data2Func1Line();
+	});
+	
+	it("checkUpdTabloAllFuncHeadersAllCells()", function() {
+		errs = T.checkUpdTabloAllFuncHeadersAllCells(env.tabenv, env.tablo2);
+	});
+	
+	it("return value", function() {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdTabloAllFuncHeadersAllCells fail checkUpdFuncHeaderAllCells", 
+	function() {
+		var env, newFunc, errs;
+		
+		before(function() {
+			env = makenv2Tablo2Data2Func1Line();
+			T.newLine(env.tabenv, env.tablo2);
+		});
+		
+		it("checkUpdTabloAllFuncHeadersAllCells()", function() {
+			errs = T.checkUpdTabloAllFuncHeadersAllCells(env.tabenv, env.tablo2);
+		});
+		
+		it("return value", function() {
+			assert.equal(errs[0].type, T.ERR.LINE.OUT_OF_BOUNDS);
+			assert.equal(errs[1].type, T.ERR.LINE.OUT_OF_BOUNDS);
+		});
+	}
+);
 
 describe("updTabloAllFuncHeadersAllCells()", function() {
 	var env;
@@ -3193,6 +3389,72 @@ describe("updTabloAllFuncHeadersAllCells()", function() {
 			T.getCell(env.tablo2, env.header4, 0),
 			env.header4.func(T.getCell(env.tablo1, env.header2, 0))
 		);
+	});
+});
+
+describe("checkUpdLineAllFuncCells", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data2Func1Line();
+	});
+	
+	it("checkUpdLineAllFuncCells()", function() {
+		errs = T.checkUpdLineAllFuncCells(env.tabenv, env.tablo2, 0);
+	});
+	
+	it("return value", function() {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkUpdLineAllFuncCells fail OUT_OF_BOUNDS", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data2Func1Line();
+	});
+	
+	it("checkUpdLineAllFuncCells()", function() {
+		errs = T.checkUpdLineAllFuncCells(env.tabenv, env.tablo2, 1);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.LINE.OUT_OF_BOUNDS);
+	});
+});
+
+describe("checkUpdLineAllFuncCells fail checkUpdFuncCell", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data2Func1Line();
+		T.newLine(env.tabenv, env.tablo2);
+	});
+	
+	it("checkUpdLineAllFuncCells()", function() {
+		errs = T.checkUpdLineAllFuncCells(env.tabenv, env.tablo2, 1);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.LINE.OUT_OF_BOUNDS);
+	});
+});
+
+describe("checkUpdLineAllFuncCells fail checkUpdCellReactions", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo2Data2Func1Line();
+		T.delReactKey(env.tabenv.reactMap, env.header3FullAlias);
+	});
+	
+	it("checkUpdLineAllFuncCells()", function() {
+		errs = T.checkUpdLineAllFuncCells(env.tabenv, env.tablo2, 0);
+	});
+	
+	it("return value", function() {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
 	});
 });
 
