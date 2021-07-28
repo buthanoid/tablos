@@ -88,6 +88,8 @@ export {
 	updHeaderFunc,
 	checkUpdLineAllFuncCells,
 	updLineAllFuncCells,
+	checkUpdCellReactions,
+	updCellReactions,
 	checkUpdFuncHeaderAllCells,
 	updFuncHeaderAllCells,
 	checkUpdTabloAllFuncHeadersAllCells,
@@ -97,7 +99,6 @@ export {
 	updDataCell, 
 	checkUpdDataCellFromStr,
 	updDataCellFromStr, 
-	updCellReactions,
 	// del functions
 	delTablo,
 	delHeader,
@@ -908,13 +909,13 @@ function getCell (tablo, header, numLine) {
 function checkGetCellByAliases (tabenv, tabloAlias, headerAlias, numLine) {
 	var tablo = tabenv.tablos.get(tabloAlias);
 	if (tablo === undefined) {
-		var err = newErr(ERR.TABLO.NOT_FOUND, { tabloAlias: tabloAlias });
+		var err = newErr(ERR.TABLO.ALIAS.NOT_FOUND, { tabloAlias: tabloAlias });
 		return [ err ];
 	}
 	
 	var header = getHeader(tablo, headerAlias);
 	if (header === undefined) {
-		var err = newErr(ERR.HEADER.NOT_FOUND, {
+		var err = newErr(ERR.HEADER.ALIAS.NOT_FOUND, {
 			tabloAlias: tabloAlias, headerAlias: headerAlias });
 		return [ err ];
 	}
@@ -1472,7 +1473,7 @@ function updCellReactions (tabenv, tablo, header, numLine) {
 				// tablo1 has data header1.
 				// tablo2 has func header2 poiting to tablo1[#][header1].
 				// when you add a line to tablo1, it is possible that tablo2 
-				// have inferior number of tablo1.
+				// have inferior number of lines than tablo1.
 				// so we don't update data in tablo2.
 				// TODO maybe we should display a warning then
 			}
