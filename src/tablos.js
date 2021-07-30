@@ -94,11 +94,13 @@ export {
 	updFuncHeaderAllCells,
 	checkUpdTabloAllFuncHeadersAllCells,
 	updTabloAllFuncHeadersAllCells,
+	checkUpdFuncCell,
 	updFuncCell,
 	checkUpdDataCell,
 	updDataCell, 
 	checkUpdDataCellFromStr,
 	updDataCellFromStr, 
+	updCellToDefault,
 	// del functions
 	delTablo,
 	delHeader,
@@ -129,6 +131,11 @@ const HEADER = {
 };
 
 const ERR = {
+	FUNCTION: {
+		PARAM: {
+			NOT_STRING: "ERR.FUNCTION.PARAM.NOT_STRING"
+		}
+	},
 	REACT_MAP: { 
 		BAD_CONTENT: "ERR.REACT_MAP.BAD_CONTENT",
 		KEY: {
@@ -1646,6 +1653,10 @@ function updDataCell (tablo, header, numLine, newVal) {
 function checkUpdDataCellFromStr (tablo, header, numLine, strVal) {
 	var errs = [];
 
+	if (typeof strVal != "string") errs.push(newErr(
+		ERR.FUNCTION.PARAM.NOT_STRING, { 
+			function: "checkUpdDataCellFromStr", param: "strVal" }));
+	
 	var parsedVal ;
 	switch (header.dataType) {
 		case HEADER.DATA_TYPE.INT:
@@ -1655,21 +1666,11 @@ function checkUpdDataCellFromStr (tablo, header, numLine, strVal) {
 					tabloAlias: tablo.alias, headerAlias: header.alias,
 					numLine: numLine, cellContent: strVal }));
 			}
-			else if (! Number.isFinite(parsedVal)) {
-				errs.push(newErr(ERR.CELL.INT.INFINITE, {
-					tabloAlias: tablo.alias, headerAlias: header.alias,
-					numLine: numLine, cellContent: strVal }));
-			}
 			break;
 		case HEADER.DATA_TYPE.FLOAT:
 			parsedVal = parseFloat(strVal, 10);
 			if (Number.isNaN(parsedVal)) {
 				errs.push(newErr(ERR.CELL.FLOAT.NOT_A_NUMBER, {
-					tabloAlias: tablo.alias, headerAlias: header.alias,
-					numLine: numLine, cellContent: strVal }));
-			}
-			else if (! Number.isFinite(parsedVal)) {
-				errs.push(newErr(ERR.CELL.FLOAT.INFINITE, {
 					tabloAlias: tablo.alias, headerAlias: header.alias,
 					numLine: numLine, cellContent: strVal }));
 			}
@@ -1720,8 +1721,8 @@ function updDataCellFromStr (tablo, header, numLine, strVal) {
 					numLine: numLine, cellContent: strVal });
 			}
 			break;
-		default: errs.push(newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
-			dataType: header.dataType })) ;
+		default:  throw newErr(ERR.HEADER.DATA_TYPE.UNKNOWN, {
+			dataType: header.dataType }) ;
 	}
 	updDataCell(tablo, header, numLine, parsedVal);
 }
