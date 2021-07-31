@@ -30,6 +30,7 @@ export {
 	updReactKey,
 	checkDelReactKey,
 	delReactKey,
+	checkDelReaction,
 	delReaction,
 	delReactionFromAllKeys,
 	// new functions
@@ -107,7 +108,9 @@ export {
 	delTablo,
 	checkDelHeader,
 	delHeader,
+	checkDelArgFromHeader,
 	delArgFromHeader,
+	checkDelAllArgsFromHeader,
 	delAllArgsFromHeader
 };
 
@@ -143,6 +146,9 @@ const ERR = {
 		BAD_CONTENT: "ERR.REACT_MAP.BAD_CONTENT",
 		KEY: {
 			NOT_FOUND: "ERR.REACT_MAP.KEY.NOT_FOUND"
+		},
+		REACTION: {
+			NOT_FOUND: "ERR.REACT_MAP.REACTION.NOT_FOUND"
 		},
 		LOOP: "ERR.REACT_MAP.LOOP"
 	},
@@ -203,6 +209,9 @@ const ERR = {
 			},
 			HEADER_ALIAS: {
 				NON_EXISTING: "ERR.HEADER.ARG.HEADER_ALIAS.NON_EXISTING"
+			},
+			INDEX: {
+				OUT_OF_BOUNDS: "ERR.HEADER.ARG.INDEX.OUT_OF_BOUNDS"
 			}
 		}
 	},
@@ -483,6 +492,22 @@ function checkDelReactKey (reactMap, reactKey) {
 
 function delReactKey (reactMap, reactKey) { 
 	return reactMap.delete(reactKey) 
+}
+
+function checkDelReaction (reactMap, reactKey, reaction) {
+	var errs = [];
+	
+	if (! hasReactKey(reactMap, reactKey)) {
+		errs.push(newErr(ERR.REACT_MAP.KEY.NOT_FOUND, { reactKey: reactKey }));
+		return errs;
+	}
+
+	if (! reactMap.get(reactKey).has(reaction)) {
+		errs.push(newErr(ERR.REACT_MAP.REACTION.NOT_FOUND, {
+			reactKey: reactKey, reaction: reaction }));
+	}
+	
+	return errs ;
 }
 
 function delReaction (reactMap, reactKey, reaction) {
@@ -1910,6 +1935,41 @@ function delHeader (tabenv, tablo, header) {
 	}
 }
 
+function checkDelArgFromHeader (tabenv, tablo, header, indexArg) {
+	var errs = [];
+	
+	if (header.type != HEADER.TYPE.FUNC) {
+		errs.push(newErr(ERR.HEADER.TYPE.NOT_FUNC, {
+			tabloAlias: tablo.alias, headerAlias: header.alias,
+			headerType: header.type }));
+		return errs ;
+	}
+	
+	if (indexArg < 0 || indexArg >= header.args.length) {
+		errs.push(newErr(ERR.HEADER.ARG.INDEX.OUT_OF_BOUNDS, {
+			tabloAlias: tablo.alias, headerAlias: header.alias,
+			indexArg: indexArg, argsLength: header.args.length
+		}));
+		return errs;
+	}
+	
+	var arg = header.args[indexArg];
+	
+	switch (arg.type) {
+		case HEADER.ARG.TYPE.NULL: break;
+		case HEADER.ARG.TYPE.COL_SAME_LINE:
+			errs = errs.concat(checkDelReaction(
+				tabenv.reactMap, 
+				aliasesToStr(arg.alias.tablo, arg.alias.header), 
+				aliasesToStr(tablo.alias, header.alias)));
+			break;
+		default: errs.push(newErr(ERR.HEADER.ARG.TYPE.UNKNOWN, { 
+			type: arg.type }));
+	}
+	
+	return errs ;
+}
+
 // careful : does not update data
 function delArgFromHeader (tabenv, tablo, header, indexArg) {
 	
@@ -1939,6 +1999,23 @@ function delArgFromHeader (tabenv, tablo, header, indexArg) {
 			break;
 		default: throw newErr(ERR.HEADER.ARG.TYPE.UNKNOWN, { type: arg.type });
 	}
+}
+
+function checkDelAllArgsFromHeader (tabenv, tablo, header) {
+	var errs = [];
+	
+	if (header.type != HEADER.TYPE.FUNC) {
+		errs.push(newErr(ERR.HEADER.TYPE.NOT_FUNC, {
+			tabloAlias: tablo.alias, headerAlias: header.alias,
+			headerType: header.type }));
+		return errs ;
+	}
+	
+	for (var i = 0 ; i < header.args.length ; i ++) {
+		errs = errs.concat(checkDelArgFromHeader(tabenv, tablo, header, i));
+	}
+	
+	return errs; 
 }
 
 // careful : does not update data

@@ -963,6 +963,67 @@ describe ("delReactKey", function () {
 	});
 });
 
+describe ("checkDelReaction", function () {
+	var reactMap, reactKey1, reaction1, errs;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("checkDelReaction()", function() {
+		errs = T.checkDelReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe ("checkDelReaction fail KEY.NOT_FOUND", function () {
+	var reactMap, reactKey1, reaction1, errs;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("checkDelReaction()", function() {
+		errs = T.checkDelReaction(reactMap, null, reaction1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+	});
+});
+
+describe ("checkDelReaction fail REACTION.NOT_FOUND", function () {
+	var reactMap, reactKey1, reaction1, errs;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("checkDelReaction()", function() {
+		errs = T.checkDelReaction(reactMap, reactKey1, null);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.REACTION.NOT_FOUND);
+	});
+});
+
+
 describe ("delReaction", function () {
 	var reactMap, reactKey1, reaction1;
 	
@@ -4485,15 +4546,15 @@ describe("checkDelHeader fail checkDelAllArgsFromHeader", function() {
 	
 	before(function() {
 		env = makenv2Tablo1Func1Line();
-		env.header2.type = null ;
+		env.header2.args.push({ type: null });
 	});
 	
 	it("checkDelHeader()", function() {
-		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header1);
+		errs = T.checkDelHeader(env.tabenv, env.tablo2, env.header2);
 	});
 	
 	it("return value", function () {
-		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_FUNC);
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TYPE.UNKNOWN);
 	});
 });
 
@@ -4542,6 +4603,88 @@ describe("delHeader", function() {
 	});
 });
 
+describe("checkDelArgFromHeader", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkDelArgFromHeader()", function() {
+		errs = T.checkDelArgFromHeader(env.tabenv, env.tablo2, env.header2, 0);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkDelArgFromHeader fail NOT_FUNC", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkDelArgFromHeader()", function() {
+		errs = T.checkDelArgFromHeader(env.tabenv, env.tablo1, env.header1, 0);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_FUNC);
+	});
+});
+
+describe("checkDelArgFromHeader fail ARG.INDEX.OUT_OF_BOUNDS", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkDelArgFromHeader()", function() {
+		errs = T.checkDelArgFromHeader(env.tabenv, env.tablo2, env.header2, 1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.INDEX.OUT_OF_BOUNDS);
+	});
+});
+
+describe("checkDelArgFromHeader fail checkDelReaction", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		T.delReactKey(env.tabenv.reactMap, env.header1FullAlias);
+	});
+	
+	it("checkDelArgFromHeader()", function() {
+		errs = T.checkDelArgFromHeader(env.tabenv, env.tablo2, env.header2, 0);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+	});
+});
+
+describe("checkDelArgFromHeader fail ARG.TYPE.UNKNOWN", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		env.header2.args.push({ type: null });
+	});
+	
+	it("checkDelArgFromHeader()", function() {
+		errs = T.checkDelArgFromHeader(env.tabenv, env.tablo2, env.header2, 1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TYPE.UNKNOWN);
+	});
+});
+
 describe("delArgFromHeader", function() {
 	var env;
 	
@@ -4560,6 +4703,59 @@ describe("delArgFromHeader", function() {
 		assert.isEmpty(
 			T.getReactions(env.tabenv.reactMap, env.header1FullAlias)
 		);
+	});
+});
+
+describe("checkDelAllArgsFromHeader", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkDelAllArgsFromHeader()", function() {
+		errs = T.checkDelAllArgsFromHeader(
+			env.tabenv, env.tablo2, env.header2);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkDelAllArgsFromHeader fail NOT_FUNC", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		env.header2.type = null ;
+	});
+	
+	it("checkDelAllArgsFromHeader()", function() {
+		errs = T.checkDelAllArgsFromHeader(
+			env.tabenv, env.tablo2, env.header2);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_FUNC);
+	});
+});
+
+describe("checkDelAllArgsFromHeader fail checkDelArgFromHeader", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		env.header2.args.push({ type: null });
+	});
+	
+	it("checkDelAllArgsFromHeader()", function() {
+		errs = T.checkDelAllArgsFromHeader(
+			env.tabenv, env.tablo2, env.header2);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TYPE.UNKNOWN);
 	});
 });
 
