@@ -28,6 +28,7 @@ export {
 	getReactionsTree,
 	getReactKeysFromReaction,
 	updReactKey,
+	checkDelReactKey,
 	delReactKey,
 	delReaction,
 	delReactionFromAllKeys,
@@ -102,7 +103,9 @@ export {
 	updDataCellFromStr, 
 	updCellToDefault,
 	// del functions
+	checkDelTablo,
 	delTablo,
+	checkDelHeader,
 	delHeader,
 	delArgFromHeader,
 	delAllArgsFromHeader
@@ -468,6 +471,14 @@ function updReactKey (reactMap, oldReactKey, newReactKey) {
 		reactMap.set(newReactKey, reactions);
 		return true;
 	}
+}
+
+function checkDelReactKey (reactMap, reactKey) { 
+	var errs = [];
+	if (! reactMap.has(reactKey)) {
+		errs.push(newErr(ERR.REACT_MAP.KEY.NOT_FOUND, { reactKey: reactKey }));
+	}
+	return errs ;
 }
 
 function delReactKey (reactMap, reactKey) { 
@@ -1756,6 +1767,16 @@ function updCellToDefault (tablo, header, numLine) {
 
 // ==================== DEL FUNCTIONS =======================
 
+function checkDelTablo (tabenv, tablo) {
+	var errs = [];
+	
+	if (! tabenv.tablos.has(tablo.alias)) {
+		errs.push(newErr(ERR.TABLO.ALIAS.NOT_FOUND, { alias: tablo.alias }));
+	}
+	
+	return errs;
+}
+
 function delTablo (tabenv, tablo) {
 	
 	// delete headers (this will delete reactions too)
@@ -1768,7 +1789,68 @@ function delTablo (tabenv, tablo) {
 	tabenv.tablos.delete(tablo.alias);
 }
 
+function checkDelHeader (tabenv, tablo, header) {
+	var errs = [];
+	
+	if (getHeader(tablo, header.alias) == undefined) {
+		errs.push(newErr(ERR.HEADER.ALIAS.NOT_FOUND, {
+			tabloAlias: tablo.alias, headerAlias: header.alias }));
+		return errs;
+	}
 
+	var headerFullAlias = aliasesToStr(tablo.alias, header.alias);
+	if (! hasReactKey(tabenv.reactMap, headerFullAlias)) {
+		errs.push(newErr(ERR.REACT_MAP.KEY.NOT_FOUND, { 
+			key: headerFullAlias }));
+		return errs;
+	}
+		
+	var reactions = Array.from(getReactions(tabenv.reactMap, headerFullAlias));
+	
+	reactions.forEach(function (reaction) {
+		var reactionAlias = aliasObjFromStr(reaction);
+		var reactionTablo = tabenv.tablos.get(reactionAlias.tablo);
+		if (reactionTablo == undefined) {
+			errs.push(newErr(ERR.TABLO.ALIAS.NOT_FOUND, {
+				tabloAlias: reactionAlias.tablo }));
+			return ;
+		}
+		var reactionHeader = getHeader(reactionTablo, reactionAlias.header);
+		if (reactionHeader == undefined) {
+			errs.push(newErr(ERR.HEADER.ALIAS.NOT_FOUND, {
+				tabloAlias: reactionTablo, headerAlias: reactionAlias.header 
+			}));
+			return ;
+		}
+		var reactionArgs = reactionHeader.args.map(function (arg) {
+			switch (arg.type) {
+				case HEADER.ARG.TYPE.NULL: return arg;
+				case HEADER.ARG.TYPE.COL_SAME_LINE: 
+					if (arg.alias.tablo == tablo.alias &&
+						arg.alias.header == header.alias
+					){
+						return { type: HEADER.ARG.TYPE.NULL };
+					}
+					else return arg;
+				default: 
+					errs.push(newErr(ERR.HEADER.ARG.TYPE.UNKNOWN, {
+						type: arg.type }));
+					return null ;
+			}
+		});
+		reactionArgs = reactionArgs.filter(function (arg) { 
+			return arg != null });
+		errs = errs.concat(checkUpdHeaderArgs(
+			tabenv, reactionTablo, reactionHeader, reactionArgs));
+	});
+	
+	if (header.type == HEADER.TYPE.FUNC) {
+		// this function takes care of deleting reactions 
+		errs = errs.concat(checkDelAllArgsFromHeader(tabenv, tablo, header));
+	}
+	
+	return errs;
+}
 
 function delHeader (tabenv, tablo, header) { 
 	

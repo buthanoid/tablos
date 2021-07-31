@@ -903,6 +903,46 @@ describe("updReactKey", function () {
 	});	
 });
 
+describe ("checkDelReactKey", function () {
+	var reactMap, reactKey1, reaction1, errs;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("checkDelReactKey()", function() {
+		errs = T.checkDelReactKey(reactMap, reactKey1);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe ("checkDelReactKey fail NOT_FOUND", function () {
+	var reactMap, reactKey1, reaction1, errs;
+	
+	before(function() {
+		reactKey1 = "key1";
+		reactMap = T.newReactMap();
+		T.newReactKey(reactMap, reactKey1);
+		reaction1 = "reaction1";
+		T.newReaction(reactMap, reactKey1, reaction1);
+	});
+	
+	it("checkDelReactKey()", function() {
+		errs = T.checkDelReactKey(reactMap, null);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+	});
+});
+
 describe ("delReactKey", function () {
 	var reactMap, reactKey1, reaction1;
 	
@@ -4270,6 +4310,39 @@ describe("updCellToDefault fail TYPE.UNKNOWN", function() {
 
 // ==================== DEL FUNCTIONS =======================
 
+describe("checkDelTablo", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv1Tablo1Data1Line();
+	});
+	
+	it("checkUpdDataCellFromStr()", function() {
+		errs = T.checkDelTablo(env.tabenv, env.tablo1);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkDelTablo fail NOT_FOUND", function() {
+	var env1, env2, errs;
+	
+	before(function() {
+		env1 = makenv1Tablo1Data1Line();
+		env2 = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkUpdDataCellFromStr()", function() {
+		errs = T.checkDelTablo(env1.tabenv, env2.tablo2);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.TABLO.ALIAS.NOT_FOUND);
+	});
+});
+
 describe("delTablo", function() {
 	var env;
 	
@@ -4295,6 +4368,149 @@ describe("delTablo", function() {
 			T.getCell(env.tablo2, env.header2, 0),
 			env.header2.func(null)
 		);
+	});
+});
+
+describe("checkDelHeader", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkDelHeader()", function() {
+		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header1);
+	});
+	
+	it("return value", function () {
+		assert.isEmpty(errs);
+	});
+});
+
+describe("checkDelHeader fail HEADER NOT_FOUND", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+	});
+	
+	it("checkDelHeader()", function() {
+		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header2);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ALIAS.NOT_FOUND);
+	});
+});
+
+describe("checkDelHeader fail REACT KEY NOT_FOUND", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		T.delReactKey(env.tabenv.reactMap, env.header1FullAlias);
+	});
+	
+	it("checkDelHeader()", function() {
+		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.REACT_MAP.KEY.NOT_FOUND);
+	});
+});
+
+describe("checkDelHeader fail reaction tablo NOT_FOUND", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		T.delReaction(
+			env.tabenv.reactMap, env.header1FullAlias, env.header2FullAlias);
+		T.newReaction(
+			env.tabenv.reactMap, env.header1FullAlias,
+			T.aliasesToStr(null, env.header2.alias));
+	});
+	
+	it("checkDelHeader()", function() {
+		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.TABLO.ALIAS.NOT_FOUND);
+	});
+});
+
+describe("checkDelHeader fail reaction header NOT_FOUND", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		T.delReaction(
+			env.tabenv.reactMap, env.header1FullAlias, env.header2FullAlias);
+		T.newReaction(
+			env.tabenv.reactMap, env.header1FullAlias,
+			T.aliasesToStr(env.tablo2.alias, null));
+	});
+	
+	it("checkDelHeader()", function() {
+		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ALIAS.NOT_FOUND);
+	});
+});
+
+describe("checkDelHeader fail ARG.TYPE.UNKNOWN", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		env.header2.args.push({ type: null });
+	});
+	
+	it("checkDelHeader()", function() {
+		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.ARG.TYPE.UNKNOWN);
+	});
+});
+
+// TODO
+describe("checkDelHeader fail checkDelAllArgsFromHeader", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		env.header2.type = null ;
+	});
+	
+	it("checkDelHeader()", function() {
+		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_FUNC);
+	});
+});
+
+describe("checkDelHeader fail checkDelReactKey", function() {
+	var env, errs;
+	
+	before(function() {
+		env = makenv2Tablo1Func1Line();
+		env.header2.type = null ;
+	});
+	
+	it("checkDelHeader()", function() {
+		errs = T.checkDelHeader(env.tabenv, env.tablo1, env.header1);
+	});
+	
+	it("return value", function () {
+		assert.equal(errs[0].type, T.ERR.HEADER.TYPE.NOT_FUNC);
 	});
 });
 
